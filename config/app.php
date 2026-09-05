@@ -165,9 +165,7 @@ return [
         LaravelLang\StarterKits\Plugin::class,
         LaravelLang\StarterKits\ServiceProvider::class,
 
-        Laravel\Pail\PailServiceProvider::class,
         Carbon\Laravel\ServiceProvider::class,
-        NunoMaduro\Collision\Adapters\Laravel\CollisionServiceProvider::class,
         Termwind\Laravel\TermwindServiceProvider::class,
         Yajra\DataTables\DataTablesServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
