@@ -5,7 +5,7 @@ $themeColor = auth()->check()
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme-primary="{{ $themeColor }}" style="--tblr-primary: {{ $themeColor }};" data-theme-initializing>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme-primary="{{ $themeColor }}" style="--tblr-primary: {{ $themeColor }};">
 
 <head>
     <meta charset="utf-8">
@@ -29,10 +29,6 @@ $themeColor = auth()->check()
 
     {{-- Styles additionnels --}}
     <style>
-        html[data-theme-initializing] body {
-            visibility: hidden;
-        }
-
         html {
             overflow-y: scroll;
             scrollbar-gutter: stable;

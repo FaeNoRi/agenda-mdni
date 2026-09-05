@@ -22,9 +22,6 @@
 
     {{-- Styles additionnels --}}
     <style>
-        html[data-theme-initializing] body {
-            visibility: hidden;
-        }
         .dataTables_filter {
             padding-bottom: .5rem;
         }
