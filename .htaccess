@@ -1,0 +1,20 @@
+# Désactiver l'index des dossiers
+
+Options -Indexes
+
+# Bloquer les accès aux fichiers sensibles
+
+<FilesMatch "\.(env|git|gitattributes|gitignore|log|sql|env.example|htaccess|yml|lock|config\.js|md)$">
+Require all denied
+</FilesMatch>
+
+# Bloquer les robots indésirables
+
+BrowserMatchNoCase "MJ12bot" bots
+BrowserMatchNoCase "HTTrack" bots
+BrowserMatchNoCase "wget" bots
+BrowserMatchNoCase "curl" bots
+
+Order Allow,Deny
+Allow from all
+Deny from env=bots

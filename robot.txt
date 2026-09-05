@@ -1,0 +1,10 @@
+User-agent: *
+
+Disallow: /vendor/
+Disallow: /storage/
+Disallow: /.git/
+Disallow: /.env
+Disallow: /node_modules/
+Disallow: /tests/
+Disallow: /config/
+Disallow: /README.md
