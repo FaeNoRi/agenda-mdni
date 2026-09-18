@@ -224,6 +224,10 @@ class EvenementController extends Controller
             'badge_label' => 'Congé',
             'summary'     => $summary,
             'dates'       => $dates,
+            // Bornes réelles du congé, utilisées pour détecter un conflit d'horaire
+            // (et pas seulement un conflit de date) avec un événement.
+            'start'       => $c->start,
+            'end'         => $c->end,
         ];
     }
 
