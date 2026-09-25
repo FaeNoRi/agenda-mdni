@@ -38,6 +38,32 @@ class Evenements extends Model
         'date_heure_fin',
     ];
 
+    /**
+     * Présence d'un utilisateur sur cet événement :
+     *  - 'named' : la personne est citée nommément (prioritaire) ;
+     *  - 'team'  : seule "Toute l'équipe" (id 0) est citée, et la personne fait partie de l'équipe ;
+     *  - null    : pas de mise en avant (non concernée, ou événement annulé).
+     * Nécessite la relation users chargée pour éviter une requête par événement.
+     */
+    public function participationFor(?User $user): ?string
+    {
+        if (!$user || in_array($this->type_event, ['Annule', 'Annulé'], true)) {
+            return null;
+        }
+
+        $ids = $this->users->pluck('id');
+
+        if ($ids->contains($user->id)) {
+            return 'named';
+        }
+
+        if ($user->is_equipe && $ids->contains(0)) {
+            return 'team';
+        }
+
+        return null;
+    }
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'evenement_users', 'evenement_id', 'user_id');

@@ -1,5 +1,6 @@
 @php
     $clr = $event->type_color ?? 'secondary';
+    $participation = $event->participationFor(auth()->user());
 @endphp
 
 
@@ -61,6 +62,11 @@
             <span class="badge bg-{{ $clr }}-lt text-{{ $clr }}">
                 {{ $event->type_event }}
             </span>
+            @if($participation)
+            <span class="badge bg-success text-white" title="{{ $participation === 'team' ? 'Toute l\'équipe est concernée' : 'Vous êtes affecté(e) à cet événement' }}">
+                @include('dashboard.partials.icon-user-check') Vous participez
+            </span>
+            @endif
             {{-- Badge Règlement à faire, aligné sur la même ligne --}}
             @if($event->reglement === 'A faire')
             <span class="badge bg-danger text-white">
@@ -101,17 +107,20 @@
             @endif
         </p>
 
-        {{-- Salle --}}
-        @if($event->salles->isNotEmpty())
+        {{-- Animateurs --}}
+        @if($event->users->isNotEmpty())
         <p class="flex items-start text-sm text-gray-600 gap-2 break-words">
             <svg class="w-4 h-4 shrink-0 mt-0.5 text-gray-500" xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="20" height="20" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
                 <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
             </svg>
-            {{ $event->users->pluck('name')->join(' - ') }}
+            <span>@include('dashboard.partials.participants', ['event' => $event, 'sep' => ' - '])</span>
         </p>
+        @endif
 
+        {{-- Salle --}}
+        @if($event->salles->isNotEmpty())
         <p class="flex items-start text-sm text-gray-600 gap-2 break-words">
             <svg class="w-4 h-4 shrink-0 mt-0.5 text-gray-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-door">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />

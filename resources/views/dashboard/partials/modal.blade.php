@@ -1,5 +1,6 @@
 @php
     $clr = $event->type_color ?? 'secondary';
+    $participation = $event->participationFor(auth()->user());
 @endphp
 
 {{-- --- HEADER --- --}}
@@ -11,6 +12,18 @@
 
 {{-- --- BODY dynamique --- --}}
 <div class="modal-body">
+    @if($participation)
+    <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-3" role="status">
+        @include('dashboard.partials.icon-user-check', ['size' => 22])
+        <span>
+            <strong>Vous participez à cet événement</strong>
+            @if($participation === 'team')
+            <span class="text-muted">— via « Toute l'équipe »</span>
+            @endif
+        </span>
+    </div>
+    @endif
+
     {{-- Bandeau titre & type pleine largeur --}}
 
     <div class="w-full p-3 mb-4 rounded bg-{{ $clr }}-lt">
@@ -44,7 +57,7 @@
     <div class="row gx-4 mb-4">
         <div class="col-md-6">
             <p class="mb-1"><strong>Animateur{{ $event->users->count()>1?'s':'' }}</strong></p>
-            <p class="mb-0">{{ $event->users->pluck('name')->join(', ') ?: '–' }}</p>
+            <p class="mb-0">@include('dashboard.partials.participants', ['event' => $event, 'sep' => ', '])</p>
         </div>
         <div class="col-md-6">
             <p class="mb-1"><strong>Salle{{ $event->salles->count()>1?'s':'' }}</strong></p>
