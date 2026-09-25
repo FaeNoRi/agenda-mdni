@@ -29,8 +29,10 @@ $themeColor = auth()->check()
 
     {{-- Styles additionnels --}}
     <style>
+        /* Pas d'overflow-y sur <html> : Bootstrap verrouille le scroll via body { overflow: hidden }
+           à l'ouverture d'une modale, ce qui ne se propage au viewport (et ne conserve la position
+           de la page) que si <html> a un overflow "visible". Le gutter évite le décalage de mise en page. */
         html {
-            overflow-y: scroll;
             scrollbar-gutter: stable;
         }
 
