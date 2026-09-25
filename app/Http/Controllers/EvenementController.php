@@ -429,7 +429,7 @@ class EvenementController extends Controller
             });
 
             // ✅ Envoi d’email une fois la transaction réussie
-            app(SendEventEmailService::class)->send($evenement);
+            app(SendEventEmailService::class)->send($evenement, SendEventEmailService::CREATED);
 
         } catch (\Throwable $e) {
             Log::error("Erreur store() Evenement: " . $e->getMessage());
@@ -537,6 +537,9 @@ class EvenementController extends Controller
 
         $data['auteur'] = Auth::user()?->name;
 
+        // Animateurs avant modification : les personnes retirées reçoivent une annulation.
+        $previousUserIds = $evenement->users()->pluck('users.id')->all();
+
         try {
             DB::transaction(function () use ($request, $evenement, $data) {
                 $evenement->update($data);
@@ -576,7 +579,7 @@ class EvenementController extends Controller
                 }
             });
 
-            app(SendEventEmailService::class)->send($evenement);
+            app(SendEventEmailService::class)->send($evenement, SendEventEmailService::UPDATED, $previousUserIds);
 
         } catch (\Throwable $e) {
             Log::error("Erreur update() Evenement: " . $e->getMessage());
@@ -601,6 +604,12 @@ class EvenementController extends Controller
     {
 
         $dateFiltre = Carbon::parse($evenement->date_heure_debut)->toDateString();
+
+        // Avant suppression (les animateurs sont encore rattachés) : retire l'événement des agendas.
+        // (inutile si l'événement était déjà passé au type "Annulé" : l'annulation a déjà été envoyée)
+        if (!in_array($evenement->type_event, ['Annule', 'Annulé'], true)) {
+            app(SendEventEmailService::class)->send($evenement, SendEventEmailService::CANCELLED);
+        }
 
         DB::transaction(function () use ($evenement) {
             $evenement->users()->detach();

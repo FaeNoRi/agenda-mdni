@@ -3,14 +3,21 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class SendEventEmailService
 {
-        private function getColor($type)
+    public const CREATED = 'created';
+    public const UPDATED = 'updated';
+    public const CANCELLED = 'cancelled';
+
+    public function __construct(private IcsBuilder $ics)
+    {
+    }
+
+    private function getColor($type)
     {
         return [
             'RDV' => '#0d6efd',
@@ -27,78 +34,93 @@ class SendEventEmailService
         ][$type] ?? '#888888';
     }
 
-    public function send($event)
+    /**
+     * Notifie les personnes concernées par un événement, avec un fichier .ics.
+     *
+     * @param  string  $mode             CREATED, UPDATED ou CANCELLED (suppression de l'événement).
+     * @param  array   $previousUserIds  Animateurs avant modification : les personnes retirées reçoivent
+     *                                   une annulation pour que l'événement disparaisse de leur agenda.
+     *
+     * N'échoue jamais : un problème d'envoi ne doit pas faire échouer la sauvegarde de l'événement.
+     */
+    public function send($event, string $mode = self::CREATED, array $previousUserIds = []): void
     {
+        try {
+            $event->load(['users', 'salles']);
 
-        $concernedUsers = $event->users()
-            ->where('is_email', 1)
-            ->get();
+            // Un événement passé au type "Annulé" doit disparaître des agendas.
+            if (in_array($event->type_event, ['Annule', 'Annulé'], true)) {
+                $mode = self::CANCELLED;
+            }
 
-        $hasWholeTeam = $event->users()->whereKey(0)->exists();
+            $recipients = $this->recipients($event->users->pluck('id')->all());
+            $method = $mode === self::CANCELLED ? IcsBuilder::METHOD_CANCEL : IcsBuilder::METHOD_PUBLISH;
 
-        if ($hasWholeTeam) {
-            $teamUsers = User::query()
+            $this->sendTo($recipients, $event, $mode, $method);
+
+            if ($mode === self::UPDATED && $previousUserIds) {
+                $removed = $this->recipients($previousUserIds)->diffKeys($recipients);
+                $this->sendTo($removed, $event, self::CANCELLED, IcsBuilder::METHOD_CANCEL);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Erreur notification événement : ' . $e->getMessage());
+        }
+    }
+
+    /** Destinataires (indexés par id) : animateurs cités + équipe entière si "Toute l'équipe" (id 0). */
+    private function recipients(array $userIds): Collection
+    {
+        $users = User::query()->whereIn('id', $userIds)->where('is_email', 1)->get();
+
+        if (in_array(0, $userIds, true)) {
+            $team = User::query()
                 ->where('is_equipe', 1)
                 ->where('is_email', 1)
                 ->where('id', '!=', 0)
                 ->get();
 
-            $concernedUsers = $concernedUsers
-                ->merge($teamUsers)
-                ->unique('id')
-                ->values();
+            $users = $users->merge($team);
         }
 
-        $concernedUsers = $concernedUsers->filter(fn ($u) => !empty($u->email));
+        return $users->filter(fn ($u) => !empty($u->email))->keyBy('id');
+    }
 
-        if ($concernedUsers->isEmpty()) {
+    private function sendTo(Collection $users, $event, string $mode, string $method): void
+    {
+        if ($users->isEmpty()) {
             return;
         }
 
-        $icsContent = $this->generateICS($event);
+        $icsContent = $this->ics->build($event, $method);
 
-        foreach ($concernedUsers as $user) {
-            $this->sendEmail($user->email, $event, $icsContent);
+        foreach ($users as $user) {
+            try {
+                $this->sendEmail($user->email, $event, $icsContent, $mode);
+            } catch (\Throwable $e) {
+                Log::error("Erreur envoi mail événement à {$user->email} : " . $e->getMessage());
+            }
         }
     }
 
-    private function generateICS($event)
+    private function subject($event, string $mode): string
     {
-        $start = Carbon::parse($event->date_heure_debut)->format('Ymd\THis');
-        $end = Carbon::parse($event->date_heure_fin)->format('Ymd\THis');
-
-        // 🔁 Récupération des noms de salles
-        $location = $event->salles->pluck('nom_salle')->implode(', ');
-
-        return <<<ICS
-        BEGIN:VCALENDAR
-        VERSION:2.0
-        PRODID:-//Floppy Bord//EN
-        BEGIN:VEVENT
-        UID:event-{$event->id}@floppybord
-        DTSTAMP:$start
-        DTSTART:$start
-        DTEND:$end
-        SUMMARY:{$event->nom_event}
-        DESCRIPTION:{$event->desc_event}
-        LOCATION:$location
-        END:VEVENT
-        END:VCALENDAR
-        ICS;
+        return match ($mode) {
+            self::UPDATED => "Événement modifié : {$event->nom_event}",
+            self::CANCELLED => "Événement annulé : {$event->nom_event}",
+            default => "Nouvel événement : {$event->nom_event}",
+        };
     }
 
-
-    private function sendEmail($to, $event, $icsContent)
+    private function sendEmail($to, $event, $icsContent, string $mode): void
     {
-        $apiKey = config('services.brevo.api_key');
-
         $htmlContent = view('emails.event-notification', [
             'event' => $event,
             'color' => $this->getColor($event->type_event),
+            'mode' => $mode,
         ])->render();
 
-        $response = Http::withHeaders([
-            'api-key' => $apiKey,
+        $response = Http::timeout(10)->withHeaders([
+            'api-key' => config('services.brevo.api_key'),
             'accept' => 'application/json',
             'content-type' => 'application/json',
         ])->post('https://api.brevo.com/v3/smtp/email', [
@@ -106,8 +128,8 @@ class SendEventEmailService
                 'name' => config('services.brevo.sender_name'),
                 'email' => config('services.brevo.sender_email'),
             ],
-            'to' => [[ 'email' => $to ]],
-            'subject' => "Nouvel événement : {$event->nom_event}",
+            'to' => [['email' => $to]],
+            'subject' => $this->subject($event, $mode),
             'htmlContent' => $htmlContent,
             'attachment' => [[
                 'name' => 'event.ics',
@@ -116,7 +138,7 @@ class SendEventEmailService
         ]);
 
         if (!$response->successful()) {
-            Log::error("Erreur envoi Brevo : " . $response->body());
+            Log::error('Erreur envoi Brevo : ' . $response->body());
         }
     }
 }
