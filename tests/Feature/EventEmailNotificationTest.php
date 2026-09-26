@@ -69,6 +69,7 @@ class EventEmailNotificationTest extends TestCase
             /** @var Request $request */
             $out[$request['to'][0]['email']] = [
                 'subject' => $request['subject'],
+                'html' => $request['htmlContent'],
                 'ics' => base64_decode($request['attachment'][0]['content']),
             ];
         }
@@ -117,9 +118,99 @@ class EventEmailNotificationTest extends TestCase
 
         $sent = $this->sent();
         $this->assertStringContainsString('METHOD:PUBLISH', $sent['anne@example.test']['ics']);
-        $this->assertStringStartsWith('Événement annulé', $sent['bob@example.test']['subject']);
+        $this->assertStringStartsWith("Vous n'êtes plus affecté(e)", $sent['bob@example.test']['subject']);
         $this->assertStringContainsString('METHOD:CANCEL', $sent['bob@example.test']['ics']);
         $this->assertStringContainsString("UID:event-{$event->id}@floppybord", $sent['bob@example.test']['ics']);
+        $this->assertStringContainsString('Vous n&#039;êtes plus affecté(e) à cet événement', $sent['bob@example.test']['html']);
+        $this->assertStringNotContainsString('Événement annulé', $sent['bob@example.test']['html']);
+    }
+
+    public function test_person_added_during_update_gets_a_new_event_mail_not_an_update(): void
+    {
+        $admin = $this->person('admin@example.test');
+        $anne = $this->person('anne@example.test');
+        $bob = $this->person('bob@example.test');
+        $event = $this->event([$anne->id]);
+
+        $this->actingAs($admin)->put("/evenements/{$event->id}", $this->payload(['users' => [$anne->id, $bob->id]]))->assertRedirect();
+
+        $sent = $this->sent();
+        $this->assertStringStartsWith('Nouvel événement', $sent['bob@example.test']['subject']);
+        $this->assertStringContainsString('Vous avez été ajouté(e) à cet événement', $sent['bob@example.test']['html']);
+        $this->assertStringStartsWith('Événement modifié', $sent['anne@example.test']['subject']);
+    }
+
+    public function test_update_mail_lists_only_what_changed_with_old_and_new_values(): void
+    {
+        $admin = $this->person('admin@example.test');
+        $anne = $this->person('anne@example.test');
+        $event = $this->event([$anne->id]);
+
+        $this->actingAs($admin)->put("/evenements/{$event->id}", $this->payload([
+            'date_heure_debut' => '2026-09-17T14:00', 'date_heure_fin' => '2026-09-17T15:00', 'users' => [$anne->id],
+        ]))->assertRedirect();
+
+        $html = $this->sent()['anne@example.test']['html'];
+        $this->assertStringContainsString('les changements sont indiqués ci-dessous', $html);
+        $this->assertStringContainsString('10:30 – 11:30', $html);
+        $this->assertStringContainsString('<strong>14:00 – 15:00</strong>', $html);
+        // Un seul champ modifié (l'horaire) : ni la date, ni la salle, ni les animateurs ne sont listés.
+        $this->assertSame(1, substr_count($html, '<strong>14:00 – 15:00</strong>'));
+        $this->assertSame(1, preg_match_all('/text-decoration:line-through;">/', $html));
+    }
+
+    public function test_update_without_visible_change_has_no_changes_table(): void
+    {
+        $admin = $this->person('admin@example.test');
+        $anne = $this->person('anne@example.test');
+        $event = $this->event([$anne->id]);
+
+        $this->actingAs($admin)->put("/evenements/{$event->id}", $this->payload([
+            'desc_event' => 'Nouvelle description', 'users' => [$anne->id],
+        ]))->assertRedirect();
+
+        $html = $this->sent()['anne@example.test']['html'];
+        $this->assertStringContainsString('consultez les informations ci-dessous', $html);
+        $this->assertStringNotContainsString('text-decoration:line-through', $html);
+    }
+
+    public function test_reinstating_a_cancelled_event_sends_reinstated_mail(): void
+    {
+        $admin = $this->person('admin@example.test');
+        $anne = $this->person('anne@example.test');
+        $event = $this->event([$anne->id], ['type_event' => 'Annule']);
+
+        $this->actingAs($admin)->put("/evenements/{$event->id}", $this->payload(['users' => [$anne->id]]))->assertRedirect();
+
+        $mail = $this->sent()['anne@example.test'];
+        $this->assertStringStartsWith('Événement rétabli', $mail['subject']);
+        $this->assertStringContainsString('METHOD:PUBLISH', $mail['ics']);
+    }
+
+    public function test_editing_an_already_cancelled_event_sends_nothing(): void
+    {
+        $admin = $this->person('admin@example.test');
+        $anne = $this->person('anne@example.test');
+        $event = $this->event([$anne->id], ['type_event' => 'Annule']);
+
+        $this->actingAs($admin)->put("/evenements/{$event->id}", $this->payload([
+            'type_event' => 'Annule', 'desc_event' => 'y', 'users' => [$anne->id],
+        ]))->assertRedirect();
+
+        Http::assertNothingSent();
+    }
+
+    public function test_creation_mail_has_generic_greeting_banner_and_attachment_hint(): void
+    {
+        $admin = $this->person('admin@example.test');
+        $anne = $this->person('anne@example.test');
+
+        $this->actingAs($admin)->post('/evenements', $this->payload(['users' => [$anne->id]]))->assertRedirect();
+
+        $html = $this->sent()['anne@example.test']['html'];
+        $this->assertStringContainsString('Bonjour,', $html);
+        $this->assertStringContainsString('vous y êtes affecté(e)', $html);
+        $this->assertStringContainsString('Pièce jointe : event.ics', $html);
     }
 
     public function test_switching_type_to_cancelled_sends_cancellation(): void

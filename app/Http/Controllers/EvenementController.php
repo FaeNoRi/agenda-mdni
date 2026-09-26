@@ -537,8 +537,8 @@ class EvenementController extends Controller
 
         $data['auteur'] = Auth::user()?->name;
 
-        // Animateurs avant modification : les personnes retirées reçoivent une annulation.
-        $previousUserIds = $evenement->users()->pluck('users.id')->all();
+        // État avant modification : sert à savoir qui est ajouté/retiré et ce qui a changé (mail).
+        $before = app(SendEventEmailService::class)->snapshot($evenement);
 
         try {
             DB::transaction(function () use ($request, $evenement, $data) {
@@ -579,7 +579,7 @@ class EvenementController extends Controller
                 }
             });
 
-            app(SendEventEmailService::class)->send($evenement, SendEventEmailService::UPDATED, $previousUserIds);
+            app(SendEventEmailService::class)->send($evenement, SendEventEmailService::UPDATED, $before);
 
         } catch (\Throwable $e) {
             Log::error("Erreur update() Evenement: " . $e->getMessage());
