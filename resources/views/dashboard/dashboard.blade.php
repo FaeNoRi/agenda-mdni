@@ -83,6 +83,15 @@
                     Ajouter un événement
                 </button>
 
+                <div class="btn-group" id="dayNavGroup" role="group" aria-label="Jour précédent / suivant">
+                    <button id="btn-day-prev" type="button" class="btn btn-outline-primary" onclick="shiftDay(-1)" aria-label="Jour précédent">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mx-auto"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg>
+                    </button>
+                    <button id="btn-day-next" type="button" class="btn btn-outline-primary" onclick="shiftDay(1)" aria-label="Jour suivant">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mx-auto"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg>
+                    </button>
+                </div>
+
                 <div class="btn-group" role="group" aria-label="Switch view">
                     <button id="btn-cards-view" class="btn btn-outline-primary active" onclick="switchView('cards')" title="Vue cartes">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-layout-grid mx-auto">
@@ -527,6 +536,7 @@
         function switchView(view) {
             const cards = document.getElementById('cardsContainer');
             const cal = document.getElementById('calendarContainer');
+            const dayNav = document.getElementById('dayNavGroup');
 
             document.getElementById('btn-cards-view').classList.remove('active');
             document.getElementById('btn-calendar-view').classList.remove('active');
@@ -534,6 +544,7 @@
             if (view === 'calendar') {
                 cards.classList.add('d-none');
                 cal.classList.remove('d-none');
+                dayNav?.classList.add('d-none');
                 document.getElementById('btn-calendar-view').classList.add('active');
 
                 if (!calendar) {
@@ -542,8 +553,83 @@
             } else {
                 cards.classList.remove('d-none');
                 cal.classList.add('d-none');
+                dayNav?.classList.remove('d-none');
                 document.getElementById('btn-cards-view').classList.add('active');
             }
+        }
+
+        // Construit les paramètres de filtrage à partir des champs actuels (dates + type/salle/user).
+        function collectFilterParams() {
+            const ps = new URLSearchParams();
+
+            ['from', 'to'].forEach(k => {
+                const v = document.getElementById(`filter-${k}`)?.value;
+                if (v) ps.append(k, v);
+            });
+
+            ['type', 'salle', 'user'].forEach(k => {
+                const select = document.getElementById(`filter-${k}`);
+                if (!select) return;
+                Array.from(select.selectedOptions).forEach(opt => ps.append(k, opt.value));
+            });
+
+            return ps;
+        }
+
+        // Recharge les cartes (et le calendrier si affiché) avec les paramètres donnés.
+        function refreshCards(ps, { closeOffcanvas = false } = {}) {
+            const cardsCt = document.getElementById('cardsContainer');
+
+            return fetch(`/dashboard/cards?${ps.toString()}`)
+                .then(r => r.ok ? r.text() : Promise.reject(r.status))
+                .then(html => {
+                    cardsCt.innerHTML = html;
+                    initDateBadgePopovers();
+                    updateFilterActiveBadges();
+
+                    if (calendar) {
+                        calendar.refetchEvents();
+                    }
+
+                    if (closeOffcanvas) {
+                        bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvasFilters')).hide();
+                    }
+                })
+                .catch(console.error);
+        }
+
+        // Les flèches ne pilotent qu'une date unique : dès qu'une période est active dans les
+        // filtres (champ "Date de fin" affiché), on les désactive pour éviter tout conflit —
+        // décaler "d'un jour" une période n'a pas de sens univoque, et le filtre gère déjà ce cas.
+        function updateDayNavState() {
+            const disabled = isToFilterVisible();
+            const prev = document.getElementById('btn-day-prev');
+            const next = document.getElementById('btn-day-next');
+            const title = disabled ? 'Retirez la période pour naviguer jour par jour' : '';
+
+            [prev, next].forEach(btn => {
+                if (!btn) return;
+                btn.disabled = disabled;
+                btn.title = title;
+            });
+        }
+
+        function shiftDay(delta) {
+            const fromEl = document.getElementById('filter-from');
+            if (!fromEl || !fromEl.value || isToFilterVisible()) return;
+
+            const d = new Date(`${fromEl.value}T00:00:00`);
+            d.setDate(d.getDate() + delta);
+
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const next = `${year}-${month}-${day}`;
+
+            fromEl.value = next;
+            document.getElementById('filter-to').value = next;
+            updateFilterActiveBadges();
+            refreshCards(collectFilterParams());
         }
 
         function initCalendar() {
@@ -745,14 +831,17 @@
             initDateBadgePopovers();
             const btnApply = document.getElementById('apply-filters');
             const btnReset = document.getElementById('reset-filters');
-            const cardsCt = document.getElementById('cardsContainer');
             const btnToggleTo = document.getElementById('toggle-filter-to');
 
             syncHiddenToDate();
             updateToFilterToggleLabel();
             updateFilterActiveBadges();
+            updateDayNavState();
 
-            btnToggleTo?.addEventListener('click', toggleToFilter);
+            btnToggleTo?.addEventListener('click', () => {
+                toggleToFilter();
+                updateDayNavState();
+            });
 
             document.getElementById('filter-from')?.addEventListener('change', () => {
                 syncHiddenToDate();
@@ -779,35 +868,8 @@
 
             btnApply.addEventListener('click', () => {
                 syncHiddenToDate();
-
-                const ps = new URLSearchParams();
-
-                ['from', 'to'].forEach(k => {
-                    const v = document.getElementById(`filter-${k}`).value;
-                    if (v) ps.append(k, v);
-                });
-
-                ['type', 'salle', 'user'].forEach(k => {
-                    const select = document.getElementById(`filter-${k}`);
-                    Array.from(select.selectedOptions).forEach(opt => {
-                        ps.append(k, opt.value);
-                    });
-                });
-
-                fetch(`/dashboard/cards?${ps.toString()}`)
-                    .then(r => r.ok ? r.text() : Promise.reject(r.status))
-                    .then(html => {
-                        cardsCt.innerHTML = html;
-                        initDateBadgePopovers();
-                        updateFilterActiveBadges();
-
-                        if (calendar) {
-                            calendar.refetchEvents();
-                        }
-
-                        bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvasFilters')).hide();
-                    })
-                    .catch(console.error);
+                updateDayNavState();
+                refreshCards(collectFilterParams(), { closeOffcanvas: true });
             });
 
             btnReset.addEventListener('click', () => {
@@ -833,25 +895,13 @@
                 });
 
                 updateFilterActiveBadges();
+                updateDayNavState();
 
                 const ps = new URLSearchParams();
                 ps.append('from', today);
                 ps.append('to', today);
 
-                fetch(`/dashboard/cards?${ps.toString()}`)
-                    .then(r => r.ok ? r.text() : Promise.reject(r.status))
-                    .then(html => {
-                        cardsCt.innerHTML = html;
-                        initDateBadgePopovers();
-                        updateFilterActiveBadges();
-
-                        if (calendar) {
-                            calendar.refetchEvents();
-                        }
-
-                        bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('offcanvasFilters')).hide();
-                    })
-                    .catch(console.error);
+                refreshCards(ps, { closeOffcanvas: true });
             });
 
             ['type', 'salle', 'user'].forEach(k => {

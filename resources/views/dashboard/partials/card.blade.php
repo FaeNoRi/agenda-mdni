@@ -1,12 +1,16 @@
 @php
     $clr = $event->type_color ?? 'secondary';
     $participation = $event->participationFor(auth()->user());
+    // "Annulé" en dark plein (pas -lt) pour bien le distinguer du gris du type "Événement".
+    $isCancelled = in_array($event->type_event, ['Annule', 'Annulé'], true);
+    $headerBg = $isCancelled ? 'bg-'.$clr : 'bg-'.$clr.'-lt';
+    $headerText = $isCancelled ? 'text-white' : 'text-'.$clr;
 @endphp
 
 
 <div x-data="{ dropdownOpen: false }" @click="openEvenementDetails({{ $event->id }})" class="card flex flex-col h-full w-full border-l-4 border-{{ $clr }} shadow-sm hover:shadow-md transition cursor-pointer">
     {{-- HEADER --}}
-    <div class="card-header relative overflow-visible flex justify-between items-center bg-{{ $clr }}-lt text-{{ $clr }}">
+    <div class="card-header relative overflow-visible flex justify-between items-center {{ $headerBg }} {{ $headerText }}">
         {{-- Conteneur Alpine + marquee --}}
         <div x-data="marquee" x-init="init()" class="w-60 marquee">
             <div x-ref="inner" class="marquee__inner text-lg font-semibold">
@@ -59,7 +63,7 @@
     <div class="card-body flex-1 p-4">
         {{-- Ligne badges --}}
         <div class="flex items-center mb-2 space-x-2">
-            <span class="badge bg-{{ $clr }}-lt text-{{ $clr }}">
+            <span class="badge {{ $headerBg }} {{ $headerText }}">
                 {{ $event->type_event }}
             </span>
             @if($participation)

@@ -22,7 +22,7 @@ class EvenementController extends Controller
 {
 
     private const EVENT_TYPE_COLORS = [
-        'RDV'          => 'primary',
+        'RDV'          => 'warning',
         'Location'     => 'danger',
         'Permanence'   => 'danger',
         'Atelier'      => 'success',
