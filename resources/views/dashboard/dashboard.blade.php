@@ -619,7 +619,12 @@
             const todayBtn = document.getElementById('btn-day-today');
             if (todayBtn) {
                 const fromEl = document.getElementById('filter-from');
-                todayBtn.disabled = !periodActive && fromEl?.value === getTodayLocalYmd();
+                const isToday = !periodActive && fromEl?.value === getTodayLocalYmd();
+                todayBtn.disabled = isToday;
+                // Jaune plein quand cliquable (on n'est pas déjà sur aujourd'hui), sinon on
+                // retombe sur l'aspect outline habituel, grisé par :disabled.
+                todayBtn.classList.toggle('btn-warning', !isToday);
+                todayBtn.classList.toggle('btn-outline-primary', isToday);
             }
         }
 
