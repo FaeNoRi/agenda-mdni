@@ -621,9 +621,9 @@
                 const fromEl = document.getElementById('filter-from');
                 const isToday = !periodActive && fromEl?.value === getTodayLocalYmd();
                 todayBtn.disabled = isToday;
-                // Jaune plein quand cliquable (on n'est pas déjà sur aujourd'hui), sinon on
-                // retombe sur l'aspect outline habituel, grisé par :disabled.
-                todayBtn.classList.toggle('btn-warning', !isToday);
+                // Plein (couleur du thème choisi par l'utilisateur, via --tblr-primary) quand
+                // cliquable, sinon on retombe sur l'aspect outline habituel, grisé par :disabled.
+                todayBtn.classList.toggle('btn-primary', !isToday);
                 todayBtn.classList.toggle('btn-outline-primary', isToday);
             }
         }
