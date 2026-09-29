@@ -135,7 +135,7 @@
         </div>
     </div>
 
-    <div id="evenementViewModal" class="modal modal-blur fade" tabindex="-1" aria-hidden="true">
+    <div id="evenementViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content" id="evenementDetailContainer">
                 Chargement…
@@ -144,7 +144,7 @@
     </div>
 
     {{-- Modal édition / création --}}
-    <div class="modal modal-blur fade" id="evenementModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade" id="evenementModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -168,7 +168,7 @@
     </div>
 
     {{-- Modal de suppression --}}
-    <div class="modal modal-blur fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <form method="POST" id="deleteEvenementForm">
