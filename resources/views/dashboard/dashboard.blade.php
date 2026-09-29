@@ -83,9 +83,12 @@
                     Ajouter un événement
                 </button>
 
-                <div class="btn-group" id="dayNavGroup" role="group" aria-label="Jour précédent / suivant">
+                <div class="btn-group mx-2" id="dayNavGroup" role="group" aria-label="Navigation par jour">
                     <button id="btn-day-prev" type="button" class="btn btn-outline-primary" onclick="shiftDay(-1)" aria-label="Jour précédent">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mx-auto"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg>
+                    </button>
+                    <button id="btn-day-today" type="button" class="btn btn-outline-primary" onclick="goToToday()">
+                        Aujourd'hui
                     </button>
                     <button id="btn-day-next" type="button" class="btn btn-outline-primary" onclick="shiftDay(1)" aria-label="Jour suivant">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mx-auto"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 6l6 6l-6 6" /></svg>
@@ -602,16 +605,22 @@
         // filtres (champ "Date de fin" affiché), on les désactive pour éviter tout conflit —
         // décaler "d'un jour" une période n'a pas de sens univoque, et le filtre gère déjà ce cas.
         function updateDayNavState() {
-            const disabled = isToFilterVisible();
+            const periodActive = isToFilterVisible();
             const prev = document.getElementById('btn-day-prev');
             const next = document.getElementById('btn-day-next');
-            const title = disabled ? 'Retirez la période pour naviguer jour par jour' : '';
+            const title = periodActive ? 'Retirez la période pour naviguer jour par jour' : '';
 
             [prev, next].forEach(btn => {
                 if (!btn) return;
-                btn.disabled = disabled;
+                btn.disabled = periodActive;
                 btn.title = title;
             });
+
+            const todayBtn = document.getElementById('btn-day-today');
+            if (todayBtn) {
+                const fromEl = document.getElementById('filter-from');
+                todayBtn.disabled = !periodActive && fromEl?.value === getTodayLocalYmd();
+            }
         }
 
         function shiftDay(delta) {
@@ -629,6 +638,20 @@
             fromEl.value = next;
             document.getElementById('filter-to').value = next;
             updateFilterActiveBadges();
+            updateDayNavState();
+            refreshCards(collectFilterParams());
+        }
+
+        // Revient à aujourd'hui, en date unique : referme aussi une période éventuellement active.
+        function goToToday() {
+            const today = getTodayLocalYmd();
+
+            document.getElementById('filter-from').value = today;
+            document.getElementById('filter-to').value = today;
+            document.getElementById('filter-to-wrapper')?.classList.add('d-none');
+            updateToFilterToggleLabel();
+            updateFilterActiveBadges();
+            updateDayNavState();
             refreshCards(collectFilterParams());
         }
 
@@ -845,9 +868,13 @@
 
             document.getElementById('filter-from')?.addEventListener('change', () => {
                 syncHiddenToDate();
+                updateDayNavState();
             });
 
-            document.getElementById('filter-to')?.addEventListener('change', updateFilterActiveBadges);
+            document.getElementById('filter-to')?.addEventListener('change', () => {
+                updateFilterActiveBadges();
+                updateDayNavState();
+            });
 
             document.getElementById('btnOpenFilters')?.addEventListener('click', (e) => {
                 e.preventDefault();
