@@ -1,11 +1,11 @@
 {{-- <pre>{!! json_encode($formData, JSON_PRETTY_PRINT) !!}</pre> --}}
 
-<form method="POST" action="{{ $route }}" x-data='() => ({
+<form method="POST" action="{{ $route }}" data-event-id="{{ $evenement->id ?? '' }}" x-data='() => ({
         step: 1,
         form: @json($formData)
     })' x-init="
         if (form.animateurs.length === 0) form.animateurs.push('');
-        if (form.salles.length === 0) form.salles.push('');
+        if (form.salles.length === 0) form.salles.push({ id: '' });
     ">
 
     @csrf
@@ -216,7 +216,7 @@
             <div class="col-md-6 ps-3">
                 <label class="form-label d-flex justify-content-between align-items-center">
                     Salles
-                    <button type="button" class="btn btn-sm btn-outline-primary" @click="form.salles.push(''); $nextTick(() => checkDisponibilites())">Ajouter une salle
+                    <button type="button" class="btn btn-sm btn-outline-primary" @click="form.salles.push({ id: '' }); $nextTick(() => checkDisponibilites())">Ajouter une salle
                     </button>
                 </label>
                 <template x-for="(salle, index) in form.salles" :key="index">
@@ -264,9 +264,18 @@
             </template>
         </div>
 
+        {{-- Photos --}}
+        <div class="mb-3 pt-3 border-top">
+            <label class="form-check mb-0">
+                <input type="hidden" name="prendre_photos" value="0">
+                <input type="checkbox" class="form-check-input" name="prendre_photos" value="1" x-model="form.prendre_photos">
+                <span class="form-check-label">Prendre des photos</span>
+            </label>
+        </div>
+
         {{-- Objets --}}
         <div class="mb-3">
-            <label class="form-label">Objets à produire ?</label>
+            <label class="form-label">Objets à remettre ?</label>
             <select name="objet" class="form-select" x-model="form.objet">
                 <option>Non</option>
                 <option>Oui</option>

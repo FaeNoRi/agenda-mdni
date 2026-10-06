@@ -5,6 +5,43 @@
         pointer-events: none;
     }
 
+    .event-flags {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .event-flag {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        border-radius: 6px;
+        color: #fff;
+        cursor: default;
+    }
+
+    .event-flag:hover::after {
+        content: attr(data-tip);
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1080;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: #182433;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 1.3;
+        width: max-content;
+        max-width: 200px;
+        text-align: center;
+        pointer-events: none;
+    }
+
     .marquee {
         position: relative;
         overflow: hidden;
@@ -490,7 +527,10 @@
 
             if (!debut || !fin) return;
 
-            fetch(`/evenements/disponibilites?debut=${encodeURIComponent(debut)}&fin=${encodeURIComponent(fin)}`)
+            const eventId = debutInput.closest('form')?.dataset.eventId;
+            const exclude = eventId ? `&exclude=${encodeURIComponent(eventId)}` : '';
+
+            fetch(`/evenements/disponibilites?debut=${encodeURIComponent(debut)}&fin=${encodeURIComponent(fin)}${exclude}`)
                 .then(res => res.json())
                 .then(data => appliquerDisponibilites(data))
                 .catch(err => console.error('checkDisponibilites', err));

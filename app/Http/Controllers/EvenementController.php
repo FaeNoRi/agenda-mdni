@@ -332,6 +332,7 @@ class EvenementController extends Controller
             'type_reglement' => '',
             'num_reglement' => '',
             'objet' => 'Non',
+            'prendre_photos' => false,
             'date_heure_debut' => $debut->format('Y-m-d\TH:i'),
             'date_heure_fin'   => $fin->format('Y-m-d\TH:i'),
 
@@ -367,7 +368,8 @@ class EvenementController extends Controller
 
     }
 
-    public function store(Request $request)
+    /** Validation commune à la création et à la modification, + valeurs normalisées. */
+    private function validateEvent(Request $request): array
     {
         $data = $request->validate([
             'nom_event' => 'required|string|max:255',
@@ -386,46 +388,92 @@ class EvenementController extends Controller
             'date_heure_debut' => 'required|date_format:Y-m-d\TH:i',
             'date_heure_fin'   => 'required|date_format:Y-m-d\TH:i|after_or_equal:date_heure_debut',
             'objet' => 'nullable|in:Oui,Non,A faire',
+            'prendre_photos' => 'nullable|boolean',
             'users' => 'nullable|array',
+            'users.*' => 'nullable|integer',
             'salles' => 'nullable|array',
+            'salles.*' => 'nullable|integer',
             'materiels' => 'nullable|array',
+            'materiels.*' => 'nullable|integer',
             'quantites' => 'nullable|array',
+            'quantites.*' => 'nullable|integer|min:1',
             'objets' => 'nullable|array',
-            'etat' => 'nullable|array'
+            'objets.*' => 'nullable|integer',
+            'etat' => 'nullable|array',
+            'etat.*' => 'nullable|in:A faire,Fait',
         ]);
 
+        // Champs facultatifs à l'écran mais NOT NULL en base : un champ vidé ne doit pas faire échouer l'enregistrement.
+        $data['nbpart'] = $data['nbpart'] ?? 0;
+        $data['desc_event'] = $data['desc_event'] ?? '';
+        $data['commanditaire_event'] = $data['commanditaire_event'] ?? '';
+
+        $data['objet'] = ($data['objet'] ?? 'Non') === 'Oui' ? 'Oui' : 'Non';
+        $data['prendre_photos'] = $request->boolean('prendre_photos');
         $data['auteur'] = Auth::user()?->name;
+
+        return $data;
+    }
+
+    /** Retire les lignes vides et les doublons d'une liste d'identifiants (l'id 0 est valide). */
+    private function cleanIds(array $ids): array
+    {
+        return array_values(array_unique(array_filter($ids, fn ($id) => $id !== null && $id !== '')));
+    }
+
+    /** Matériels : lignes vides ignorées, quantité 1 par défaut, doublons additionnés. */
+    private function materielPivotData(array $materiels, array $quantites): array
+    {
+        $rows = [];
+
+        foreach ($materiels as $i => $id) {
+            if ($id === null || $id === '') {
+                continue;
+            }
+            $quantite = max(1, (int) ($quantites[$i] ?? 1));
+            $rows[$id] = ['quantite' => ($rows[$id]['quantite'] ?? 0) + $quantite];
+        }
+
+        return $rows;
+    }
+
+    /** Objets : lignes vides ignorées ; si un même objet est saisi deux fois, "A faire" l'emporte. */
+    private function objetPivotData(array $objets, array $etats): array
+    {
+        $rows = [];
+
+        foreach ($objets as $i => $id) {
+            if ($id === null || $id === '') {
+                continue;
+            }
+            $enAttente = ($rows[$id]['etat'] ?? null) === 'A faire' || ($etats[$i] ?? 'A faire') !== 'Fait';
+            $rows[$id] = ['etat' => $enAttente ? 'A faire' : 'Fait'];
+        }
+
+        return $rows;
+    }
+
+    /** Synchronise animateurs, salles, matériels et objets (objets vidés si "Objets à remettre" ≠ Oui). */
+    private function syncRelations(Evenements $evenement, array $data): void
+    {
+        $evenement->users()->sync($this->cleanIds($data['users'] ?? []));
+        $evenement->salles()->sync($this->cleanIds($data['salles'] ?? []));
+        $evenement->materiels()->sync($this->materielPivotData($data['materiels'] ?? [], $data['quantites'] ?? []));
+        $evenement->objets()->sync(
+            $data['objet'] === 'Oui' ? $this->objetPivotData($data['objets'] ?? [], $data['etat'] ?? []) : []
+        );
+    }
+
+    public function store(Request $request)
+    {
+        $data = $this->validateEvent($request);
 
         try {
             $evenement = null; // ➜ à rendre accessible hors de la transaction
 
             DB::transaction(function () use ($data, &$evenement) {
                 $evenement = Evenements::create($data);
-                Log::debug('Événement créé', ['evenement_id' => $evenement->id ?? null]);
-
-                $evenement->users()->sync($data['users'] ?? []);
-                Log::debug('Users liés :', $data['users'] ?? []);
-
-                $evenement->salles()->sync($data['salles'] ?? []);
-                Log::debug('Objets liés :', $data['objets'] ?? []);
-
-                $materiels = [];
-                if (!empty($data['materiels'])) {
-                    foreach ($data['materiels'] as $i => $id) {
-                        $quantite = $data['quantites'][$i] ?? 0;
-                        $materiels[$id] = ['quantite' => $quantite];
-                    }
-                }
-                $evenement->materiels()->sync($materiels);
-
-                $objects = [];
-                if (!empty($data['objets'])) {
-                    foreach ($data['objets'] as $i => $id) {
-                        $etat = $data['etat'][$i] ?? 'A faire';
-                        $objects[$id] = ['etat' => $etat];
-                    }
-                }
-                $evenement->objets()->sync($objects);
+                $this->syncRelations($evenement, $data);
             });
 
             // ✅ Envoi d’email une fois la transaction réussie
@@ -472,6 +520,7 @@ class EvenementController extends Controller
             'type_reglement' => $evenement->type_reglement ?? '',
             'num_reglement' => $evenement->num_reglement ?? '',
             'objet' => $evenement->objet ?? 'Non',
+            'prendre_photos' => (bool) $evenement->prendre_photos,
             'date_heure_debut' => optional($evenement->date_heure_debut)
                                     ->format('Y-m-d\TH:i') ?? '',
             'date_heure_fin'   => optional($evenement->date_heure_fin)
@@ -510,73 +559,15 @@ class EvenementController extends Controller
 
     public function update(Request $request, Evenements $evenement)
     {
-        $data = $request->validate([
-            'nom_event' => 'required|string|max:255',
-            'commanditaire_event' => 'nullable|string',
-            'nbpart' => 'nullable|integer',
-            'type_event' => 'required|string',
-            'type_public' => 'nullable|string',
-            'devis' => 'nullable|in:Oui,Non,A faire',
-            'numdevis' => 'nullable|string',
-            'facture' => 'nullable|in:Oui,Non,A faire',
-            'numfact' => 'nullable|string',
-            'reglement' => 'nullable|in:Oui,Non,A faire',
-            'type_reglement' => 'nullable|string',
-            'num_reglement' => 'nullable|string',
-            'desc_event' => 'nullable|string',
-            'date_heure_debut' => 'required|date_format:Y-m-d\TH:i',
-            'date_heure_fin'   => 'required|date_format:Y-m-d\TH:i|after_or_equal:date_heure_debut',
-            'objet' => 'nullable|in:Oui,Non,A faire',
-            'users' => 'nullable|array',
-            'salles' => 'nullable|array',
-            'materiels' => 'nullable|array',
-            'quantites' => 'nullable|array',
-            'objets' => 'nullable|array',
-            'etat' => 'nullable|array'
-        ]);
-
-        $data['auteur'] = Auth::user()?->name;
+        $data = $this->validateEvent($request);
 
         // État avant modification : sert à savoir qui est ajouté/retiré et ce qui a changé (mail).
         $before = app(SendEventEmailService::class)->snapshot($evenement);
 
         try {
-            DB::transaction(function () use ($request, $evenement, $data) {
+            DB::transaction(function () use ($evenement, $data) {
                 $evenement->update($data);
-
-                // Users
-                $evenement->users()->sync($request->input('users', []));
-
-                // Salles
-                $evenement->salles()->sync($request->input('salles', []));
-
-                // Matériels
-                $materielData = [];
-                $materiels = $request->input('materiels', []);
-                $quantites = $request->input('quantites', []);
-                foreach ($materiels as $i => $materielId) {
-                    if ($materielId) {
-                        $materielData[$materielId] = ['quantite' => $quantites[$i] ?? 1];
-                    }
-                }
-                $evenement->materiels()->sync($materielData);
-
-                // Objets
-                if ($request->input('objet') === 'Oui') {
-                    $evenement->update(['objet' => 'Oui']);
-                    $objetData = [];
-                    $objets = $request->input('objets', []);
-                    $etats = $request->input('etat', []);
-                    foreach ($objets as $i => $objetId) {
-                        if ($objetId) {
-                            $objetData[$objetId] = ['etat' => $etats[$i] ?? 'A faire'];
-                        }
-                    }
-                    $evenement->objets()->sync($objetData);
-                } else {
-                    $evenement->update(['objet' => 'Non']);
-                    $evenement->objets()->detach();
-                }
+                $this->syncRelations($evenement, $data);
             });
 
             app(SendEventEmailService::class)->send($evenement, SendEventEmailService::UPDATED, $before);
@@ -684,8 +675,10 @@ class EvenementController extends Controller
         $userReasons = [];
         $salleReasons = [];
 
-        // Autres événements chevauchant le créneau (occupation ferme)
+        // Autres événements chevauchant le créneau (occupation ferme). En modification,
+        // l'événement édité est exclu : il ne doit pas se déclarer "occupé" par lui-même.
         $evenements = Evenements::where('type_event', '!=', 'Annule')
+            ->when($request->integer('exclude'), fn ($q, $id) => $q->where('id', '!=', $id))
             ->where(function ($q) use ($debut, $fin) {
                 $q->where('date_heure_debut', '<', $fin)
                   ->where('date_heure_fin', '>', $debut);
@@ -934,6 +927,7 @@ class EvenementController extends Controller
             'num_reglement' => $evenement->num_reglement ?? '',
 
             'objet' => $evenement->objet ?? 'Non',
+            'prendre_photos' => (bool) $evenement->prendre_photos,
 
             'date_heure_debut' => optional($evenement->date_heure_debut)->format('Y-m-d\TH:i') ?? '',
             'date_heure_fin' => optional($evenement->date_heure_fin)->format('Y-m-d\TH:i') ?? '',
@@ -949,9 +943,10 @@ class EvenementController extends Controller
                 'quantite' => $m->pivot->quantite,
             ])->toArray(),
 
+            // Une copie est un nouvel événement : ses objets restent à préparer.
             'objets' => $evenement->objets->map(fn ($o) => [
                 'id' => $o->id,
-                'etat' => $o->pivot->etat,
+                'etat' => 'A faire',
             ])->toArray(),
         ];
 

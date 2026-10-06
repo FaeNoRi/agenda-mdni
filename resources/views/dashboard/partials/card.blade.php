@@ -1,8 +1,7 @@
 @php
     $clr = $event->type_color ?? 'secondary';
-    $participation = $event->participationFor(auth()->user());
     // "Annulé" en dark plein (pas -lt) pour bien le distinguer du gris du type "Événement".
-    $isCancelled = in_array($event->type_event, ['Annule', 'Annulé'], true);
+    $isCancelled = $event->isCancelled();
     $headerBg = $isCancelled ? 'bg-'.$clr : 'bg-'.$clr.'-lt';
     $headerText = $isCancelled ? 'text-white' : 'text-'.$clr;
 @endphp
@@ -62,15 +61,11 @@
     {{-- BODY --}}
     <div class="card-body flex-1 p-4">
         {{-- Ligne badges --}}
-        <div class="flex items-center mb-2 space-x-2">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
             <span class="badge {{ $headerBg }} {{ $headerText }}">
                 {{ $event->type_event }}
             </span>
-            @if($participation)
-            <span class="badge bg-success text-white" title="{{ $participation === 'team' ? 'Toute l\'équipe est concernée' : 'Vous êtes affecté(e) à cet événement' }}">
-                @include('dashboard.partials.icon-user-check') Vous participez
-            </span>
-            @endif
+            @include('dashboard.partials.event-flags', ['event' => $event, 'clr' => $clr])
             {{-- Badge Règlement à faire, aligné sur la même ligne --}}
             @if($event->reglement === 'A faire')
             <span class="badge bg-danger text-white">

@@ -234,7 +234,10 @@
 
             if (!debut || !fin) return;
 
-            fetch(`/evenements/disponibilites?debut=${encodeURIComponent(debut)}&fin=${encodeURIComponent(fin)}`)
+            const eventId = debutInput.closest('form')?.dataset.eventId;
+            const exclude = eventId ? `&exclude=${encodeURIComponent(eventId)}` : '';
+
+            fetch(`/evenements/disponibilites?debut=${encodeURIComponent(debut)}&fin=${encodeURIComponent(fin)}${exclude}`)
                 .then(res => res.json())
                 .then(data => appliquerDisponibilites(data))
                 .catch(err => console.error('checkDisponibilites', err));

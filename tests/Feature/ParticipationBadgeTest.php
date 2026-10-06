@@ -121,24 +121,25 @@ class ParticipationBadgeTest extends TestCase
         $this->assertStringContainsString('Deloison Clément', $this->cards($me));
     }
 
-    public function test_modal_shows_participation_banner_and_highlight(): void
+    public function test_modal_shows_participation_flag_and_highlight(): void
     {
         $me = User::factory()->create(['name' => 'Deloison Clément', 'is_equipe' => 1]);
         $event = $this->event([0, $me->id]);
 
         $html = $this->actingAs($me)->get("/evenements/{$event->id}/details")->assertOk()->getContent();
 
-        $this->assertStringContainsString('Vous participez à cet événement', $html);
+        $this->assertStringContainsString('data-tip="Vous participez"', $html);
+        $this->assertStringNotContainsString('Vous participez à cet événement', $html);
         $this->assertTrue($this->pillFor($html, 'Deloison Clément'));
         $this->assertFalse($this->pillFor($html, "Toute l'équipe"));
     }
 
-    public function test_modal_has_no_banner_for_cancelled_event(): void
+    public function test_modal_has_no_participation_flag_for_cancelled_event(): void
     {
         $me = User::factory()->create(['name' => 'Deloison Clément', 'is_equipe' => 1]);
         $event = $this->event([$me->id], ['type_event' => 'Annule']);
 
         $this->actingAs($me)->get("/evenements/{$event->id}/details")
-            ->assertOk()->assertDontSee('Vous participez à cet événement');
+            ->assertOk()->assertDontSee('Vous participez');
     }
 }

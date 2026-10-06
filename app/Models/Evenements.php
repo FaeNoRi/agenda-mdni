@@ -16,6 +16,7 @@ class Evenements extends Model
     protected $casts = [
         'date_heure_debut' => 'datetime',
         'date_heure_fin'   => 'datetime',
+        'prendre_photos'   => 'boolean',
     ];
 
     protected $fillable = [
@@ -33,10 +34,36 @@ class Evenements extends Model
         'type_reglement',
         'num_reglement',
         'objet',
+        'prendre_photos',
         'auteur',
         'date_heure_debut',
         'date_heure_fin',
     ];
+
+    public function isCancelled(): bool
+    {
+        return in_array($this->type_event, ['Annule', 'Annulé'], true);
+    }
+
+    /** Des photos doivent être prises (jamais pour un événement annulé). */
+    public function wantsPhotos(): bool
+    {
+        return !$this->isCancelled() && $this->prendre_photos;
+    }
+
+    /**
+     * État des objets à remettre : null (rien à signaler : annulé, "Non" ou liste vide),
+     * 'pending' (au moins un objet encore "A faire") ou 'done' (tous prêts).
+     * Nécessite la relation objets chargée.
+     */
+    public function objetsARemettre(): ?string
+    {
+        if ($this->isCancelled() || $this->objet !== 'Oui' || $this->objets->isEmpty()) {
+            return null;
+        }
+
+        return $this->objets->contains(fn ($o) => $o->pivot->etat !== 'Fait') ? 'pending' : 'done';
+    }
 
     /**
      * Présence d'un utilisateur sur cet événement :
@@ -47,7 +74,7 @@ class Evenements extends Model
      */
     public function participationFor(?User $user): ?string
     {
-        if (!$user || in_array($this->type_event, ['Annule', 'Annulé'], true)) {
+        if (!$user || $this->isCancelled()) {
             return null;
         }
 

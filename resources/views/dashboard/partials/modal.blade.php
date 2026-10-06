@@ -1,6 +1,5 @@
 @php
     $clr = $event->type_color ?? 'secondary';
-    $participation = $event->participationFor(auth()->user());
 @endphp
 
 {{-- --- HEADER --- --}}
@@ -12,32 +11,24 @@
 
 {{-- --- BODY dynamique --- --}}
 <div class="modal-body">
-    @if($participation)
-    <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-3" role="status">
-        @include('dashboard.partials.icon-user-check', ['size' => 22])
-        <span>
-            <strong>Vous participez à cet événement</strong>
-            @if($participation === 'team')
-            <span class="text-muted">— via « Toute l'équipe »</span>
-            @endif
-        </span>
-    </div>
-    @endif
+    {{-- Bandeau titre & type pleine largeur, pastilles (participation / photos / objets) à droite --}}
 
-    {{-- Bandeau titre & type pleine largeur --}}
+    <div class="w-full p-3 mb-4 rounded bg-{{ $clr }}-lt d-flex justify-content-between align-items-center gap-3">
+        <div style="min-width: 0;">
+            <span class="badge bg-{{ $clr }}-lt text-{{ $clr }} me-2 align-text-top">
+                ID:{{ $event->id }}
+            </span>
 
-    <div class="w-full p-3 mb-4 rounded bg-{{ $clr }}-lt">
-        <span class="badge bg-{{ $clr }}-lt text-{{ $clr }} me-2 align-text-top">
-            ID:{{ $event->id }}
-        </span>
+            <span class="badge bg-{{ $clr }} text-white me-2 align-text-top">
+                {{ $event->type_event }}
+            </span>
 
-        <span class="badge bg-{{ $clr }} text-white me-2 align-text-top">
-            {{ $event->type_event }}
-        </span>
+            <span class="h4 mb-0 text-{{ $clr }}">
+                {{ $event->nom_event }}
+            </span>
+        </div>
 
-        <span class="h4 mb-0 text-{{ $clr }}">
-            {{ $event->nom_event }}
-        </span>
+        @include('dashboard.partials.event-flags', ['event' => $event, 'clr' => $clr, 'size' => 30])
     </div>
 
     {{-- Réduire l’écart en mettant mb-2 ici au lieu mb-4 --}}
@@ -115,7 +106,7 @@
             <div>
                 <p class="mb-2"><strong>Matériel{{ $event->materiels->count()>1?'s':'' }} spécifique</strong></p>
                 <div class="d-flex flex-wrap gap-2">
-                    @if($event->objets->isNotEmpty())
+                    @if($event->materiels->isNotEmpty())
                     @foreach($event->materiels as $m)
                     <span class="badge bg-{{ $clr }}-lt text-{{ $clr }}">
                         {{ $m->nom_mat }} × {{ $m->pivot->quantite }}
@@ -132,7 +123,10 @@
 
         <div class="col-md-6">
             <div>
-                <p class="mb-2"><strong>Objet{{ $event->objets->count()>1?'s':'' }} à remettre</strong></p>
+                <p class="mb-2 d-flex align-items-center gap-2">
+                    @include('dashboard.partials.event-flags', ['event' => $event, 'clr' => $clr, 'size' => 22, 'only' => ['objets']])
+                    <strong>Objet{{ $event->objets->count()>1?'s':'' }} à remettre</strong>
+                </p>
                 <div class="d-flex flex-wrap gap-2">
                     @if($event->objets->isNotEmpty())
                     @foreach($event->objets as $o)
