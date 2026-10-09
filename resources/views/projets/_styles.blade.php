@@ -31,7 +31,9 @@
     .pt-carte { display: flex; flex-direction: column; gap: 16px; padding: 18px 18px 14px; border: 1px solid #e6e7e9; border-top: 4px solid var(--pc); border-radius: 14px; background: #fff; color: inherit; text-decoration: none; transition: box-shadow .15s, transform .15s; }
     .pt-carte:hover { box-shadow: 0 6px 18px rgba(24, 36, 51, .1); transform: translateY(-1px); color: inherit; }
     .pt-carte--clos { opacity: .8; }
-    .pt-carte__pied { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid #f1f3f5; margin-top: auto; }
+    .pt-carte__pied { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid #f1f3f5; margin-top: auto; }
+    .pt-carte__ligne { display: flex; align-items: center; min-height: 28px; }
+    .pt-carte__ligne--ecarte { justify-content: space-between; gap: 8px; }
     .pt-picto { display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 10px; }
     .pt-carte__titre { font-size: 15px; font-weight: 700; line-height: 1.25; }
     .pt-carte__desc { margin-top: 3px; font-size: 12px; line-height: 1.4; color: #667382; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

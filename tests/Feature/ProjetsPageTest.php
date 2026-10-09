@@ -247,4 +247,14 @@ class ProjetsPageTest extends TestCase
                 ->assertSee('overflow-y: auto', false);
         }
     }
+
+    public function test_le_pied_de_carte_a_deux_lignes_fixes(): void
+    {
+        // Ligne 1 : les personnes seules ; ligne 2 : échéance à gauche, état à droite.
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->projet(['nom' => 'Pied de carte', 'etat' => 'en_cours', 'date_limite' => '2026-10-23']);
+
+        $this->actingAs($admin)->get('/projets')
+            ->assertSeeInOrder(['pt-carte__pied', 'pt-avatars', 'pt-carte__ligne--ecarte', 'pt-echeance', 'pt-badge'], false);
+    }
 }

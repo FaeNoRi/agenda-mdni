@@ -42,11 +42,16 @@
         </div>
     </div>
 
+    {{-- Deux lignes fixes : les personnes seules sur la première, échéance à gauche et état à droite sur la seconde --}}
     <div class="pt-carte__pied">
-        <x-avatars :users="$personnes" :size="28" />
-        <span title="État du projet" class="pt-badge" style="background: {{ $projet->etat->couleur() }}1f; color: {{ $projet->etat->couleur() }};">
-            <x-icone :name="$projet->etat->icone()" :size="13" /> {{ $projet->etat->label() }}
-        </span>
-        <x-echeance :item="$projet" :jours="true" />
+        <div class="pt-carte__ligne">
+            <x-avatars :users="$personnes" :size="28" :max="7" />
+        </div>
+        <div class="pt-carte__ligne pt-carte__ligne--ecarte">
+            <x-echeance :item="$projet" :jours="true" />
+            <span title="État du projet" class="pt-badge" style="background: {{ $projet->etat->couleur() }}1f; color: {{ $projet->etat->couleur() }};">
+                <x-icone :name="$projet->etat->icone()" :size="13" /> {{ $projet->etat->label() }}
+            </span>
+        </div>
     </div>
 </a>
