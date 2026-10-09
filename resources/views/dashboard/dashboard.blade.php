@@ -33,19 +33,6 @@
         color: var(--pc);
     }
 
-    .fpill .fpill-ini {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background: color-mix(in srgb, var(--pc) 16%, white);
-        color: var(--pc);
-        font-size: 10px;
-        font-weight: 800;
-    }
-
     .fsec {
         display: flex;
         align-items: center;
@@ -415,7 +402,22 @@
                 </div>
             </details>
 
-            {{-- 3) Filtre Salle --}}
+            {{-- 3) Filtre Personne --}}
+            <details class="fgroup mb-4" open>
+                <summary class="fsec">Personne <span class="fcount d-none" data-count-for="filter-user"></span></summary>
+                <select id="filter-user" class="d-none" name="user[]" multiple>
+                    @foreach($animateursDisponibles as $user)
+                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach($animateursDisponibles as $user)
+                    <button type="button" class="fpill" data-target="filter-user" data-value="{{ $user->id }}" aria-pressed="false">{{ $user->name }}</button>
+                    @endforeach
+                </div>
+            </details>
+
+            {{-- 4) Filtre Salle --}}
             <details class="fgroup mb-4">
                 <summary class="fsec">Salle <span class="fcount d-none" data-count-for="filter-salle"></span></summary>
                 <select id="filter-salle" class="d-none" name="salle[]" multiple>
@@ -426,23 +428,6 @@
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($sallesDisponibles as $salle)
                     <button type="button" class="fpill" data-target="filter-salle" data-value="{{ $salle->id }}" aria-pressed="false">{{ $salle->nom_salle }}</button>
-                    @endforeach
-                </div>
-            </details>
-
-            {{-- 4) Filtre Personne --}}
-            <details class="fgroup mb-4" open>
-                <summary class="fsec">Personne <span class="fcount d-none" data-count-for="filter-user"></span></summary>
-                <select id="filter-user" class="d-none" name="user[]" multiple>
-                    @foreach($animateursDisponibles as $user)
-                    <option value="{{ $user->id }}">{{ $user->name }}</option>
-                    @endforeach
-                </select>
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach($animateursDisponibles as $user)
-                    <button type="button" class="fpill" data-target="filter-user" data-value="{{ $user->id }}" aria-pressed="false">
-                        <span class="fpill-ini">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}{{ mb_strtoupper(mb_substr(trim(strstr($user->name, ' ') ?: ''), 0, 1)) }}</span>{{ $user->name }}
-                    </button>
                     @endforeach
                 </div>
             </details>

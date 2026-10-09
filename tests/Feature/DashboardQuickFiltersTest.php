@@ -152,4 +152,27 @@ class DashboardQuickFiltersTest extends TestCase
             ->assertSee('data-flag="objets"', false)
             ->assertSee('data-flag="photos"', false);
     }
+
+    public function test_le_filtre_personne_exclut_l_equipe_et_non(): void
+    {
+        User::unguarded(fn () => User::create([
+            'id' => 0, 'name' => "Toute l'équipe", 'email' => 'team@x.test', 'password' => 'x',
+            'is_admin' => 0, 'is_equipe' => 0, 'id_horaire' => 0,
+        ]));
+        User::factory()->create(['name' => 'Non']);
+        User::factory()->create(['name' => 'Marie Dupont']);
+
+        $html = $this->actingAs(User::factory()->create(['name' => 'Admin']))->get('/dashboard')->getContent();
+        preg_match('/id="filter-user".*?<\/select>/s', $html, $m);
+
+        $this->assertStringContainsString('Marie Dupont', $m[0]);
+        $this->assertStringNotContainsString("Toute l'équipe", $m[0]);
+        $this->assertStringNotContainsString('>Non<', $m[0]);
+    }
+
+    public function test_l_ordre_des_sections_du_tiroir(): void
+    {
+        $this->actingAs(User::factory()->create())->get('/dashboard')
+            ->assertSeeInOrder(['Filtres rapides', 'data-count-for="filter-type"', 'data-count-for="filter-user"', 'data-count-for="filter-salle"'], false);
+    }
 }
