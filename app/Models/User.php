@@ -62,6 +62,18 @@ class User extends Authenticatable
         return $this->belongsTo(Horaire::class, 'id_horaire');
     }
 
+    /** Tâches dont la personne est responsable. */
+    public function tachesResponsable()
+    {
+        return $this->belongsToMany(Tache::class, 'tache_user');
+    }
+
+    /** Projets auxquels la personne participe (référent ou impliquée). */
+    public function projets()
+    {
+        return $this->belongsToMany(Projet::class, 'projet_user')->withPivot('role');
+    }
+
     public function evenements()
     {
         return $this->belongsToMany(Evenements::class, 'evenement_users', 'user_id', 'evenement_id');
