@@ -19,6 +19,11 @@
     .pt-anneau__sur { color: #9aa0ac; font-weight: 600; }
     .pt-anneau__lib { font-size: 10px; color: #667382; }
 
+    /* Bouton d'action léger (fond teinté, comme les badges d'événements) */
+    .pt-btn-doux { border: 0; background: color-mix(in srgb, var(--tblr-primary) 14%, white); color: var(--tblr-primary); font-weight: 700; }
+    .pt-btn-doux:hover, .pt-btn-doux:focus-visible { background: color-mix(in srgb, var(--tblr-primary) 24%, white); color: var(--tblr-primary); }
+    .pt-btn-doux:disabled { opacity: .6; }
+
     .pt-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
 
     .pt-kpis { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }

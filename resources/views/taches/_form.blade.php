@@ -68,7 +68,7 @@
                     <div class="col-auto"><button type="button" class="btn btn-outline-danger btn-icon" @click="liens.splice(i, 1)" aria-label="Retirer ce lien">×</button></div>
                 </div>
             </template>
-            <button type="button" class="btn btn-sm btn-outline-primary" @click="liens.push({ libelle: '', url: '' })">+ Ajouter un lien</button>
+            <button type="button" class="btn btn-sm pt-btn-doux" @click="liens.push({ libelle: '', url: '' })">+ Ajouter un lien</button>
         </div>
     </div>
 

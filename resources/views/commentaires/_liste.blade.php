@@ -23,7 +23,7 @@
                         @csrf @method('PUT')
                         <div class="alert alert-danger d-none py-1 px-2 mb-1" data-erreurs role="alert"></div>
                         <textarea name="contenu" class="form-control form-control-sm mb-1" rows="2" maxlength="2000">{{ $c->contenu }}</textarea>
-                        <button type="submit" class="btn btn-sm btn-primary">Enregistrer</button>
+                        <button type="submit" class="btn btn-sm pt-btn-doux">Enregistrer</button>
                         <button type="button" class="btn btn-sm btn-link link-secondary" data-commentaire-annuler>Annuler</button>
                     </form>
                 @endcan
@@ -54,7 +54,7 @@
             @csrf
             <div class="alert alert-danger d-none py-1 px-2 mb-1" data-erreurs role="alert"></div>
             <textarea name="contenu" class="form-control mb-1" rows="2" maxlength="2000" placeholder="Ajouter un commentaire…"></textarea>
-            <button type="submit" class="btn btn-sm btn-primary">Commenter</button>
+            <button type="submit" class="btn btn-sm pt-btn-doux">Commenter</button>
         </form>
     @endcan
 </div>

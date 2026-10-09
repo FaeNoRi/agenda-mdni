@@ -124,7 +124,7 @@
                     <div class="d-none mb-2" data-raison-bloc>
                         <textarea name="raison" class="form-control" rows="2" maxlength="1000" placeholder="Pourquoi ? (obligatoire)"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-sm btn-primary d-none" data-enregistrer-etat>Enregistrer l'état</button>
+                    <button type="submit" class="btn btn-sm pt-btn-doux d-none" data-enregistrer-etat>Enregistrer l'état</button>
                     <div class="form-hint mt-1">« Terminé » n'est possible que lorsque toutes les tâches sont terminées ou annulées.</div>
                 </form>
             </div>
@@ -133,7 +133,7 @@
         <div class="d-flex align-items-center justify-content-between mb-2">
             <span style="font-weight: 700; font-size: 15px;">Tâches</span>
             @can('create', \App\Models\Tache::class)
-                <button type="button" class="btn btn-sm btn-primary" data-tache-nouvelle data-projet="{{ $projet->id }}">+ Ajouter une tâche</button>
+                <button type="button" class="btn btn-sm pt-btn-doux" data-tache-nouvelle data-projet="{{ $projet->id }}">+ Ajouter une tâche</button>
             @endcan
         </div>
         @if($taches->isEmpty())

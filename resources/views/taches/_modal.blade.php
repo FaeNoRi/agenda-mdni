@@ -107,7 +107,7 @@
                 <div class="d-none mb-2" data-raison-bloc>
                     <textarea name="raison" class="form-control" rows="2" maxlength="1000" placeholder="Pourquoi ? (obligatoire)"></textarea>
                 </div>
-                <button type="submit" class="btn btn-sm btn-primary d-none" data-enregistrer-statut>Enregistrer le statut</button>
+                <button type="submit" class="btn btn-sm pt-btn-doux d-none" data-enregistrer-statut>Enregistrer le statut</button>
             </form>
         </div>
     @endcan
