@@ -99,7 +99,7 @@
 
         document.addEventListener('submit', async (e) => {
             const form = e.target.closest('[data-ajax-form]');
-            if (!form) return;
+            if (!form || form.dataset.hote === 'projet') return;
             e.preventDefault();
 
             const bloc = form.querySelector('[data-erreurs]');

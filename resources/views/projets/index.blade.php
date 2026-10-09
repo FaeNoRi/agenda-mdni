@@ -4,7 +4,12 @@
     <x-slot name="header">
         <div class="flex flex-wrap justify-between items-center gap-2 w-full">
             <h2 class="page-title text-xl font-semibold">{{ __('Projets & tâches') }}</h2>
-            @include('projets._onglets', ['actif' => 'projets'])
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                @can('create', \App\Models\Projet::class)
+                    <button type="button" class="btn btn-primary" data-projet-nouveau>Nouveau projet</button>
+                @endcan
+                @include('projets._onglets', ['actif' => 'projets'])
+            </div>
         </div>
     </x-slot>
 
@@ -59,6 +64,8 @@
             <div class="pt-vide d-none" id="ptAucun">Aucun projet ne correspond à ces filtres.</div>
         @endif
     </div>
+
+    @include('projets._modal-host')
 
     <script>
         (function () {

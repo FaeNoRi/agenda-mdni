@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Validation\ValidationException;
 
 class Projet extends Model
 {
@@ -82,6 +83,81 @@ class Projet extends Model
     public function tachesOuvertes(): int
     {
         return $this->tachesCollection()->filter(fn (Tache $t) => $t->statut->estOuvert())->count();
+    }
+
+    /** « 2 tâches ne sont pas terminées » / « 1 tâche n'est pas terminée ». */
+    public function phraseTachesOuvertes(): string
+    {
+        $n = $this->tachesOuvertes();
+
+        return $n.' '.($n > 1 ? 'tâches ne sont pas terminées' : "tâche n'est pas terminée");
+    }
+
+    /**
+     * Change l'état du projet (saisi à la main par le référent) en appliquant la règle :
+     *  - « Bloqué » et « En attente » exigent une raison ;
+     *  - « Terminé » est refusé tant qu'il reste des tâches ouvertes.
+     * Les autres incohérences ne bloquent pas : voir avertissements().
+     * Retourne false si l'état est déjà celui demandé.
+     */
+    public function changerEtat(ProjetEtat $nouveau, ?string $raison = null): bool
+    {
+        $raison = $raison !== null ? trim($raison) : null;
+
+        if ($nouveau->exigeRaison() && ($raison === null || $raison === '')) {
+            throw ValidationException::withMessages([
+                'raison' => "Précisez la raison pour l'état « ".$nouveau->label().' ».',
+            ]);
+        }
+
+        if ($nouveau === ProjetEtat::Termine && $this->tachesOuvertes() > 0) {
+            throw ValidationException::withMessages([
+                'etat' => $this->phraseTachesOuvertes().' : terminez-les ou annulez-les avant de clore le projet.',
+            ]);
+        }
+
+        if ($this->etat === $nouveau) {
+            return false;
+        }
+
+        $this->forceFill(['etat' => $nouveau, 'raison' => $nouveau->exigeRaison() ? $raison : null])->save();
+
+        return true;
+    }
+
+    /**
+     * Incohérences entre l'état saisi et l'avancement des tâches (information, jamais bloquant).
+     *
+     * @return list<string>
+     */
+    public function avertissements(): array
+    {
+        $ouvertes = $this->tachesOuvertes();
+        $actives = $this->resume()['actives'];
+        $avertissements = [];
+
+        switch ($this->etat) {
+            case ProjetEtat::AValider:
+                if ($ouvertes > 0) {
+                    $avertissements[] = $this->phraseTachesOuvertes().' alors que le projet est à valider.';
+                }
+                break;
+            case ProjetEtat::EnCours:
+            case ProjetEtat::EnAttente:
+            case ProjetEtat::Bloque:
+                if ($actives > 0 && $ouvertes === 0) {
+                    $avertissements[] = 'Toutes les tâches sont terminées : le projet peut passer à « À valider ».';
+                }
+                break;
+            case ProjetEtat::Termine:
+            case ProjetEtat::Annule:
+                if ($ouvertes > 0) {
+                    $avertissements[] = $this->phraseTachesOuvertes().' dans un projet '.mb_strtolower($this->etat->label()).'.';
+                }
+                break;
+        }
+
+        return $avertissements;
     }
 
     /**

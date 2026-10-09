@@ -14,9 +14,41 @@
     </x-slot>
 
     <div class="container mx-auto py-4 px-4">
-        <a href="{{ route('projets.index') }}" class="d-inline-flex align-items-center gap-1 mb-3" style="font-size: 12.5px; font-weight: 600;">
-            <x-icone name="arrow-left" :size="14" /> Tous les projets
-        </a>
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <a href="{{ route('projets.index') }}" class="d-inline-flex align-items-center gap-1" style="font-size: 12.5px; font-weight: 600;">
+                <x-icone name="arrow-left" :size="14" /> Tous les projets
+            </a>
+            <div class="d-flex gap-2">
+                @can('update', $projet)
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-modifier-projet="{{ $projet->id }}">Modifier</button>
+                @endcan
+                @can('delete', $projet)
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-supprimer-projet-demande>Supprimer</button>
+                @endcan
+            </div>
+        </div>
+
+        @can('delete', $projet)
+            <div class="alert alert-danger d-none" data-suppr-projet-confirm role="alert">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span style="flex: 1;">
+                        Supprimer définitivement ce projet
+                        @if($projet->taches->isNotEmpty())
+                            et ses <strong>{{ $projet->taches->count() }} tâche{{ $projet->taches->count() > 1 ? 's' : '' }}</strong>
+                        @endif
+                        (historique et commentaires compris) ?
+                    </span>
+                    <button type="button" class="btn btn-sm btn-danger" data-supprimer-projet="{{ $projet->id }}">Oui, supprimer</button>
+                    <button type="button" class="btn btn-sm btn-link link-secondary" data-suppr-projet-annuler>Annuler</button>
+                </div>
+            </div>
+        @endcan
+
+        @foreach($avertissements as $avertissement)
+            <div class="alert alert-warning d-flex align-items-center gap-2 py-2" role="alert">
+                <x-icone name="alert-triangle" :size="18" /> <span>{{ $avertissement }}</span>
+            </div>
+        @endforeach
 
         <div class="pt-fiche">
             <div class="pt-fiche__entete" style="background: {{ $couleur }}1f;">
@@ -74,6 +106,30 @@
             </div>
         </div>
 
+        @can('update', $projet)
+            <div class="pt-panneau mb-3">
+                <h3>Changer l'état du projet</h3>
+                <form action="{{ route('projets.etat', $projet) }}" method="POST" data-ajax-form data-hote="projet" data-apres="recharger" novalidate>
+                    @csrf
+                    <input type="hidden" name="etat" value="{{ $etat->value }}" data-etat-valeur data-courant="{{ $etat->value }}">
+                    <div class="alert alert-danger d-none" data-erreurs role="alert"></div>
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        @foreach($etats as $e)
+                            <button type="button" class="pt-pastille {{ $e === $etat ? 'on' : '' }}" data-choix-etat="{{ $e->value }}"
+                                    data-exige="{{ $e->exigeRaison() ? 1 : 0 }}" style="--pc: {{ $e->couleur() }};">
+                                <x-statut-carre :statut="$e" :size="22" />{{ $e->label() }}
+                            </button>
+                        @endforeach
+                    </div>
+                    <div class="d-none mb-2" data-raison-bloc>
+                        <textarea name="raison" class="form-control" rows="2" maxlength="1000" placeholder="Pourquoi ? (obligatoire)"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary d-none" data-enregistrer-etat>Enregistrer l'état</button>
+                    <div class="form-hint mt-1">« Terminé » n'est possible que lorsque toutes les tâches sont terminées ou annulées.</div>
+                </form>
+            </div>
+        @endcan
+
         <div class="d-flex align-items-center justify-content-between mb-2">
             <span style="font-weight: 700; font-size: 15px;">Tâches</span>
             @can('create', \App\Models\Tache::class)
@@ -124,4 +180,5 @@
     </div>
 
     @include('taches._modal-host')
+    @include('projets._modal-host')
 </x-app-layout>

@@ -121,7 +121,14 @@ Route::middleware(['auth'])->group(function () {
 // Projets & tâches : réservé aux administrateurs tant que le module n'est pas ouvert (config/features.php)
 Route::middleware(['auth', 'projets.acces'])->group(function () {
     Route::get('/projets', [ProjetController::class, 'index'])->name('projets.index');
+    // /projets/create doit rester avant /projets/{projet}
+    Route::get('/projets/create', [ProjetController::class, 'create'])->name('projets.create');
+    Route::post('/projets', [ProjetController::class, 'store'])->name('projets.store');
     Route::get('/projets/{projet}', [ProjetController::class, 'show'])->name('projets.show');
+    Route::get('/projets/{projet}/edit', [ProjetController::class, 'edit'])->name('projets.edit');
+    Route::put('/projets/{projet}', [ProjetController::class, 'update'])->name('projets.update');
+    Route::delete('/projets/{projet}', [ProjetController::class, 'destroy'])->name('projets.destroy');
+    Route::post('/projets/{projet}/etat', [ProjetController::class, 'etat'])->name('projets.etat');
     Route::get('/taches', [TacheController::class, 'index'])->name('taches.index');
     // /taches/create doit rester avant /taches/{tache}
     Route::get('/taches/create', [TacheController::class, 'create'])->name('taches.create');
