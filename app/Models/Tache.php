@@ -99,6 +99,17 @@ class Tache extends Model
         return $referents->isNotEmpty() ? $referents : new Collection(array_filter([$this->createur]));
     }
 
+    public function estReferent(User $user): bool
+    {
+        return $this->referents()->contains('id', $user->id);
+    }
+
+    /** Responsable de la tâche ou référent : la personne est « impliquée » dans la tâche. */
+    public function estImplique(User $user): bool
+    {
+        return $this->personnesImpliquees()->contains('id', $user->id);
+    }
+
     /** Toutes les personnes concernées : responsables + référents (sans doublon). */
     public function personnesImpliquees(): Collection
     {

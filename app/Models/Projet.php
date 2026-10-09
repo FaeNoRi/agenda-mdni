@@ -66,6 +66,18 @@ class Projet extends Model
         return $this->morphMany(Lien::class, 'lienable');
     }
 
+    public function estReferent(User $user): bool
+    {
+        return $this->referents()->where('users.id', $user->id)->exists();
+    }
+
+    /** Membre du projet (référent ou impliqué), ou responsable d'une de ses tâches. */
+    public function estImplique(User $user): bool
+    {
+        return $this->membres()->where('users.id', $user->id)->exists()
+            || $this->taches()->whereHas('responsables', fn ($q) => $q->where('users.id', $user->id))->exists();
+    }
+
     /** Tâches pas encore terminées ni annulées (sert à l'avertissement avant de clore un projet). */
     public function tachesOuvertes(): int
     {

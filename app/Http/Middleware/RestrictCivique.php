@@ -21,6 +21,12 @@ class RestrictCivique
         'password.update',
         'user.theme.color',
         'export',
+        // Projets & tâches : le Service civique peut changer le statut d'une tâche et commenter.
+        // La règle fine (« uniquement là où il est impliqué ») est portée par les politiques
+        // TachePolicy / ProjetPolicy, que les contrôleurs doivent interroger.
+        'taches.statut',
+        'taches.commentaires.store',
+        'projets.commentaires.store',
     ];
 
     public function handle(Request $request, Closure $next): Response
