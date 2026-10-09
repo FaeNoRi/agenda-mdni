@@ -1,0 +1,157 @@
+{{--
+    Contenu de la fenêtre « Détail tâche » (même structure que « Détail événement »).
+    Variables : $tache (projet, responsables, createur, liens, historiques.user, commentaires.user chargés),
+                $referents (collection d'utilisateurs).
+    Lecture seule pour l'instant : le changement de statut et les commentaires arrivent aux étapes suivantes.
+--}}
+@php
+    $s = $tache->statut;
+    $projet = $tache->projet;
+    $couleur = $projet?->couleur ?: '#667382';
+    $retard = $tache->joursDeRetard();
+    $moiResponsable = $tache->responsables->contains('id', auth()->id());
+    $impliques = $tache->personnesImpliquees();
+@endphp
+
+<div class="modal-header">
+    <h5 class="modal-title">Détail tâche</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+</div>
+
+<div class="modal-body">
+    {{-- Bandeau : identifiant, statut, titre ; pastilles à droite --}}
+    <div class="w-full p-3 mb-4 rounded d-flex justify-content-between align-items-center gap-3" style="background: {{ $couleur }}1f;">
+        <div style="min-width: 0;">
+            <span class="pt-badge me-1 align-text-top" style="background: {{ $couleur }}1f; color: {{ $couleur }};">ID:{{ $tache->id }}</span>
+            <span class="pt-badge me-1 align-text-top" style="background: {{ $s->couleur() }}; color: #fff;">
+                <x-icone :name="$s->icone()" :size="13" /> {{ $s->label() }}
+            </span>
+            <span class="h4 mb-0" style="color: {{ $couleur }};">{{ $tache->titre }}</span>
+        </div>
+        <span style="display: inline-flex; gap: 6px;">
+            @if($moiResponsable)
+                <span class="pt-carre" data-tip="Vous êtes responsable" style="width: 30px; height: 30px; background: {{ $couleur }};"><x-icone name="user-check" :size="18" /></span>
+            @endif
+            @if($retard)
+                <span class="pt-carre" data-tip="En retard de {{ $retard }} j" style="width: 30px; height: 30px; background: #d63939;"><x-icone name="alert-triangle" :size="18" /></span>
+            @endif
+            @if($tache->liens->isNotEmpty())
+                <span class="pt-carre" data-tip="Liens et documents" style="width: 30px; height: 30px; background: {{ $couleur }};"><x-icone name="paperclip" :size="18" /></span>
+            @endif
+        </span>
+    </div>
+
+    <div class="row gx-4 mb-4">
+        <div class="col-md-6">
+            <p class="mb-1"><strong>Projet</strong></p>
+            <p class="mb-0">
+                @if($projet)
+                    <a href="{{ route('projets.show', $projet) }}" class="d-inline-flex align-items-center gap-1" style="color: {{ $couleur }}; font-weight: 600;">
+                        <x-icone :name="$projet->icone ?: 'folder'" :size="15" /> {{ $projet->nom }}
+                    </a>
+                @else
+                    Sans projet
+                @endif
+            </p>
+        </div>
+        <div class="col-md-6">
+            <p class="mb-1"><strong>Responsable{{ $tache->responsables->count() > 1 ? 's' : '' }}</strong></p>
+            <p class="mb-0">{{ $tache->responsables->pluck('name')->join(', ') ?: 'Aucun' }}</p>
+        </div>
+    </div>
+
+    <div class="row gx-4 mb-4">
+        <div class="col-md-6">
+            <p class="mb-1"><strong>Date limite</strong></p>
+            <p class="mb-0">
+                {{ \Illuminate\Support\Str::title($tache->date_limite->translatedFormat('l d F Y')) }}
+                <x-echeance :item="$tache" />
+            </p>
+        </div>
+        <div class="col-md-6">
+            <p class="mb-1"><strong>Créée par</strong></p>
+            <p class="mb-0">{{ $tache->createur?->name ?? 'Ancien utilisateur' }}, le {{ $tache->created_at->format('d/m/Y') }}</p>
+        </div>
+    </div>
+
+    @if($tache->raison && $s->exigeRaison())
+        <div class="mb-4 p-2 rounded" style="background: {{ $s->couleur() }}1f; color: {{ $s->couleur() }}; font-size: 13px;">
+            <x-icone name="message-2" :size="14" /> <strong>{{ $s->label() }} :</strong> {{ $tache->raison }}
+        </div>
+    @endif
+
+    @if($tache->details)
+        <div class="mb-4">
+            <p class="mb-1"><strong>Détails</strong></p>
+            <p class="text-muted mb-0" style="white-space: pre-line;">{{ $tache->details }}</p>
+        </div>
+    @endif
+
+    {{-- Toutes les personnes concernées : responsables et référents --}}
+    <div class="mb-4">
+        <p class="mb-2"><strong>Personnes impliquées</strong></p>
+        <div class="d-flex flex-wrap gap-2">
+            @forelse($impliques as $u)
+                @php
+                    $roles = array_filter([
+                        $tache->responsables->contains('id', $u->id) ? 'Responsable' : null,
+                        $referents->contains('id', $u->id) ? 'Référent' : null,
+                    ]);
+                @endphp
+                <span class="d-inline-flex align-items-center gap-2 pe-2" style="border: 1px solid #e6e7e9; border-radius: 999px; font-size: 12.5px;">
+                    <x-avatars :users="[$u]" :size="26" />
+                    <span><strong>{{ $u->name }}</strong> <span style="color: #667382;">· {{ implode(' et ', $roles) }}</span></span>
+                </span>
+            @empty
+                <span style="color: #9aa0ac; font-size: 12.5px;">Personne</span>
+            @endforelse
+        </div>
+    </div>
+
+    @if($tache->liens->isNotEmpty())
+        <div class="mb-4">
+            <p class="mb-1"><strong>Liens et documents utiles</strong></p>
+            @foreach($tache->liens as $lien)
+                <div style="font-size: 12.5px;"><a href="{{ $lien->url }}" target="_blank" rel="noopener noreferrer">{{ $lien->libelle ?: $lien->url }}</a></div>
+            @endforeach
+        </div>
+    @endif
+
+    {{-- Historique des statuts --}}
+    <div class="mb-4">
+        <p class="mb-2"><strong>Historique</strong></p>
+        @foreach($tache->historiques as $h)
+            <div class="d-flex align-items-start gap-2 mb-2" style="font-size: 12.5px;">
+                <x-statut-carre :statut="$h->statut" :size="20" />
+                <div>
+                    <strong>{{ $h->statut->label() }}</strong>
+                    <span style="color: #667382;">· {{ $h->user?->name ?? 'Ancien utilisateur' }}, le {{ $h->created_at->format('d/m/Y') }}</span>
+                    @if($h->raison)<div style="color: #667382;">{{ $h->raison }}</div>@endif
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- Commentaires (lecture seule pour l'instant) --}}
+    <div class="mb-2">
+        <p class="mb-2"><strong>Commentaires</strong></p>
+        @forelse($tache->commentaires as $c)
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                @if($c->user)<x-avatars :users="[$c->user]" :size="26" />@endif
+                <div style="flex: 1; padding: 6px 9px; border-radius: 0 10px 10px 10px; background: #f6f8fb; font-size: 12px;">
+                    <b>{{ $c->user?->name ?? 'Ancien utilisateur' }}</b> <span style="color: #9aa0ac;">{{ $c->created_at->format('d/m/Y') }}</span><br>
+                    {{ $c->contenu }}
+                </div>
+            </div>
+        @empty
+            <div style="font-size: 12px; color: #9aa0ac;">Aucun commentaire.</div>
+        @endforelse
+    </div>
+</div>
+
+<div class="modal-footer">
+    <p class="text-muted small" style="margin: auto; padding-left: 85px;">
+        Dernière modification le <b>{{ $tache->updated_at->translatedFormat('d F Y') }}</b>
+    </p>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+</div>

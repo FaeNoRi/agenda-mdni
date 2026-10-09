@@ -15,6 +15,7 @@ use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SyncController;
 use App\Http\Controllers\ReglementSignatureController;
 use App\Http\Controllers\ProjetController;
+use App\Http\Controllers\TacheController;
 
 // tableau de bord initial (vue Blade + Offcanvas)
 Route::get('/dashboard', [EvenementController::class, 'dashboard'])
@@ -121,6 +122,8 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'projets.acces'])->group(function () {
     Route::get('/projets', [ProjetController::class, 'index'])->name('projets.index');
     Route::get('/projets/{projet}', [ProjetController::class, 'show'])->name('projets.show');
+    Route::get('/taches', [TacheController::class, 'index'])->name('taches.index');
+    Route::get('/taches/{tache}', [TacheController::class, 'show'])->name('taches.show');
 });
 
 Route::get('/', function () {

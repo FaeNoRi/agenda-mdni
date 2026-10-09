@@ -9,6 +9,7 @@
     <x-slot name="header">
         <div class="flex flex-wrap justify-between items-center gap-2 w-full">
             <h2 class="page-title text-xl font-semibold">{{ __('Projets & tâches') }}</h2>
+            @include('projets._onglets', ['actif' => 'projets'])
         </div>
     </x-slot>
 
@@ -116,4 +117,6 @@
             </div>
         </div>
     </div>
+
+    @include('taches._modal-host')
 </x-app-layout>

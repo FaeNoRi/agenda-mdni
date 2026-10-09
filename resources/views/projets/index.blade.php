@@ -4,6 +4,7 @@
     <x-slot name="header">
         <div class="flex flex-wrap justify-between items-center gap-2 w-full">
             <h2 class="page-title text-xl font-semibold">{{ __('Projets & tâches') }}</h2>
+            @include('projets._onglets', ['actif' => 'projets'])
         </div>
     </x-slot>
 
@@ -42,15 +43,6 @@
                 </button>
             @endforeach
             <a href="#" id="ptEffacer" class="d-none" style="margin-left: 6px; font-size: 11.5px; font-weight: 600;">Effacer les filtres</a>
-        </div>
-
-        {{-- Légende --}}
-        <div class="pt-legende">
-            <span class="pt-legende__t">Légende</span>
-            @foreach($statutsCarte as $statut)
-                <span><x-statut-carre :statut="$statut" :size="18" />{{ $statut->label() }}</span>
-            @endforeach
-            <span style="color: #667382;"><x-icone name="circle-dashed" :size="16" /> Terminées : dans l'anneau</span>
         </div>
 
         @if($projets->isEmpty())
