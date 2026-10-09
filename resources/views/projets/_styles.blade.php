@@ -19,10 +19,12 @@
     .pt-anneau__sur { color: #9aa0ac; font-weight: 600; }
     .pt-anneau__lib { font-size: 10px; color: #667382; }
 
-    /* Bouton d'action léger (fond teinté, comme les badges d'événements) */
-    .pt-btn-doux { border: 0; background: color-mix(in srgb, var(--tblr-primary) 14%, white); color: var(--tblr-primary); font-weight: 700; }
-    .pt-btn-doux:hover, .pt-btn-doux:focus-visible { background: color-mix(in srgb, var(--tblr-primary) 24%, white); color: var(--tblr-primary); }
-    .pt-btn-doux:disabled { opacity: .6; }
+    /* Boutons du module : fond teinté, plein au survol (bleu du thème par défaut, rouge pour supprimer) */
+    .btn.pt-btn-doux { --bc: var(--tblr-primary); padding: .5rem 1.1rem; border: 1px solid transparent; border-radius: 8px; background: color-mix(in srgb, var(--bc) 13%, white); color: var(--bc); font-weight: 600; transition: background-color .15s, color .15s; }
+    .btn.pt-btn-doux:hover, .btn.pt-btn-doux:focus-visible { background: var(--bc); color: #fff; }
+    .btn.pt-btn-doux:disabled { opacity: .6; pointer-events: none; }
+    .btn.pt-btn-danger { --bc: #d63939; }
+    .btn.pt-btn-neutre { --bc: #667382; }
 
     .pt-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
 
@@ -53,6 +55,8 @@
     .pt-filtres__t { font-size: 11.5px; color: #9aa0ac; }
     .pt-pastille { --pc: var(--tblr-primary); display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 4px; border: 1px solid var(--tblr-border-color, #dee2e6); border-radius: 8px; background: #fff; color: #182433; font-size: 12px; font-weight: 600; cursor: pointer; }
     .pt-pastille--texte { padding: 5px 12px; border-radius: 999px; }
+    .pt-pastille:disabled { opacity: .4; filter: grayscale(1); cursor: not-allowed; }
+    .pt-pastille:disabled:hover { border-color: var(--tblr-border-color, #dee2e6); }
     .pt-pastille:hover { border-color: var(--pc); }
     .pt-pastille.on { border-color: var(--pc); background: color-mix(in srgb, var(--pc) 13%, white); box-shadow: inset 0 0 0 1px var(--pc); }
     .pt-pastille--texte.on { color: var(--pc); }

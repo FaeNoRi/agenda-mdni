@@ -20,10 +20,10 @@
             </a>
             <div class="d-flex gap-2">
                 @can('update', $projet)
-                    <button type="button" class="btn btn-sm btn-outline-primary" data-modifier-projet="{{ $projet->id }}">Modifier</button>
+                    <button type="button" class="btn pt-btn-doux" data-modifier-projet="{{ $projet->id }}">Modifier</button>
                 @endcan
                 @can('delete', $projet)
-                    <button type="button" class="btn btn-sm btn-outline-danger" data-supprimer-projet-demande>Supprimer</button>
+                    <button type="button" class="btn pt-btn-doux pt-btn-danger" data-supprimer-projet-demande>Supprimer</button>
                 @endcan
             </div>
         </div>
@@ -38,7 +38,7 @@
                         @endif
                         (historique et commentaires compris) ?
                     </span>
-                    <button type="button" class="btn btn-sm btn-danger" data-supprimer-projet="{{ $projet->id }}">Oui, supprimer</button>
+                    <button type="button" class="btn pt-btn-doux pt-btn-danger" data-supprimer-projet="{{ $projet->id }}">Oui, supprimer</button>
                     <button type="button" class="btn btn-sm btn-link link-secondary" data-suppr-projet-annuler>Annuler</button>
                 </div>
             </div>
@@ -115,7 +115,9 @@
                     <div class="alert alert-danger d-none" data-erreurs role="alert"></div>
                     <div class="d-flex flex-wrap gap-2 mb-2">
                         @foreach($etats as $e)
+                            @php $verrouille = $e === \App\Enums\ProjetEtat::Termine && $e !== $etat && $projet->tachesOuvertes() > 0; @endphp
                             <button type="button" class="pt-pastille {{ $e === $etat ? 'on' : '' }}" data-choix-etat="{{ $e->value }}"
+                                    @if($verrouille) disabled title="{{ $projet->phraseTachesOuvertes() }}" @endif
                                     data-exige="{{ $e->exigeRaison() ? 1 : 0 }}" style="--pc: {{ $e->couleur() }};">
                                 <x-statut-carre :statut="$e" :size="22" />{{ $e->label() }}
                             </button>
@@ -124,8 +126,14 @@
                     <div class="d-none mb-2" data-raison-bloc>
                         <textarea name="raison" class="form-control" rows="2" maxlength="1000" placeholder="Pourquoi ? (obligatoire)"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-sm pt-btn-doux d-none" data-enregistrer-etat>Enregistrer l'état</button>
-                    <div class="form-hint mt-1">« Terminé » n'est possible que lorsque toutes les tâches sont terminées ou annulées.</div>
+                    <button type="submit" class="btn pt-btn-doux d-none" data-enregistrer-etat>Enregistrer l'état</button>
+                    <div class="form-hint mt-1">
+                        @if($projet->etat !== \App\Enums\ProjetEtat::Termine && $projet->tachesOuvertes() > 0)
+                            « Terminé » est indisponible : {{ $projet->phraseTachesOuvertes() }}.
+                        @else
+                            « Terminé » n'est possible que lorsque toutes les tâches sont terminées ou annulées.
+                        @endif
+                    </div>
                 </form>
             </div>
         @endcan
@@ -133,7 +141,7 @@
         <div class="d-flex align-items-center justify-content-between mb-2">
             <span style="font-weight: 700; font-size: 15px;">Tâches</span>
             @can('create', \App\Models\Tache::class)
-                <button type="button" class="btn btn-sm pt-btn-doux" data-tache-nouvelle data-projet="{{ $projet->id }}">+ Ajouter une tâche</button>
+                <button type="button" class="btn pt-btn-doux" data-tache-nouvelle data-projet="{{ $projet->id }}">+ Ajouter une tâche</button>
             @endcan
         </div>
         @if($taches->isEmpty())

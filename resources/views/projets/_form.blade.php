@@ -94,6 +94,6 @@
 
     <div class="modal-footer">
         <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="submit" class="btn btn-primary ms-auto">{{ $edition ? 'Enregistrer' : 'Créer le projet' }}</button>
+        <button type="submit" class="btn pt-btn-doux ms-auto">{{ $edition ? 'Enregistrer' : 'Créer le projet' }}</button>
     </div>
 </form>

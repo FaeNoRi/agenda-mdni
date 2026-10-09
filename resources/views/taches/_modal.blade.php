@@ -22,7 +22,7 @@
         <div class="alert alert-danger d-none" data-suppr-confirm role="alert">
             <div class="d-flex align-items-center gap-2">
                 <span style="flex: 1;">Supprimer définitivement cette tâche, son historique et ses commentaires ?</span>
-                <button type="button" class="btn btn-sm btn-danger" data-supprimer="{{ $tache->id }}">Oui, supprimer</button>
+                <button type="button" class="btn pt-btn-doux pt-btn-danger" data-supprimer="{{ $tache->id }}">Oui, supprimer</button>
                 <button type="button" class="btn btn-sm btn-link link-secondary" data-suppr-annuler>Annuler</button>
             </div>
         </div>
@@ -107,7 +107,7 @@
                 <div class="d-none mb-2" data-raison-bloc>
                     <textarea name="raison" class="form-control" rows="2" maxlength="1000" placeholder="Pourquoi ? (obligatoire)"></textarea>
                 </div>
-                <button type="submit" class="btn btn-sm pt-btn-doux d-none" data-enregistrer-statut>Enregistrer le statut</button>
+                <button type="submit" class="btn pt-btn-doux d-none" data-enregistrer-statut>Enregistrer le statut</button>
             </form>
         </div>
     @endcan
@@ -173,13 +173,13 @@
 
 <div class="modal-footer">
     @can('delete', $tache)
-        <button type="button" class="btn btn-outline-danger" data-supprimer-demande>Supprimer</button>
+        <button type="button" class="btn pt-btn-doux pt-btn-danger" data-supprimer-demande>Supprimer</button>
     @endcan
     <p class="text-muted small mb-0" style="margin: auto;">
         Dernière modification le <b>{{ $tache->updated_at->translatedFormat('d F Y') }}</b>
     </p>
     @can('update', $tache)
-        <button type="button" class="btn btn-outline-primary" data-modifier-tache="{{ $tache->id }}">Modifier</button>
+        <button type="button" class="btn pt-btn-doux" data-modifier-tache="{{ $tache->id }}">Modifier</button>
     @endcan
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+    <button type="button" class="btn pt-btn-doux pt-btn-neutre" data-bs-dismiss="modal">Fermer</button>
 </div>

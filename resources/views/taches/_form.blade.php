@@ -68,7 +68,7 @@
                     <div class="col-auto"><button type="button" class="btn btn-outline-danger btn-icon" @click="liens.splice(i, 1)" aria-label="Retirer ce lien">×</button></div>
                 </div>
             </template>
-            <button type="button" class="btn btn-sm pt-btn-doux" @click="liens.push({ libelle: '', url: '' })">+ Ajouter un lien</button>
+            <button type="button" class="btn pt-btn-doux" @click="liens.push({ libelle: '', url: '' })">+ Ajouter un lien</button>
         </div>
     </div>
 
@@ -78,6 +78,6 @@
         @else
             <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Annuler</button>
         @endif
-        <button type="submit" class="btn btn-primary ms-auto">{{ $edition ? 'Enregistrer' : 'Créer la tâche' }}</button>
+        <button type="submit" class="btn pt-btn-doux ms-auto">{{ $edition ? 'Enregistrer' : 'Créer la tâche' }}</button>
     </div>
 </form>

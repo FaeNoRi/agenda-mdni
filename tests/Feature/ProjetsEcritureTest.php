@@ -62,6 +62,20 @@ class ProjetsEcritureTest extends TestCase
 
     // ---- Création --------------------------------------------------------
 
+    public function test_l_etat_termine_est_grise_tant_que_des_taches_sont_ouvertes(): void
+    {
+        $projet = Projet::factory()->create(['etat' => 'en_cours']);
+        $tache = Tache::factory()->create(['projet_id' => $projet->id, 'statut' => 'en_cours']);
+
+        $html = $this->actingAs($this->admin)->get(route('projets.show', $projet))->getContent();
+        $this->assertMatchesRegularExpression('/data-choix-etat="termine"[^>]*\sdisabled/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-choix-etat="bloque"[^>]*\sdisabled/', $html);
+
+        $tache->update(['statut' => 'termine']);
+        $html = $this->actingAs($this->admin)->get(route('projets.show', $projet))->getContent();
+        $this->assertDoesNotMatchRegularExpression('/data-choix-etat="termine"[^>]*\sdisabled/', $html);
+    }
+
     public function test_creer_un_projet_avec_plusieurs_referents(): void
     {
         $this->actingAs($this->membre)->postJson('/projets', $this->donnees())->assertOk()->assertJsonPath('ok', true);

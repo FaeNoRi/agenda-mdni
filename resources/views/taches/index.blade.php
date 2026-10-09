@@ -6,7 +6,7 @@
             <h2 class="page-title text-xl font-semibold">{{ __('Projets & tâches') }}</h2>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 @can('create', \App\Models\Tache::class)
-                    <button type="button" class="btn btn-primary" data-tache-nouvelle>Nouvelle tâche</button>
+                    <button type="button" class="btn pt-btn-doux" data-tache-nouvelle>Nouvelle tâche</button>
                 @endcan
                 @include('projets._onglets', ['actif' => 'taches'])
             </div>
