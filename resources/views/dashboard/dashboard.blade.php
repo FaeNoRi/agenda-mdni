@@ -388,7 +388,7 @@
             </div>
 
             {{-- 2) Filtre Type --}}
-            <details class="fgroup mb-4" open>
+            <details class="fgroup mb-4">
                 <summary class="fsec">Type <span class="fcount d-none" data-count-for="filter-type"></span></summary>
                 <select id="filter-type" class="d-none" name="type[]" multiple>
                     @foreach($typesDisponibles as $type)
@@ -403,7 +403,7 @@
             </details>
 
             {{-- 3) Filtre Personne --}}
-            <details class="fgroup mb-4" open>
+            <details class="fgroup mb-4">
                 <summary class="fsec">Personne <span class="fcount d-none" data-count-for="filter-user"></span></summary>
                 <select id="filter-user" class="d-none" name="user[]" multiple>
                     @foreach($animateursDisponibles as $user)
@@ -432,15 +432,13 @@
                 </div>
             </details>
 
-            {{-- 5) Bouton Appliquer --}}
+            {{-- 5) Pied : les filtres s'appliquent instantanément, on ne fait que fermer le tiroir --}}
             <div class="offcanvas-footer p-3 d-flex justify-content-between">
-                <!-- Bouton reset -->
-                <button id="reset-filters" class="btn btn-outline-secondary">
+                <button id="reset-filters" type="button" class="btn btn-outline-secondary">
                     Réinitialiser
                 </button>
-                <!-- Bouton appliquer -->
-                <button id="apply-filters" class="btn btn-primary">
-                    Appliquer
+                <button type="button" class="btn btn-primary" data-bs-dismiss="offcanvas">
+                    Fermer
                 </button>
             </div>
         </div>
@@ -749,12 +747,19 @@
         }
 
         // Recharge les cartes (et le calendrier si affiché) avec les paramètres donnés.
+        let _refreshSeq = 0;
+        let _refreshTimer = null;
+
         function refreshCards(ps, { closeOffcanvas = false } = {}) {
             const cardsCt = document.getElementById('cardsContainer');
+            const seq = ++_refreshSeq;
 
             return fetch(`/dashboard/cards?${ps.toString()}`)
                 .then(r => r.ok ? r.text() : Promise.reject(r.status))
                 .then(html => {
+                    // une requête plus récente est partie : on ignore cette réponse
+                    if (seq !== _refreshSeq) return;
+
                     cardsCt.innerHTML = html;
                     initDateBadgePopovers();
                     updateFilterActiveBadges();
@@ -768,6 +773,15 @@
                     }
                 })
                 .catch(console.error);
+        }
+
+        // Filtrage instantané : regroupe les clics rapprochés en une seule requête.
+        function scheduleFilterRefresh() {
+            clearTimeout(_refreshTimer);
+            _refreshTimer = setTimeout(() => {
+                syncHiddenToDate();
+                refreshCards(collectFilterParams());
+            }, 250);
         }
 
         // Les flèches ne pilotent qu'une date unique : dès qu'une période est active dans les
@@ -1028,7 +1042,6 @@
             });
 
             initDateBadgePopovers();
-            const btnApply = document.getElementById('apply-filters');
             const btnReset = document.getElementById('reset-filters');
             const btnToggleTo = document.getElementById('toggle-filter-to');
 
@@ -1043,36 +1056,43 @@
                 if (!pill) return;
 
                 if (pill.dataset.flag) {
-                    // filtre rapide : bascule on/off (appliqué avec le bouton "Appliquer")
+                    // filtre rapide : bascule on/off
                     const on = !pill.classList.contains('on');
                     pill.classList.toggle('on', on);
                     pill.setAttribute('aria-pressed', on ? 'true' : 'false');
                     updateFilterActiveBadges();
+                    scheduleFilterRefresh();
                     return;
                 }
 
-                // pastille de liste : bascule l'option correspondante (appliquée avec le bouton "Appliquer")
+                // pastille de liste : bascule l'option correspondante
                 const select = document.getElementById(pill.dataset.target);
                 const opt = select && Array.from(select.options).find(o => o.value === pill.dataset.value);
                 if (!opt) return;
                 opt.selected = !opt.selected;
                 syncFilterPills();
                 updateFilterActiveBadges();
+                scheduleFilterRefresh();
             });
 
             btnToggleTo?.addEventListener('click', () => {
                 toggleToFilter();
                 updateDayNavState();
+                updateFilterActiveBadges();
+                scheduleFilterRefresh();
             });
 
             document.getElementById('filter-from')?.addEventListener('change', () => {
                 syncHiddenToDate();
                 updateDayNavState();
+                updateFilterActiveBadges();
+                scheduleFilterRefresh();
             });
 
             document.getElementById('filter-to')?.addEventListener('change', () => {
                 updateFilterActiveBadges();
                 updateDayNavState();
+                scheduleFilterRefresh();
             });
 
             document.getElementById('btnOpenFilters')?.addEventListener('click', (e) => {
@@ -1090,12 +1110,6 @@
                 closeFiltersThen(() => {
                     openEvenementCreateForm(event);
                 });
-            });
-
-            btnApply.addEventListener('click', () => {
-                syncHiddenToDate();
-                updateDayNavState();
-                refreshCards(collectFilterParams(), { closeOffcanvas: true });
             });
 
             btnReset.addEventListener('click', () => {
@@ -1132,7 +1146,8 @@
                 ps.append('from', today);
                 ps.append('to', today);
 
-                refreshCards(ps, { closeOffcanvas: true });
+                clearTimeout(_refreshTimer);
+                refreshCards(ps);
             });
 
             ['type', 'salle', 'user'].forEach(k => {
