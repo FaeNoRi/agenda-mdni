@@ -47,12 +47,53 @@
     }
 
     .fsec {
-        margin-bottom: 8px;
-        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-size: 13px;
         font-weight: 700;
         letter-spacing: .04em;
         text-transform: uppercase;
-        color: #667382;
+        color: #4b5563;
+    }
+
+    details.fgroup > summary {
+        list-style: none;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    details.fgroup > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    details.fgroup > summary::after {
+        content: "";
+        margin-left: auto;
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(45deg);
+        transition: transform .15s;
+    }
+
+    details.fgroup[open] > summary::after {
+        transform: rotate(-135deg);
+    }
+
+    .fcount {
+        min-width: 20px;
+        padding: 0 6px;
+        border-radius: 999px;
+        background: var(--tblr-primary);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 20px;
+        text-align: center;
+        letter-spacing: 0;
     }
 
     .event-flags {
@@ -216,17 +257,6 @@
 
 
     <div class="container mx-auto py-4 px-4">
-        <div id="quickFilters" class="d-flex flex-wrap align-items-center gap-2 mb-3" role="group" aria-label="Filtres rapides">
-            <button type="button" class="fpill" data-flag="participe" aria-pressed="false" style="--pc: var(--tblr-primary);">
-                @include('dashboard.partials.icon-user-check', ['size' => 16]) Vous participez
-            </button>
-            <button type="button" class="fpill" data-flag="objets" aria-pressed="false" style="--pc: #d63939;">
-                @include('dashboard.partials.icon-cube', ['size' => 16]) Objets à faire
-            </button>
-            <button type="button" class="fpill" data-flag="photos" aria-pressed="false" style="--pc: #4299e1;">
-                @include('dashboard.partials.icon-camera', ['size' => 16]) Photos à prendre
-            </button>
-        </div>
         <div id="cardsContainer">
             @include('dashboard.partials.cards', ['events' => $events])
         </div>
@@ -354,9 +384,25 @@
                 </div>
             </div>
 
-            {{-- 2) Filtre Type --}}
+            {{-- Filtres rapides --}}
             <div class="mb-4">
-                <div class="fsec">Type</div>
+                <div class="fsec">Filtres rapides</div>
+                <div id="quickFilters" class="d-flex flex-wrap gap-2" role="group" aria-label="Filtres rapides">
+                    <button type="button" class="fpill" data-flag="participe" aria-pressed="false" style="--pc: var(--tblr-primary);">
+                        @include('dashboard.partials.icon-user-check', ['size' => 16]) Vous participez
+                    </button>
+                    <button type="button" class="fpill" data-flag="objets" aria-pressed="false" style="--pc: #d63939;">
+                        @include('dashboard.partials.icon-cube', ['size' => 16]) Objets à faire
+                    </button>
+                    <button type="button" class="fpill" data-flag="photos" aria-pressed="false" style="--pc: #4299e1;">
+                        @include('dashboard.partials.icon-camera', ['size' => 16]) Photos à prendre
+                    </button>
+                </div>
+            </div>
+
+            {{-- 2) Filtre Type --}}
+            <details class="fgroup mb-4" open>
+                <summary class="fsec">Type <span class="fcount d-none" data-count-for="filter-type"></span></summary>
                 <select id="filter-type" class="d-none" name="type[]" multiple>
                     @foreach($typesDisponibles as $type)
                     <option value="{{ $type }}">{{ $type }}</option>
@@ -367,11 +413,11 @@
                     <button type="button" class="fpill" data-target="filter-type" data-value="{{ $type }}" aria-pressed="false" style="--pc: {{ $typeColors[$type] ?? '#667382' }};">{{ $type }}</button>
                     @endforeach
                 </div>
-            </div>
+            </details>
 
             {{-- 3) Filtre Salle --}}
-            <div class="mb-4">
-                <div class="fsec">Salle</div>
+            <details class="fgroup mb-4">
+                <summary class="fsec">Salle <span class="fcount d-none" data-count-for="filter-salle"></span></summary>
                 <select id="filter-salle" class="d-none" name="salle[]" multiple>
                     @foreach($sallesDisponibles as $salle)
                     <option value="{{ $salle->id }}">{{ $salle->nom_salle }}</option>
@@ -382,11 +428,11 @@
                     <button type="button" class="fpill" data-target="filter-salle" data-value="{{ $salle->id }}" aria-pressed="false">{{ $salle->nom_salle }}</button>
                     @endforeach
                 </div>
-            </div>
+            </details>
 
             {{-- 4) Filtre Personne --}}
-            <div class="mb-4">
-                <div class="fsec">Personne</div>
+            <details class="fgroup mb-4" open>
+                <summary class="fsec">Personne <span class="fcount d-none" data-count-for="filter-user"></span></summary>
                 <select id="filter-user" class="d-none" name="user[]" multiple>
                     @foreach($animateursDisponibles as $user)
                     <option value="{{ $user->id }}">{{ $user->name }}</option>
@@ -399,7 +445,7 @@
                     </button>
                     @endforeach
                 </div>
-            </div>
+            </details>
 
             {{-- 5) Bouton Appliquer --}}
             <div class="offcanvas-footer p-3 d-flex justify-content-between">
@@ -708,6 +754,13 @@
                 pill.classList.toggle('on', on);
                 pill.setAttribute('aria-pressed', on ? 'true' : 'false');
             });
+
+            document.querySelectorAll('.fcount[data-count-for]').forEach(badge => {
+                const select = document.getElementById(badge.dataset.countFor);
+                const n = select ? select.selectedOptions.length : 0;
+                badge.textContent = n;
+                badge.classList.toggle('d-none', n === 0);
+            });
         }
 
         // Recharge les cartes (et le calendrier si affiché) avec les paramètres donnés.
@@ -1005,12 +1058,11 @@
                 if (!pill) return;
 
                 if (pill.dataset.flag) {
-                    // filtre rapide : bascule on/off et applique tout de suite
+                    // filtre rapide : bascule on/off (appliqué avec le bouton "Appliquer")
                     const on = !pill.classList.contains('on');
                     pill.classList.toggle('on', on);
                     pill.setAttribute('aria-pressed', on ? 'true' : 'false');
                     updateFilterActiveBadges();
-                    refreshCards(collectFilterParams());
                     return;
                 }
 
