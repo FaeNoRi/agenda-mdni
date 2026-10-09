@@ -73,7 +73,7 @@ class Tache extends Model
 
     public function commentaires(): MorphMany
     {
-        return $this->morphMany(Commentaire::class, 'commentable');
+        return $this->morphMany(Commentaire::class, 'commentable')->orderBy('created_at')->orderBy('id');
     }
 
     public function liens(): MorphMany

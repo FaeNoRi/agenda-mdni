@@ -14,6 +14,7 @@ use App\Http\Controllers\ChangementHoraireController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SyncController;
 use App\Http\Controllers\ReglementSignatureController;
+use App\Http\Controllers\CommentaireController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\TacheController;
 
@@ -138,6 +139,10 @@ Route::middleware(['auth', 'projets.acces'])->group(function () {
     Route::put('/taches/{tache}', [TacheController::class, 'update'])->name('taches.update');
     Route::delete('/taches/{tache}', [TacheController::class, 'destroy'])->name('taches.destroy');
     Route::post('/taches/{tache}/statut', [TacheController::class, 'statut'])->name('taches.statut');
+    Route::post('/taches/{tache}/commentaires', [CommentaireController::class, 'storeTache'])->name('taches.commentaires.store');
+    Route::post('/projets/{projet}/commentaires', [CommentaireController::class, 'storeProjet'])->name('projets.commentaires.store');
+    Route::put('/commentaires/{commentaire}', [CommentaireController::class, 'update'])->name('commentaires.update');
+    Route::delete('/commentaires/{commentaire}', [CommentaireController::class, 'destroy'])->name('commentaires.destroy');
 });
 
 Route::get('/', function () {

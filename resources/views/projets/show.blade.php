@@ -150,18 +150,7 @@
             <div class="col-md-6">
                 <div class="pt-panneau">
                     <h3><x-icone name="messages" :size="16" /> Commentaires</h3>
-                    @forelse($projet->commentaires as $commentaire)
-                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                            @if($commentaire->user)<x-avatars :users="[$commentaire->user]" :size="26" />@endif
-                            <div style="flex: 1; padding: 6px 9px; border-radius: 0 10px 10px 10px; background: #f6f8fb; font-size: 12px;">
-                                <b>{{ $commentaire->user?->name ?? 'Ancien utilisateur' }}</b>
-                                <span style="color: #9aa0ac;">{{ $commentaire->created_at->format('d/m/Y') }}</span><br>
-                                {{ $commentaire->contenu }}
-                            </div>
-                        </div>
-                    @empty
-                        <div style="font-size: 12px; color: #9aa0ac;">Aucun commentaire.</div>
-                    @endforelse
+                    @include('commentaires._liste', ['commentable' => $projet, 'routeAjout' => route('projets.commentaires.store', $projet), 'hote' => 'projet'])
                 </div>
             </div>
             <div class="col-md-6">

@@ -87,6 +87,30 @@
                 return;
             }
 
+            // Commentaires : modifier en place, supprimer après confirmation.
+            const cModifier = t.closest('[data-commentaire-modifier]');
+            if (cModifier) {
+                const bloc = cModifier.closest('[data-commentaires] > div');
+                bloc.querySelector('[data-commentaire-vue]').classList.add('d-none');
+                bloc.querySelector('[data-commentaire-actions]').classList.add('d-none');
+                bloc.querySelector('[data-commentaire-edition]').classList.remove('d-none');
+                return;
+            }
+            if (t.closest('[data-commentaire-annuler]')) {
+                const bloc = t.closest('[data-commentaires] > div');
+                bloc.querySelector('[data-commentaire-vue]').classList.remove('d-none');
+                bloc.querySelector('[data-commentaire-actions]').classList.remove('d-none');
+                bloc.querySelector('[data-commentaire-edition]').classList.add('d-none');
+                return;
+            }
+            const cSuppr = t.closest('[data-commentaire-suppr]');
+            if (cSuppr) {
+                if (cSuppr.dataset.pret) return void cSuppr.closest('form').requestSubmit();
+                cSuppr.dataset.pret = '1';
+                cSuppr.textContent = 'Confirmer la suppression';
+                return;
+            }
+
             const carte = t.closest('[data-tache]');
             if (carte) ouvrirTache(carte.dataset.tache);
         });

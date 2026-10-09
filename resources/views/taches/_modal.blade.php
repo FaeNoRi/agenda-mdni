@@ -2,7 +2,6 @@
     Contenu de la fenêtre « Détail tâche » (même structure que « Détail événement »).
     Variables : $tache (projet, responsables, createur, liens, historiques.user, commentaires.user chargés),
                 $referents (collection d'utilisateurs), $statuts (cases de TacheStatut).
-    Les commentaires sont en lecture seule pour l'instant (ils arrivent à l'étape suivante).
 --}}
 @php
     $s = $tache->statut;
@@ -165,20 +164,10 @@
         @endforeach
     </div>
 
-    {{-- Commentaires (lecture seule pour l'instant) --}}
+    {{-- Commentaires --}}
     <div class="mb-2">
         <p class="mb-2"><strong>Commentaires</strong></p>
-        @forelse($tache->commentaires as $c)
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                @if($c->user)<x-avatars :users="[$c->user]" :size="26" />@endif
-                <div style="flex: 1; padding: 6px 9px; border-radius: 0 10px 10px 10px; background: #f6f8fb; font-size: 12px;">
-                    <b>{{ $c->user?->name ?? 'Ancien utilisateur' }}</b> <span style="color: #9aa0ac;">{{ $c->created_at->format('d/m/Y') }}</span><br>
-                    {{ $c->contenu }}
-                </div>
-            </div>
-        @empty
-            <div style="font-size: 12px; color: #9aa0ac;">Aucun commentaire.</div>
-        @endforelse
+        @include('commentaires._liste', ['commentable' => $tache, 'routeAjout' => route('taches.commentaires.store', $tache)])
     </div>
 </div>
 
