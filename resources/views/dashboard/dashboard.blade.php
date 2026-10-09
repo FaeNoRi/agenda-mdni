@@ -5,6 +5,24 @@
         pointer-events: none;
     }
 
+    /* Bureau : même espacement qu'avant autour de la navigation par jour (l'ancien mx-2) */
+    @media (min-width: 576px) {
+        #dayNavGroup {
+            margin-left: .5rem;
+            margin-right: .5rem;
+        }
+    }
+
+    /* Mobile : boutons de l'en-tête resserrés pour que navigation par jour et bascule de vue tiennent sur une ligne */
+    @media (max-width: 575.98px) {
+        #dayNavGroup .btn,
+        #btn-cards-view,
+        #btn-calendar-view {
+            padding-left: .6rem;
+            padding-right: .6rem;
+        }
+    }
+
     /* Pastilles de filtre (même langage visuel que les filtres de Projets & tâches) */
     .fpill {
         --pc: var(--tblr-primary);
@@ -193,14 +211,15 @@
                 {{ __('Tableau de bord') }}
             </h2>
 
-            <div class="flex items-center gap-2">
+            {{-- flex-wrap : sur mobile les groupes de boutons passent à la ligne au lieu de déborder à droite --}}
+            <div class="flex flex-wrap items-center gap-2 max-w-full">
                 @unless(auth()->user()->is_civique)
                 <button id="btnAddEvent" type="button" class="btn btn-primary">
                     Ajouter un événement
                 </button>
                 @endunless
 
-                <div class="btn-group mx-2" id="dayNavGroup" role="group" aria-label="Navigation par jour">
+                <div class="btn-group" id="dayNavGroup" role="group" aria-label="Navigation par jour">
                     <button id="btn-day-prev" type="button" class="btn btn-outline-primary" onclick="shiftDay(-1)" aria-label="Jour précédent">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon mx-auto"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M15 6l-6 6l6 6" /></svg>
                     </button>

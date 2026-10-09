@@ -175,4 +175,14 @@ class DashboardQuickFiltersTest extends TestCase
         $this->actingAs(User::factory()->create())->get('/dashboard')
             ->assertSeeInOrder(['Filtres rapides', 'data-count-for="filter-type"', 'data-count-for="filter-user"', 'data-count-for="filter-salle"'], false);
     }
+
+    public function test_l_en_tete_du_tableau_de_bord_passe_a_la_ligne_sur_mobile(): void
+    {
+        // Sans flex-wrap, « Ajouter un événement », la navigation par jour et la bascule de vue restaient
+        // sur une seule ligne et débordaient à droite sur un écran étroit.
+        $html = $this->actingAs(User::factory()->create(['is_admin' => true]))->get('/dashboard')->getContent();
+
+        $this->assertMatchesRegularExpression('/<div class="flex flex-wrap items-center gap-2 max-w-full">\s*<button id="btnAddEvent"/', $html);
+        $this->assertStringNotContainsString('class="btn-group mx-2" id="dayNavGroup"', $html);
+    }
 }
