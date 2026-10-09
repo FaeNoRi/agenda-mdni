@@ -5,6 +5,56 @@
         pointer-events: none;
     }
 
+    /* Pastilles de filtre (même langage visuel que les filtres de Projets & tâches) */
+    .fpill {
+        --pc: var(--tblr-primary);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border: 1px solid var(--tblr-border-color, #dfe3e8);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--tblr-body-color, #182433);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.3;
+        cursor: pointer;
+        transition: background .12s, border-color .12s, color .12s;
+    }
+
+    .fpill:hover {
+        border-color: var(--pc);
+    }
+
+    .fpill.on {
+        background: color-mix(in srgb, var(--pc) 13%, white);
+        border-color: var(--pc);
+        color: var(--pc);
+    }
+
+    .fpill .fpill-ini {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: color-mix(in srgb, var(--pc) 16%, white);
+        color: var(--pc);
+        font-size: 10px;
+        font-weight: 800;
+    }
+
+    .fsec {
+        margin-bottom: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        color: #667382;
+    }
+
     .event-flags {
         display: inline-flex;
         align-items: center;
@@ -166,6 +216,17 @@
 
 
     <div class="container mx-auto py-4 px-4">
+        <div id="quickFilters" class="d-flex flex-wrap align-items-center gap-2 mb-3" role="group" aria-label="Filtres rapides">
+            <button type="button" class="fpill" data-flag="participe" aria-pressed="false" style="--pc: var(--tblr-primary);">
+                @include('dashboard.partials.icon-user-check', ['size' => 16]) Vous participez
+            </button>
+            <button type="button" class="fpill" data-flag="objets" aria-pressed="false" style="--pc: #d63939;">
+                @include('dashboard.partials.icon-cube', ['size' => 16]) Objets à faire
+            </button>
+            <button type="button" class="fpill" data-flag="photos" aria-pressed="false" style="--pc: #4299e1;">
+                @include('dashboard.partials.icon-camera', ['size' => 16]) Photos à prendre
+            </button>
+        </div>
         <div id="cardsContainer">
             @include('dashboard.partials.cards', ['events' => $events])
         </div>
@@ -294,41 +355,51 @@
             </div>
 
             {{-- 2) Filtre Type --}}
-            <div class="mb-3">
-                <label class="form-label">Type</label>
-                <select id="filter-type" class="form-select" name="type[]" multiple size="5">
-                    {{-- <option value="">Tout types</option> --}}
+            <div class="mb-4">
+                <div class="fsec">Type</div>
+                <select id="filter-type" class="d-none" name="type[]" multiple>
                     @foreach($typesDisponibles as $type)
                     <option value="{{ $type }}">{{ $type }}</option>
                     @endforeach
                 </select>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach($typesDisponibles as $type)
+                    <button type="button" class="fpill" data-target="filter-type" data-value="{{ $type }}" aria-pressed="false" style="--pc: {{ $typeColors[$type] ?? '#667382' }};">{{ $type }}</button>
+                    @endforeach
+                </div>
             </div>
 
             {{-- 3) Filtre Salle --}}
-            <div class="mb-3">
-                <label class="form-label">Salle</label>
-                <select id="filter-salle" class="form-select" name="salle[]" multiple size="5">
-                    {{-- <option value="">Toutes salles</option> --}}
+            <div class="mb-4">
+                <div class="fsec">Salle</div>
+                <select id="filter-salle" class="d-none" name="salle[]" multiple>
                     @foreach($sallesDisponibles as $salle)
                     <option value="{{ $salle->id }}">{{ $salle->nom_salle }}</option>
                     @endforeach
                 </select>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach($sallesDisponibles as $salle)
+                    <button type="button" class="fpill" data-target="filter-salle" data-value="{{ $salle->id }}" aria-pressed="false">{{ $salle->nom_salle }}</button>
+                    @endforeach
+                </div>
             </div>
 
             {{-- 4) Filtre Personne --}}
-            <div class="mb-3">
-                <label class="form-label">Personne</label>
-                <select id="filter-user" class="form-select" name="user[]" multiple size="5">
-                    {{-- <option value="">Toutes personnes</option> --}}
+            <div class="mb-4">
+                <div class="fsec">Personne</div>
+                <select id="filter-user" class="d-none" name="user[]" multiple>
                     @foreach($animateursDisponibles as $user)
                     <option value="{{ $user->id }}">{{ $user->name }}</option>
                     @endforeach
                 </select>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach($animateursDisponibles as $user)
+                    <button type="button" class="fpill" data-target="filter-user" data-value="{{ $user->id }}" aria-pressed="false">
+                        <span class="fpill-ini">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}{{ mb_strtoupper(mb_substr(trim(strstr($user->name, ' ') ?: ''), 0, 1)) }}</span>{{ $user->name }}
+                    </button>
+                    @endforeach
+                </div>
             </div>
-
-            <small class="form-text mb-3">
-                <small class="badge bg-dark-lt text-dark align-text-top">Clic gauche</small> pour selectionner ou désélectionner un élément.
-            </small>
 
             {{-- 5) Bouton Appliquer --}}
             <div class="offcanvas-footer p-3 d-flex justify-content-between">
@@ -615,10 +686,28 @@
             ['type', 'salle', 'user'].forEach(k => {
                 const select = document.getElementById(`filter-${k}`);
                 if (!select) return;
-                Array.from(select.selectedOptions).forEach(opt => ps.append(k, opt.value));
+                Array.from(select.selectedOptions).forEach(opt => ps.append(`${k}[]`, opt.value));
             });
 
+            activeFlags().forEach(f => ps.append('flag[]', f));
+
             return ps;
+        }
+
+        // Filtres rapides actifs ('participe' | 'objets' | 'photos').
+        function activeFlags() {
+            return Array.from(document.querySelectorAll('#quickFilters .fpill.on')).map(b => b.dataset.flag);
+        }
+
+        // Aligne les pastilles Type / Salle / Personne sur les listes masquées (source de vérité).
+        function syncFilterPills() {
+            document.querySelectorAll('.fpill[data-target]').forEach(pill => {
+                const select = document.getElementById(pill.dataset.target);
+                const opt = select && Array.from(select.options).find(o => o.value === pill.dataset.value);
+                const on = !!(opt && opt.selected);
+                pill.classList.toggle('on', on);
+                pill.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
         }
 
         // Recharge les cartes (et le calendrier si affiché) avec les paramètres donnés.
@@ -736,6 +825,7 @@
                     Array.from(userSelect.selectedOptions).forEach(opt => {
                         params.append('user[]', opt.value);
                     });
+                    activeFlags().forEach(f => params.append('flag[]', f));
 
                     fetch(`/dashboard/calendar-data?${params.toString()}`)
                         .then(response => response.json())
@@ -854,6 +944,7 @@
             const hasUserFilter = hasSelectedValues('filter-user');
 
             const hasActiveFilter =
+                activeFlags().length > 0 ||
                 hasDateFilter ||
                 hasTypeFilter ||
                 hasSalleFilter ||
@@ -905,8 +996,32 @@
 
             syncHiddenToDate();
             updateToFilterToggleLabel();
+            syncFilterPills();
             updateFilterActiveBadges();
             updateDayNavState();
+
+            document.addEventListener('click', (e) => {
+                const pill = e.target.closest('.fpill');
+                if (!pill) return;
+
+                if (pill.dataset.flag) {
+                    // filtre rapide : bascule on/off et applique tout de suite
+                    const on = !pill.classList.contains('on');
+                    pill.classList.toggle('on', on);
+                    pill.setAttribute('aria-pressed', on ? 'true' : 'false');
+                    updateFilterActiveBadges();
+                    refreshCards(collectFilterParams());
+                    return;
+                }
+
+                // pastille de liste : bascule l'option correspondante (appliquée avec le bouton "Appliquer")
+                const select = document.getElementById(pill.dataset.target);
+                const opt = select && Array.from(select.options).find(o => o.value === pill.dataset.value);
+                if (!opt) return;
+                opt.selected = !opt.selected;
+                syncFilterPills();
+                updateFilterActiveBadges();
+            });
 
             btnToggleTo?.addEventListener('click', () => {
                 toggleToFilter();
@@ -968,6 +1083,11 @@
                     });
                 });
 
+                document.querySelectorAll('#quickFilters .fpill.on').forEach(p => {
+                    p.classList.remove('on');
+                    p.setAttribute('aria-pressed', 'false');
+                });
+                syncFilterPills();
                 updateFilterActiveBadges();
                 updateDayNavState();
 
@@ -1025,8 +1145,9 @@
                 ['type', 'salle', 'user'].forEach(k => {
                 const select = document.getElementById(`filter-${k}`);
                 if (!select) return;
-                Array.from(select.selectedOptions).forEach(opt => ps.append(k, opt.value));
+                Array.from(select.selectedOptions).forEach(opt => ps.append(`${k}[]`, opt.value));
                 });
+                activeFlags().forEach(f => ps.append('flag[]', f));
 
                 const html = await fetchText(`/dashboard/cards?${ps.toString()}`);
                 // Préserve la position de scroll pour éviter les "sauts"

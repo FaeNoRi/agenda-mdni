@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Evenements extends Model
@@ -39,6 +40,41 @@ class Evenements extends Model
         'date_heure_debut',
         'date_heure_fin',
     ];
+
+    /** Filtres rapides du tableau de bord (cumulables) : 'participe', 'objets', 'photos'. */
+    public const QUICK_FLAGS = ['participe', 'objets', 'photos'];
+
+    /**
+     * Restreint aux événements portant les pastilles demandées (même règles que les pastilles :
+     * jamais d'événement annulé). Plusieurs filtres se cumulent (ET).
+     */
+    public function scopeWithFlags(Builder $query, array $flags, ?User $user): Builder
+    {
+        $flags = array_values(array_intersect($flags, self::QUICK_FLAGS));
+
+        if (!$flags) {
+            return $query;
+        }
+
+        $query->whereNotIn('type_event', ['Annule', 'Annulé']);
+
+        if (in_array('participe', $flags, true)) {
+            $ids = $user ? ($user->is_equipe ? [$user->id, 0] : [$user->id]) : [];
+            $query->whereHas('users', fn ($q) => $q->whereIn('users.id', $ids));
+        }
+
+        if (in_array('objets', $flags, true)) {
+            $query->where('objet', 'Oui')->whereHas('objets', fn ($q) => $q->where(
+                fn ($w) => $w->where('evenement_objets.etat', '!=', 'Fait')->orWhereNull('evenement_objets.etat')
+            ));
+        }
+
+        if (in_array('photos', $flags, true)) {
+            $query->where('prendre_photos', true);
+        }
+
+        return $query;
+    }
 
     public function isCancelled(): bool
     {

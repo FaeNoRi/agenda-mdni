@@ -752,6 +752,7 @@ class EvenementController extends Controller
                                         ->get(['id','nom_salle']);
         $animateursDisponibles  = User::orderBy('name')
                                      ->get(['id','name']);
+        $typeColors = $typesDisponibles->mapWithKeys(fn ($t) => [$t => $this->typeColorHex($t)]);
 
         $changementsHoraires = ChangementHoraire::with('user')
             ->whereDate('new_end', '>=', today())
@@ -783,6 +784,7 @@ class EvenementController extends Controller
             'typesDisponibles',
             'sallesDisponibles',
             'animateursDisponibles',
+            'typeColors',
             'notifications',
             'eventsForCalendar'
         ));
@@ -875,6 +877,9 @@ class EvenementController extends Controller
                 ->orWhere('users.id', $teamId);
             });
         }
+
+        // filtres rapides : vous participez / objets à faire / photos à prendre
+        $query->withFlags((array) $request->query('flag', []), $request->user());
 
             $events = $query
                 ->orderByRaw("CASE WHEN type_event IN ('Annulé', 'Annule') THEN 1 ELSE 0 END")
@@ -977,6 +982,8 @@ class EvenementController extends Controller
     public function calendarData(Request $request)
     {
         $query = Evenements::with(['users', 'salles']);
+
+        $query->withFlags((array) $request->query('flag', []), $request->user());
 
         // 🎯 Filtre type_event uniquement si sélection présente
         if ($request->has('type') && count($request->type)) {
