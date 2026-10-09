@@ -14,6 +14,7 @@ use App\Http\Controllers\ChangementHoraireController;
 use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SyncController;
 use App\Http\Controllers\ReglementSignatureController;
+use App\Http\Controllers\ProjetController;
 
 // tableau de bord initial (vue Blade + Offcanvas)
 Route::get('/dashboard', [EvenementController::class, 'dashboard'])
@@ -114,6 +115,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/reglement/signature', [ReglementSignatureController::class, 'sign'])
         ->name('reglement.signature');
+});
+
+// Projets & tâches : réservé aux administrateurs tant que le module n'est pas ouvert (config/features.php)
+Route::middleware(['auth', 'projets.acces'])->group(function () {
+    Route::get('/projets', [ProjetController::class, 'index'])->name('projets.index');
+    Route::get('/projets/{projet}', [ProjetController::class, 'show'])->name('projets.show');
 });
 
 Route::get('/', function () {

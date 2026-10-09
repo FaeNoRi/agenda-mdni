@@ -16,14 +16,14 @@ class Projet extends Model
 {
     use HasFactory, HasRetard;
 
-    protected $fillable = ['nom', 'description', 'date_limite', 'etat', 'raison', 'created_by'];
+    protected $fillable = ['nom', 'description', 'couleur', 'icone', 'date_limite', 'etat', 'raison', 'created_by'];
 
     protected $casts = [
         'date_limite' => 'date',
         'etat' => ProjetEtat::class,
     ];
 
-    protected $attributes = ['etat' => 'en_attente'];
+    protected $attributes = ['etat' => 'en_attente', 'couleur' => '#4263eb', 'icone' => 'folder'];
 
     public function statutActuel(): ProjetEtat
     {

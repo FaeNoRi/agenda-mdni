@@ -36,6 +36,19 @@ enum ProjetEtat: string
         };
     }
 
+    /** Nom de l'icône (voir App\Support\Icones). */
+    public function icone(): string
+    {
+        return match ($this) {
+            self::EnAttente => 'hourglass',
+            self::EnCours => 'player-play',
+            self::AValider => 'eye-check',
+            self::Termine => 'check',
+            self::Annule => 'x',
+            self::Bloque => 'hand-stop',
+        };
+    }
+
     public function estOuvert(): bool
     {
         return !in_array($this, [self::Termine, self::Annule], true);

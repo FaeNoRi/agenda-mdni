@@ -59,6 +59,20 @@ enum TacheStatut: string
         };
     }
 
+    /** Nom de l'icône (voir App\Support\Icones). */
+    public function icone(): string
+    {
+        return match ($this) {
+            self::AFaire => 'circle',
+            self::EnCours => 'player-play',
+            self::AValider => 'eye-check',
+            self::Termine => 'check',
+            self::EnAttente => 'hourglass',
+            self::Bloque => 'hand-stop',
+            self::Annule => 'x',
+        };
+    }
+
     /** Terminé ou annulé : plus rien à faire, donc jamais "en retard". */
     public function estOuvert(): bool
     {
