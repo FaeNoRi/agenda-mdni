@@ -232,11 +232,13 @@ class ProjetsTachesSocleTest extends TestCase
     {
         [$a, $b, $c] = User::factory()->count(3)->create();
         $projet = Projet::factory()->create();
-        $projet->membres()->attach([$a->id => ['role' => 'referent'], $b->id => ['role' => 'referent'], $c->id => ['role' => 'implique']]);
+        $projet->membres()->attach([$a->id => ['role' => 'referent'], $b->id => ['role' => 'referent']]);
+        Tache::factory()->create(['projet_id' => $projet->id])->responsables()->attach($c->id);
 
         $this->assertEqualsCanonicalizing([$a->id, $b->id], $projet->referents->pluck('id')->all());
-        $this->assertSame([$c->id], $projet->impliques->pluck('id')->all());
-        $this->assertCount(3, $projet->membres);
+        $this->assertSame([$c->id], $projet->impliquesHorsReferents()->pluck('id')->all());
+        $this->assertCount(3, $projet->personnesImpliquees());
+        $this->assertCount(2, $projet->membres);
         $this->assertEqualsCanonicalizing([$projet->id], $a->projets->pluck('id')->all());
     }
 

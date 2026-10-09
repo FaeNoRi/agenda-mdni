@@ -45,7 +45,6 @@ class ProjetsEcritureTest extends TestCase
             'date_limite' => '2026-11-15',
             'etat' => 'en_cours',
             'referents' => [$this->admin->id, $this->membre->id],
-            'impliques' => [$this->civique->id],
         ], $surcharge);
     }
 
@@ -75,7 +74,7 @@ class ProjetsEcritureTest extends TestCase
         $this->assertSame('2026-11-15', $p->date_limite->toDateString());
         $this->assertSame($this->membre->id, $p->created_by);
         $this->assertEqualsCanonicalizing([$this->admin->id, $this->membre->id], $p->referents->pluck('id')->all());
-        $this->assertSame([$this->civique->id], $p->impliques->pluck('id')->all());
+        $this->assertCount(2, $p->membres, 'seuls les référents sont enregistrés sur le projet');
     }
 
     public function test_nom_et_au_moins_un_referent_sont_obligatoires(): void
@@ -102,13 +101,46 @@ class ProjetsEcritureTest extends TestCase
         $this->assertSame(0, Projet::count());
     }
 
-    public function test_un_referent_n_est_pas_aussi_implique(): void
+    public function test_les_personnes_impliquees_ne_se_saisissent_pas(): void
     {
-        $this->actingAs($this->membre)->postJson('/projets', $this->donnees(['impliques' => [$this->admin->id, $this->civique->id]]))->assertOk();
+        // Même si un client envoie « impliques », la liste ne vient que des tâches.
+        $this->actingAs($this->membre)->postJson('/projets', $this->donnees(['impliques' => [$this->civique->id]]))->assertOk();
 
         $p = Projet::first();
-        $this->assertSame([$this->civique->id], $p->impliques->pluck('id')->all());
-        $this->assertCount(3, $p->membres);
+        $this->assertCount(2, $p->membres);
+        $this->assertEqualsCanonicalizing([$this->admin->id, $this->membre->id], $p->personnesImpliquees()->pluck('id')->all());
+    }
+
+    public function test_les_impliques_se_deduisent_des_responsables_de_taches(): void
+    {
+        $p = $this->projet();
+        $p->membres()->attach($this->admin->id, ['role' => 'referent']);
+        $t = Tache::factory()->create(['projet_id' => $p->id]);
+        $t->responsables()->attach([$this->membre->id, $this->admin->id]);
+        $annulee = Tache::factory()->create(['projet_id' => $p->id, 'statut' => 'annule']);
+        $annulee->responsables()->attach($this->civique->id);
+
+        $p = $p->fresh();
+        // référents d'abord, puis responsables ; un référent responsable n'est compté qu'une fois ; l'annulée est ignorée
+        $this->assertSame([$this->admin->id, $this->membre->id], $p->personnesImpliquees()->pluck('id')->all());
+        $this->assertSame([$this->membre->id], $p->impliquesHorsReferents()->pluck('id')->all());
+
+        // retirer le responsable de la tâche le sort du projet
+        $t->responsables()->detach($this->membre->id);
+        $this->assertSame([$this->admin->id], $p->fresh()->personnesImpliquees()->pluck('id')->all());
+    }
+
+    public function test_le_formulaire_n_a_plus_de_champ_impliques_et_la_fiche_les_calcule(): void
+    {
+        $this->actingAs($this->membre)->get('/projets/create')
+            ->assertDontSee('name="impliques[]"', false)
+            ->assertSee('ajoutent automatiquement');
+
+        $p = $this->projet();
+        $p->membres()->attach($this->admin->id, ['role' => 'referent']);
+        Tache::factory()->create(['projet_id' => $p->id])->responsables()->attach($this->membre->id);
+
+        $this->actingAs($this->admin)->get("/projets/{$p->id}")->assertSee('Marie Dupont');
     }
 
     public function test_l_equipe_et_les_inconnus_ne_sont_pas_assignables(): void
@@ -119,7 +151,6 @@ class ProjetsEcritureTest extends TestCase
         ]));
 
         $this->actingAs($this->membre)->postJson('/projets', $this->donnees(['referents' => [0]]))->assertJsonValidationErrors('referents.0');
-        $this->actingAs($this->membre)->postJson('/projets', $this->donnees(['impliques' => [999]]))->assertJsonValidationErrors('impliques.0');
     }
 
     public function test_formulaires_de_creation_et_de_modification(): void
@@ -157,7 +188,7 @@ class ProjetsEcritureTest extends TestCase
         $p = $this->projet();
         $p->membres()->attach([$this->admin->id => ['role' => 'referent'], $this->membre->id => ['role' => 'referent']]);
 
-        $this->actingAs($this->admin)->putJson("/projets/{$p->id}", $this->donnees(['referents' => [$this->admin->id], 'impliques' => []]))->assertOk();
+        $this->actingAs($this->admin)->putJson("/projets/{$p->id}", $this->donnees(['referents' => [$this->admin->id]]))->assertOk();
 
         $this->assertSame([$this->admin->id], $p->fresh()->membres->pluck('id')->all());
     }

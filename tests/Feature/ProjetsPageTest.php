@@ -152,7 +152,8 @@ class ProjetsPageTest extends TestCase
         $moi = User::factory()->create(['is_admin' => true, 'name' => 'Benjamin Leroy']);
         $autre = User::factory()->create(['name' => 'Clément Deloison']);
         $projet = $this->projet();
-        $projet->membres()->attach([$moi->id => ['role' => 'referent'], $autre->id => ['role' => 'implique']]);
+        $projet->membres()->attach($moi->id, ['role' => 'referent']);
+        Tache::factory()->create(['projet_id' => $projet->id])->responsables()->attach($autre->id);
 
         $html = $this->actingAs($moi)->get('/projets')->getContent();
 

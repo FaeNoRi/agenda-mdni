@@ -129,9 +129,17 @@ class ProjetsTachesDroitsTest extends TestCase
         $this->assertTrue($this->civiqueImplique->can('comment', $this->projet));
         $this->assertFalse($this->civique->can('comment', $this->projet));
 
-        // membre direct du projet
-        $this->projet->membres()->attach($this->civique->id, ['role' => 'implique']);
+        // référent du projet
+        $this->projet->membres()->attach($this->civique->id, ['role' => 'referent']);
         $this->assertTrue($this->civique->can('comment', $this->projet));
+    }
+
+    public function test_une_tache_annulee_ne_rend_pas_implique(): void
+    {
+        $annulee = Tache::factory()->create(['projet_id' => $this->projet->id, 'statut' => 'annule']);
+        $annulee->responsables()->attach($this->civique->id);
+
+        $this->assertFalse($this->civique->can('comment', $this->projet));
     }
 
     public function test_un_referent_de_projet_est_implique_dans_ses_taches(): void

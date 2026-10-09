@@ -1,11 +1,12 @@
 {{--
-    Carte d'un projet. Variables : $projet (taches + membres chargés), $mienne (bool), $statutsCarte.
+    Carte d'un projet. Variables : $projet (taches.responsables + membres chargés), $mienne (bool), $statutsCarte.
     Les attributs data-* servent au filtrage instantané côté navigateur.
 --}}
 @php
     $resume = $projet->resume();
     $couleur = $projet->couleur ?: '#4299e1';
-    $personnes = $projet->membres->sortBy(fn ($u) => $u->pivot->role === 'referent' ? 0 : 1)->values();
+    // Référents d'abord, puis les responsables des tâches (hors annulées).
+    $personnes = $projet->personnesImpliquees();
 @endphp
 <a href="{{ route('projets.show', $projet) }}"
    class="pt-carte {{ $projet->etat->estOuvert() ? '' : 'pt-carte--clos' }}"

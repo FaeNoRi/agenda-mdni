@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ProjetEtat;
 use App\Enums\TacheStatut;
 use App\Models\Concerns\HasRetard;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,7 +37,11 @@ class Projet extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /** Toutes les personnes du projet (référents et impliqués), avec leur rôle dans le pivot. */
+    /**
+     * Personnes rattachées explicitement au projet : ses référents (rôle « referent » dans le pivot).
+     * Les personnes « impliquées » ne sont pas saisies : elles se déduisent des tâches
+     * (voir personnesImpliquees()).
+     */
     public function membres(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'projet_user')->withPivot('role')->withTimestamps();
@@ -47,9 +52,28 @@ class Projet extends Model
         return $this->membres()->wherePivot('role', 'referent');
     }
 
-    public function impliques(): BelongsToMany
+    /**
+     * Personnes impliquées dans le projet : ses référents, puis les responsables de ses tâches
+     * (hors tâches annulées), sans doublon. Utilise les relations déjà chargées quand il y en a.
+     */
+    public function personnesImpliquees(): Collection
     {
-        return $this->membres()->wherePivot('role', 'implique');
+        $this->loadMissing(['membres', 'taches.responsables']);
+
+        $referents = $this->membres->filter(fn ($u) => $u->pivot->role === 'referent');
+        $responsables = $this->taches
+            ->filter(fn (Tache $t) => $t->statut !== TacheStatut::Annule)
+            ->flatMap(fn (Tache $t) => $t->responsables);
+
+        return $referents->merge($responsables)->unique('id')->values();
+    }
+
+    /** Impliqués qui ne sont pas référents (les référents sont affichés à part). */
+    public function impliquesHorsReferents(): Collection
+    {
+        $referents = $this->membres->filter(fn ($u) => $u->pivot->role === 'referent')->pluck('id');
+
+        return $this->personnesImpliquees()->reject(fn ($u) => $referents->contains($u->id))->values();
     }
 
     public function taches(): HasMany
@@ -72,11 +96,14 @@ class Projet extends Model
         return $this->referents()->where('users.id', $user->id)->exists();
     }
 
-    /** Membre du projet (référent ou impliqué), ou responsable d'une de ses tâches. */
+    /** Référent du projet, ou responsable d'une de ses tâches (hors tâches annulées). */
     public function estImplique(User $user): bool
     {
-        return $this->membres()->where('users.id', $user->id)->exists()
-            || $this->taches()->whereHas('responsables', fn ($q) => $q->where('users.id', $user->id))->exists();
+        return $this->estReferent($user)
+            || $this->taches()
+                ->where('statut', '!=', TacheStatut::Annule->value)
+                ->whereHas('responsables', fn ($q) => $q->where('users.id', $user->id))
+                ->exists();
     }
 
     /** Tâches pas encore terminées ni annulées (sert à l'avertissement avant de clore un projet). */

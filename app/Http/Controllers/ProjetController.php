@@ -47,9 +47,8 @@ class ProjetController extends Controller
             ])
             ->values();
 
-        // « Mes projets » : membre du projet ou responsable d'une de ses tâches (sans requête par projet).
-        $mienne = fn (Projet $p) => $p->membres->contains('id', $moi->id)
-            || $p->taches->contains(fn (Tache $t) => $t->responsables->contains('id', $moi->id));
+        // « Mes projets » : référent, ou responsable d'une tâche du projet (relations déjà chargées).
+        $mienne = fn (Projet $p) => $p->personnesImpliquees()->contains('id', $moi->id);
 
         $ouvertes = Tache::whereNotIn('statut', [TacheStatut::Termine->value, TacheStatut::Annule->value]);
 
@@ -85,7 +84,7 @@ class ProjetController extends Controller
             'taches' => $taches,
             'resume' => $projet->resume(),
             'referents' => $projet->membres->filter(fn ($u) => $u->pivot->role === 'referent')->values(),
-            'impliques' => $projet->membres->filter(fn ($u) => $u->pivot->role !== 'referent')->values(),
+            'impliques' => $projet->impliquesHorsReferents(),
             'statutsCarte' => self::STATUTS_CARTE,
             'avertissements' => $projet->avertissements(),
             'etats' => ProjetEtat::cases(),
@@ -118,7 +117,7 @@ class ProjetController extends Controller
                 'created_by' => $request->user()->id,
             ]);
 
-            $this->syncMembres($projet, $data['referents'], $data['impliques']);
+            $this->syncReferents($projet, $data['referents']);
 
             return $projet;
         });
@@ -148,7 +147,7 @@ class ProjetController extends Controller
                 'date_limite' => $data['date_limite'] ?? null,
             ]);
 
-            $this->syncMembres($projet, $data['referents'], $data['impliques']);
+            $this->syncReferents($projet, $data['referents']);
         });
 
         return response()->json(['ok' => true, 'id' => $projet->id]);
@@ -194,7 +193,6 @@ class ProjetController extends Controller
             'projet' => $projet,
             'personnes' => User::personnes()->orderBy('name')->get(),
             'referents' => $existe ? $projet->membres->filter(fn ($u) => $u->pivot->role === 'referent')->pluck('id')->all() : [],
-            'impliques' => $existe ? $projet->membres->filter(fn ($u) => $u->pivot->role !== 'referent')->pluck('id')->all() : [],
             'palette' => self::PALETTE,
             'icones' => Icones::PROJET,
             'etatsCreation' => [ProjetEtat::EnAttente, ProjetEtat::EnCours],
@@ -213,8 +211,6 @@ class ProjetController extends Controller
             'date_limite' => ['nullable', 'date'],
             'referents' => ['required', 'array', 'min:1'],
             'referents.*' => ['integer', $personne],
-            'impliques' => ['nullable', 'array'],
-            'impliques.*' => ['integer', $personne],
         ];
 
         if ($creation) {
@@ -231,22 +227,13 @@ class ProjetController extends Controller
         ]);
 
         $data['referents'] = array_values(array_unique(array_map('intval', $data['referents'])));
-        // Un référent n'est pas aussi "impliqué" : le rôle de référent l'emporte.
-        $data['impliques'] = array_values(array_diff(array_unique(array_map('intval', $data['impliques'] ?? [])), $data['referents']));
 
         return $data;
     }
 
-    private function syncMembres(Projet $projet, array $referents, array $impliques): void
+    /** Seuls les référents sont saisis ; les impliqués se déduisent des tâches (Projet::personnesImpliquees). */
+    private function syncReferents(Projet $projet, array $referents): void
     {
-        $membres = [];
-        foreach ($impliques as $id) {
-            $membres[$id] = ['role' => 'implique'];
-        }
-        foreach ($referents as $id) {
-            $membres[$id] = ['role' => 'referent'];
-        }
-
-        $projet->membres()->sync($membres);
+        $projet->membres()->sync(array_fill_keys($referents, ['role' => 'referent']));
     }
 }

@@ -1,6 +1,6 @@
 {{--
     Formulaire de création / modification d'un projet, affiché dans la fenêtre modale (envoi en Ajax,
-    voir _modal-host). Variables : $projet, $personnes, $referents (ids), $impliques (ids), $palette,
+    voir _modal-host). Variables : $projet, $personnes, $referents (ids), $palette,
     $icones, $etatsCreation.
 --}}
 @php
@@ -89,18 +89,7 @@
             </div>
         </div>
 
-        <div class="mb-1">
-            <label class="form-label">Personnes impliquées</label>
-            <div class="form-selectgroup form-selectgroup-pills">
-                @foreach($personnes as $u)
-                    <label class="form-selectgroup-item">
-                        <input type="checkbox" name="impliques[]" value="{{ $u->id }}" class="form-selectgroup-input" @checked(in_array($u->id, $impliques))>
-                        <span class="form-selectgroup-label">{{ $u->name }}</span>
-                    </label>
-                @endforeach
-            </div>
-            <div class="form-hint">Un référent est déjà impliqué : inutile de le cocher ici.</div>
-        </div>
+        <div class="form-hint">Les personnes impliquées s'ajoutent automatiquement : ce sont les responsables des tâches du projet.</div>
     </div>
 
     <div class="modal-footer">
