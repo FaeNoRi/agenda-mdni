@@ -62,6 +62,14 @@ class User extends Authenticatable
         return $this->belongsTo(Horaire::class, 'id_horaire');
     }
 
+    /**
+     * Vraies personnes (filtres, affectations) : ni « Toute l'équipe » (id 0), ni l'entrée « Non ».
+     */
+    public function scopePersonnes($query)
+    {
+        return $query->where('id', '!=', 0)->where('name', '!=', 'Non');
+    }
+
     /** Tâches dont la personne est responsable. */
     public function tachesResponsable()
     {

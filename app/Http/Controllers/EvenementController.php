@@ -751,7 +751,7 @@ class EvenementController extends Controller
         $sallesDisponibles      = Salles::orderBy('nom_salle')
                                         ->get(['id','nom_salle']);
         // "Toute l'équipe" (id 0) et l'entrée "Non" ne sont pas des personnes filtrables
-        $animateursDisponibles  = User::where('id', '!=', 0)->where('name', '!=', 'Non')->orderBy('name')
+        $animateursDisponibles  = User::personnes()->orderBy('name')
                                      ->get(['id','name']);
         $typeColors = $typesDisponibles->mapWithKeys(fn ($t) => [$t => $this->typeColorHex($t)]);
 

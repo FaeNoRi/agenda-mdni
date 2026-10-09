@@ -1,8 +1,8 @@
 {{--
     Contenu de la fenêtre « Détail tâche » (même structure que « Détail événement »).
     Variables : $tache (projet, responsables, createur, liens, historiques.user, commentaires.user chargés),
-                $referents (collection d'utilisateurs).
-    Lecture seule pour l'instant : le changement de statut et les commentaires arrivent aux étapes suivantes.
+                $referents (collection d'utilisateurs), $statuts (cases de TacheStatut).
+    Les commentaires sont en lecture seule pour l'instant (ils arrivent à l'étape suivante).
 --}}
 @php
     $s = $tache->statut;
@@ -19,6 +19,16 @@
 </div>
 
 <div class="modal-body">
+    @can('delete', $tache)
+        <div class="alert alert-danger d-none" data-suppr-confirm role="alert">
+            <div class="d-flex align-items-center gap-2">
+                <span style="flex: 1;">Supprimer définitivement cette tâche, son historique et ses commentaires ?</span>
+                <button type="button" class="btn btn-sm btn-danger" data-supprimer="{{ $tache->id }}">Oui, supprimer</button>
+                <button type="button" class="btn btn-sm btn-link link-secondary" data-suppr-annuler>Annuler</button>
+            </div>
+        </div>
+    @endcan
+
     {{-- Bandeau : identifiant, statut, titre ; pastilles à droite --}}
     <div class="w-full p-3 mb-4 rounded d-flex justify-content-between align-items-center gap-3" style="background: {{ $couleur }}1f;">
         <div style="min-width: 0;">
@@ -79,6 +89,29 @@
             <x-icone name="message-2" :size="14" /> <strong>{{ $s->label() }} :</strong> {{ $tache->raison }}
         </div>
     @endif
+
+    @can('changeStatus', $tache)
+        <div class="mb-4">
+            <p class="mb-2"><strong>Changer le statut</strong></p>
+            <form action="{{ route('taches.statut', $tache) }}" method="POST" data-ajax-form data-apres="rouvrir" data-id="{{ $tache->id }}" novalidate>
+                @csrf
+                <input type="hidden" name="statut" value="{{ $s->value }}" data-statut-valeur data-courant="{{ $s->value }}">
+                <div class="alert alert-danger d-none" data-erreurs role="alert"></div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    @foreach($statuts as $st)
+                        <button type="button" class="pt-pastille {{ $st === $s ? 'on' : '' }}" data-choix-statut="{{ $st->value }}"
+                                data-exige="{{ $st->exigeRaison() ? 1 : 0 }}" style="--pc: {{ $st->couleur() }};">
+                            <x-statut-carre :statut="$st" :size="22" />{{ $st->label() }}
+                        </button>
+                    @endforeach
+                </div>
+                <div class="d-none mb-2" data-raison-bloc>
+                    <textarea name="raison" class="form-control" rows="2" maxlength="1000" placeholder="Pourquoi ? (obligatoire)"></textarea>
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary d-none" data-enregistrer-statut>Enregistrer le statut</button>
+            </form>
+        </div>
+    @endcan
 
     @if($tache->details)
         <div class="mb-4">
@@ -150,8 +183,14 @@
 </div>
 
 <div class="modal-footer">
-    <p class="text-muted small" style="margin: auto; padding-left: 85px;">
+    @can('delete', $tache)
+        <button type="button" class="btn btn-outline-danger" data-supprimer-demande>Supprimer</button>
+    @endcan
+    <p class="text-muted small mb-0" style="margin: auto;">
         Dernière modification le <b>{{ $tache->updated_at->translatedFormat('d F Y') }}</b>
     </p>
+    @can('update', $tache)
+        <button type="button" class="btn btn-outline-primary" data-modifier-tache="{{ $tache->id }}">Modifier</button>
+    @endcan
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
 </div>

@@ -4,7 +4,12 @@
     <x-slot name="header">
         <div class="flex flex-wrap justify-between items-center gap-2 w-full">
             <h2 class="page-title text-xl font-semibold">{{ __('Projets & tâches') }}</h2>
-            @include('projets._onglets', ['actif' => 'taches'])
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                @can('create', \App\Models\Tache::class)
+                    <button type="button" class="btn btn-primary" data-tache-nouvelle>Nouvelle tâche</button>
+                @endcan
+                @include('projets._onglets', ['actif' => 'taches'])
+            </div>
         </div>
     </x-slot>
 
