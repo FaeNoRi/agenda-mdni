@@ -36,6 +36,7 @@ class UserController extends Controller
             'password' => 'required|confirmed|min:6',
             'is_admin' => 'nullable|boolean',
             'is_equipe' => 'nullable|boolean',
+            'is_civique' => 'nullable|boolean',
             'is_email' => 'nullable|boolean',
         ]);
 
@@ -59,6 +60,7 @@ class UserController extends Controller
         $validated['password'] = bcrypt($validated['password']);
         $validated['is_admin'] = $request->boolean('is_admin');
         $validated['is_equipe'] = $request->boolean('is_equipe');
+        $validated['is_civique'] = $request->boolean('is_civique');
         $validated['is_email'] = $request->boolean('is_email');
         $validated['id_horaire'] = $horaire->id;
 
@@ -95,6 +97,7 @@ class UserController extends Controller
             'password' => 'nullable|confirmed|min:6',
             'is_admin' => 'nullable|boolean',
             'is_equipe' => 'nullable|boolean',
+            'is_civique' => 'nullable|boolean',
             'is_email' => 'nullable|boolean',
             'theme' => 'in:blue,azure,indigo,purple,pink,red,orange,yellow,lime,green',
         ]);
@@ -107,6 +110,7 @@ class UserController extends Controller
 
         $validated['is_admin'] = $request->boolean('is_admin');
         $validated['is_equipe'] = $request->boolean('is_equipe');
+        $validated['is_civique'] = $request->boolean('is_civique');
         $validated['is_email'] = $request->boolean('is_email');
 
         // Si l'utilisateur n'a pas de planning, on en crée un

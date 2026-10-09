@@ -17,6 +17,7 @@
             </div>
         </div>
 
+        @unless(auth()->user()->is_civique)
         <div class="relative" @click.stop>
             <div class="dropdown" style="padding-left: 8px;">
                 <button class="btn btn-md btn-outline-{{ $clr }} btn-icon" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Actions">
@@ -56,6 +57,7 @@
                 </ul>
             </div>
         </div>
+        @endunless
     </div>
 
     {{-- BODY --}}

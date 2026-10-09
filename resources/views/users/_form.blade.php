@@ -57,6 +57,14 @@
             </div>
             <div class="col-md-3">
                 <div class="form-check">
+                    <input type="hidden" name="is_civique" value="0">
+                    <input class="form-check-input" type="checkbox" name="is_civique" value="1" {{ old('is_civique', $user->is_civique ?? false) ? 'checked' : '' }}>
+                    <label class="form-check-label">Service civique</label>
+                </div>
+                <div class="form-hint">Consultation uniquement</div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-check">
                     <input type="hidden" name="is_email" value="0">
                     <input class="form-check-input" type="checkbox" name="is_email" value="1" {{ old('is_email', $user->is_email ?? false) ? 'checked' : '' }}>
                     <label class="form-check-label">Envoi d'email</label>

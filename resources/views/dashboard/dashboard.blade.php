@@ -116,9 +116,11 @@
             </h2>
 
             <div class="flex items-center gap-2">
+                @unless(auth()->user()->is_civique)
                 <button id="btnAddEvent" type="button" class="btn btn-primary">
                     Ajouter un événement
                 </button>
+                @endunless
 
                 <div class="btn-group mx-2" id="dayNavGroup" role="group" aria-label="Navigation par jour">
                     <button id="btn-day-prev" type="button" class="btn btn-outline-primary" onclick="shiftDay(-1)" aria-label="Jour précédent">

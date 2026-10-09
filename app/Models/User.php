@@ -21,6 +21,7 @@ class User extends Authenticatable
         'password',
         'is_admin',
         'is_equipe',
+        'is_civique',
         'id_horaire',
         'is_email',
         'theme',
@@ -48,6 +49,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_admin' => 'boolean',
             'is_equipe' => 'boolean',
+            'is_civique' => 'boolean',
             'id_horaire' => 'integer',
         ];
     }

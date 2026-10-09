@@ -28,6 +28,7 @@
                                 <th>Email</th>
                                 <th>Admin</th>
                                 <th>Équipe</th>
+                                <th>Service civique</th>
                                 <th>Envoi Email</th>
                                 <th>Actions</th>
                             </tr>
@@ -44,6 +45,10 @@
                                 </td>
                                 <td>{!! $user->is_equipe
                                     ? '<span class="badge bg-info text-white">Oui</span>'
+                                    : '<span class="badge bg-secondary text-white">Non</span>' !!}
+                                </td>
+                                <td>{!! $user->is_civique
+                                    ? '<span class="badge bg-purple text-white">Oui</span>'
                                     : '<span class="badge bg-secondary text-white">Non</span>' !!}
                                 </td>
                                 <td>{!! $user->is_email
