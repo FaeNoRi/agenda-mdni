@@ -62,6 +62,16 @@
     .pt-mini__raison { padding: 4px 8px; border-radius: 6px; font-size: 11px; }
     .pt-grille-mini { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
 
+    /*
+     * Formulaires en modale : le <form> s'intercale entre .modal-content et .modal-body, ce qui casse le
+     * défilement de Bootstrap (le bas de la fenêtre, avec le bouton d'enregistrement, restait inatteignable
+     * sur un écran peu haut). Le formulaire devient donc lui-même la colonne flex bornée à la hauteur de l'écran.
+     */
+    .modal-dialog-scrollable .modal-content > form { display: flex; flex-direction: column; min-height: 0; max-height: calc(100vh - 3.5rem); max-height: calc(100dvh - 3.5rem); overflow: hidden; }
+    .modal-dialog-scrollable .modal-content > form > .modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+    .modal-dialog-scrollable .modal-content > form > .modal-header,
+    .modal-dialog-scrollable .modal-content > form > .modal-footer { flex: none; }
+
     .pt-pick { cursor: pointer; margin: 0; }
     .pt-pick__pastille { display: block; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #dee2e6; }
     .pt-pick__icone { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid #dee2e6; border-radius: 8px; background: #fff; color: #495057; }

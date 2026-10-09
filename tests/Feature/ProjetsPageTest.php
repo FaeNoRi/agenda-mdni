@@ -233,4 +233,17 @@ class ProjetsPageTest extends TestCase
             $this->assertTrue(\App\Support\Icones::existe($statut->icone()), $statut->name);
         }
     }
+
+    public function test_les_formulaires_en_modale_restent_defilables(): void
+    {
+        // Le <form> s'intercale entre .modal-content et .modal-body : sans cette règle, le bas de la
+        // fenêtre (bouton d'enregistrement) devenait inatteignable sur un écran peu haut.
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        foreach (['/projets', '/taches'] as $page) {
+            $this->actingAs($admin)->get($page)
+                ->assertSee('.modal-dialog-scrollable .modal-content > form', false)
+                ->assertSee('overflow-y: auto', false);
+        }
+    }
 }
