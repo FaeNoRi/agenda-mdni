@@ -1,5 +1,6 @@
 {{-- Styles propres à Projets & tâches (pas de build front en production : CSS dans la vue). --}}
 <style>
+    [x-cloak] { display: none !important; }
     .pt-carre { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 6px; color: #fff; cursor: default; }
     .pt-carre:hover::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 20; width: max-content; max-width: 200px; padding: 4px 8px; border-radius: 6px; background: #182433; color: #fff; font-size: 12px; font-weight: 500; text-align: center; pointer-events: none; }
 

@@ -62,6 +62,7 @@
                 const change = valeur.value !== valeur.dataset.courant;
                 form.querySelector('[data-enregistrer-statut]').classList.toggle('d-none', !change);
                 form.querySelector('[data-raison-bloc]').classList.toggle('d-none', !(change && choix.dataset.exige === '1'));
+                form.querySelector('[data-portee-bloc]')?.classList.toggle('d-none', !(change && valeur.value === 'annule'));
                 return;
             }
 

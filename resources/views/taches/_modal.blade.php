@@ -83,6 +83,17 @@
         </div>
     </div>
 
+    @if($tache->recurrence)
+        <div class="mb-4 p-2 rounded d-flex align-items-center gap-2" style="background: #f1f3f5; font-size: 13px;">
+            <x-icone name="repeat" :size="15" />
+            <span>
+                <strong>{{ $tache->recurrence->libelle() }}</strong> jusqu'au {{ $tache->recurrence->date_fin->format('d/m/Y') }}
+                @if($tache->recurrence->arretee) · <span style="color: #d63939;">série arrêtée</span>
+                @else <span style="color: #667382;">· l'occurrence suivante est créée quand celle-ci est terminée</span>@endif
+            </span>
+        </div>
+    @endif
+
     @if($tache->raison && $s->exigeRaison())
         <div class="mb-4 p-2 rounded" style="background: {{ $s->couleur() }}1f; color: {{ $s->couleur() }}; font-size: 13px;">
             <x-icone name="message-2" :size="14" /> <strong>{{ $s->label() }} :</strong> {{ $tache->raison }}
@@ -107,6 +118,15 @@
                 <div class="d-none mb-2" data-raison-bloc>
                     <textarea name="raison" class="form-control" rows="2" maxlength="1000" placeholder="Pourquoi ? (obligatoire)"></textarea>
                 </div>
+                @if($tache->recurrence)
+                    <div class="d-none mb-2" data-portee-bloc>
+                        <div class="form-label mb-1">Cette tâche est récurrente :</div>
+                        <label class="form-check mb-1"><input type="radio" class="form-check-input" name="portee" value="occurrence" checked>
+                            <span class="form-check-label">Annuler cette occurrence seulement (la suivante sera créée)</span></label>
+                        <label class="form-check mb-0"><input type="radio" class="form-check-input" name="portee" value="serie">
+                            <span class="form-check-label">Annuler toutes les occurrences jusqu'au {{ $tache->recurrence->date_fin->format('d/m/Y') }}</span></label>
+                    </div>
+                @endif
                 <button type="submit" class="btn pt-btn-doux d-none" data-enregistrer-statut>Enregistrer le statut</button>
             </form>
         </div>

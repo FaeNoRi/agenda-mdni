@@ -15,7 +15,7 @@
      data-mien="{{ $ids->contains(auth()->id()) ? 1 : 0 }}" data-date="{{ $tache->date_limite->toDateString() }}">
     <div style="display: flex; align-items: flex-start; gap: 8px;">
         <x-statut-carre :statut="$s" :size="24" />
-        <div class="pt-mini__titre" @if($annule) style="text-decoration: line-through; color: #9aa0ac;" @endif>{{ $tache->titre }}</div>
+        <div class="pt-mini__titre" @if($annule) style="text-decoration: line-through; color: #9aa0ac;" @endif>{{ $tache->titre }}@if($tache->recurrence_id) <span title="Tâche récurrente" style="color: #9aa0ac;"><x-icone name="repeat" :size="13" /></span>@endif</div>
     </div>
     @if($tache->raison && $s->exigeRaison())
         <div class="pt-mini__raison" style="background: {{ $s->couleur() }}1f; color: {{ $s->couleur() }};">

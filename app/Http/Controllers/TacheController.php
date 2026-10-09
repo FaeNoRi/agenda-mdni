@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\TacheStatut;
 use App\Models\Projet;
+use App\Models\Recurrence;
 use App\Models\Tache;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
@@ -61,7 +62,7 @@ class TacheController extends Controller
     {
         Gate::authorize('view', $tache);
 
-        $tache->load(['projet.referents', 'responsables', 'createur', 'liens', 'historiques.user', 'commentaires.user']);
+        $tache->load(['projet.referents', 'responsables', 'createur', 'liens', 'historiques.user', 'commentaires.user', 'recurrence']);
 
         return view('taches._modal', [
             'tache' => $tache,
@@ -85,10 +86,15 @@ class TacheController extends Controller
     {
         Gate::authorize('create', Tache::class);
 
-        $data = $this->valider($request);
+        $data = $this->valider($request, true);
 
         $tache = DB::transaction(function () use ($data, $request) {
+            $recurrence = !empty($data['recurrent'])
+                ? Recurrence::create(['frequence' => $data['frequence'], 'date_fin' => $data['date_fin'], 'created_by' => $request->user()->id])
+                : null;
+
             $tache = Tache::create([
+                'recurrence_id' => $recurrence?->id,
                 'projet_id' => $data['projet_id'] ?? null,
                 'titre' => $data['titre'],
                 'details' => $data['details'] ?? null,
@@ -151,11 +157,12 @@ class TacheController extends Controller
         $data = $request->validate([
             'statut' => ['required', Rule::enum(TacheStatut::class)],
             'raison' => ['nullable', 'string', 'max:1000'],
+            'portee' => ['nullable', Rule::in([Tache::PORTEE_OCCURRENCE, Tache::PORTEE_SERIE])],
         ], [
             'statut.required' => 'Choisissez un statut.',
         ]);
 
-        $change = $tache->changerStatut(TacheStatut::from($data['statut']), $request->user(), $data['raison'] ?? null);
+        $change = $tache->changerStatut(TacheStatut::from($data['statut']), $request->user(), $data['raison'] ?? null, $data['portee'] ?? null);
 
         return response()->json(['ok' => true, 'change' => $change, 'id' => $tache->id]);
     }
@@ -175,9 +182,15 @@ class TacheController extends Controller
         ]);
     }
 
-    private function valider(Request $request): array
+    private function valider(Request $request, bool $creation = false): array
     {
-        $data = $request->validate([
+        $recurrence = $creation ? [
+            'recurrent' => ['nullable', 'boolean'],
+            'frequence' => ['required_if:recurrent,1', 'nullable', Rule::in([Recurrence::HEBDOMADAIRE, Recurrence::MENSUELLE])],
+            'date_fin' => ['required_if:recurrent,1', 'nullable', 'date', 'after:date_limite'],
+        ] : [];
+
+        $data = $request->validate($recurrence + [
             'titre' => ['required', 'string', 'max:190'],
             'projet_id' => ['nullable', 'integer', 'exists:projets,id'],
             'details' => ['nullable', 'string', 'max:5000'],

@@ -18,6 +18,9 @@ class Tache extends Model
 {
     use HasFactory, HasRetard;
 
+    public const PORTEE_OCCURRENCE = 'occurrence';
+    public const PORTEE_SERIE = 'serie';
+
     protected $table = 'taches';
 
     protected $fillable = ['projet_id', 'titre', 'details', 'date_limite', 'statut', 'raison', 'recurrence_id', 'created_by'];
@@ -120,7 +123,7 @@ class Tache extends Model
      * Change le statut et l'inscrit dans l'historique. « En attente » et « Bloqué » exigent une raison.
      * Retourne false si le statut est déjà celui demandé (rien n'est écrit).
      */
-    public function changerStatut(TacheStatut $nouveau, ?User $par = null, ?string $raison = null): bool
+    public function changerStatut(TacheStatut $nouveau, ?User $par = null, ?string $raison = null, ?string $portee = null): bool
     {
         $raison = $raison !== null ? trim($raison) : null;
 
@@ -130,13 +133,21 @@ class Tache extends Model
             ]);
         }
 
+        // Annuler une tâche récurrente : il faut dire si c'est cette occurrence ou toute la série.
+        $serie = $this->recurrence_id && $nouveau === TacheStatut::Annule && $this->statut !== $nouveau;
+        if ($serie && !in_array($portee, [self::PORTEE_OCCURRENCE, self::PORTEE_SERIE], true)) {
+            throw ValidationException::withMessages([
+                'portee' => 'Choisissez : annuler cette occurrence seulement, ou toutes les suivantes.',
+            ]);
+        }
+
         if ($this->statut === $nouveau) {
             return false;
         }
 
         $garder = $nouveau->exigeRaison() ? $raison : null;
 
-        DB::transaction(function () use ($nouveau, $par, $garder) {
+        DB::transaction(function () use ($nouveau, $par, $garder, $serie, $portee) {
             $this->forceFill(['statut' => $nouveau, 'raison' => $garder])->save();
 
             $this->historiques()->create([
@@ -144,6 +155,16 @@ class Tache extends Model
                 'statut' => $nouveau,
                 'raison' => $garder,
             ]);
+
+            // Série : « Terminé » ou « Annulé (cette occurrence) » fait naître la suivante ;
+            // « Annulé (toutes) » arrête la série.
+            if ($this->recurrence_id) {
+                if ($serie && $portee === self::PORTEE_SERIE) {
+                    $this->recurrence->update(['arretee' => true]);
+                } elseif ($nouveau === TacheStatut::Termine || $serie) {
+                    $this->recurrence->genererSuivante($this);
+                }
+            }
         });
 
         return true;

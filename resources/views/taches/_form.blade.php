@@ -42,6 +42,36 @@
             </div>
         </div>
 
+        {{-- Récurrence : à la création seulement ; la suivante naît quand l'occurrence se termine --}}
+        @if($edition && $tache->recurrence)
+            <div class="mb-3 form-hint">
+                <x-icone name="repeat" :size="14" /> Tâche récurrente : {{ mb_strtolower($tache->recurrence->libelle()) }} jusqu'au {{ $tache->recurrence->date_fin->format('d/m/Y') }}.
+            </div>
+        @elseif(!$edition)
+            <div class="mb-3" x-data="{ rec: false }">
+                <label class="form-check mb-2">
+                    <input type="checkbox" class="form-check-input" name="recurrent" value="1" x-model="rec">
+                    <span class="form-check-label"><x-icone name="repeat" :size="14" /> Tâche récurrente</span>
+                </label>
+                <div x-show="rec" x-cloak>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">Fréquence</label>
+                            <div class="d-flex gap-3">
+                                <label class="form-check mb-0"><input type="radio" class="form-check-input" name="frequence" value="hebdomadaire" checked><span class="form-check-label">Chaque semaine</span></label>
+                                <label class="form-check mb-0"><input type="radio" class="form-check-input" name="frequence" value="mensuelle"><span class="form-check-label">Chaque mois</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label required" for="tacheDateFin">Jusqu'au</label>
+                            <input type="date" class="form-control" id="tacheDateFin" name="date_fin">
+                        </div>
+                    </div>
+                    <div class="form-hint mt-1">La date limite ci-dessus est celle de la première occurrence. La suivante est créée quand celle-ci est terminée.</div>
+                </div>
+            </div>
+        @endif
+
         <div class="mb-3">
             <label class="form-label required">Responsable(s)</label>
             <div class="form-selectgroup form-selectgroup-pills">
