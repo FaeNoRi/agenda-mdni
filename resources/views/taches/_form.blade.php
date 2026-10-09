@@ -84,6 +84,24 @@
             </div>
         </div>
 
+        {{-- Statut de départ : à la création seulement (ensuite, on change le statut depuis la fiche) --}}
+        @unless($edition)
+            <div class="mb-3" x-data="{ s: 'a_faire' }">
+                <label class="form-label">Statut de départ</label>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach($statutsDepart as $st)
+                        <label class="pt-pick-etat">
+                            <input type="radio" name="statut" value="{{ $st->value }}" class="visually-hidden" x-model="s" @checked($st->value === 'a_faire')>
+                            <span class="pt-pastille" style="--pc: {{ $st->couleur() }};"><x-statut-carre :statut="$st" :size="22" />{{ $st->label() }}</span>
+                        </label>
+                    @endforeach
+                </div>
+                <div class="mt-2" x-show="s === 'en_attente' || s === 'bloque'" x-cloak>
+                    <textarea name="raison" class="form-control" rows="2" maxlength="1000" placeholder="Pourquoi ? (obligatoire)"></textarea>
+                </div>
+            </div>
+        @endunless
+
         <div class="mb-3">
             <label class="form-label" for="tacheDetails">Détails</label>
             <textarea class="form-control" id="tacheDetails" name="details" rows="3" maxlength="5000">{{ $tache->details }}</textarea>

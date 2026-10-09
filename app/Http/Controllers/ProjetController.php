@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ProjetEtat;
 use App\Enums\TacheStatut;
 use App\Models\Projet;
+use App\Models\ProjetHistorique;
 use App\Models\Tache;
 use App\Models\User;
 use App\Support\Icones;
@@ -74,6 +75,7 @@ class ProjetController extends Controller
         Gate::authorize('view', $projet);
 
         $projet->load(['membres', 'createur', 'liens', 'commentaires.user', 'taches.responsables']);
+        $historiques = $projet->historiques()->with('user')->limit(200)->get();
 
         $taches = $projet->taches
             ->sortBy(fn (Tache $t) => [$t->statut->estOuvert() ? 0 : 1, $t->date_limite->toDateString(), $t->id])
@@ -88,6 +90,7 @@ class ProjetController extends Controller
             'statutsCarte' => self::STATUTS_CARTE,
             'avertissements' => $projet->avertissements(),
             'etats' => ProjetEtat::cases(),
+            'historiques' => $historiques,
         ]);
     }
 
@@ -119,6 +122,8 @@ class ProjetController extends Controller
 
             $this->syncReferents($projet, $data['referents']);
 
+            ProjetHistorique::noter($projet->id, ProjetHistorique::PROJET, 'Projet créé', $request->user());
+
             return $projet;
         });
 
@@ -138,7 +143,9 @@ class ProjetController extends Controller
 
         $data = $this->valider($request, false);
 
-        DB::transaction(function () use ($data, $projet) {
+        DB::transaction(function () use ($data, $projet, $request) {
+            $avant = ['nom' => $projet->nom, 'date' => $projet->date_limite?->format('d/m/Y'), 'referents' => $projet->referents()->pluck('users.id')->sort()->values()->all()];
+
             $projet->update([
                 'nom' => $data['nom'],
                 'description' => $data['description'] ?? null,
@@ -148,6 +155,19 @@ class ProjetController extends Controller
             ]);
 
             $this->syncReferents($projet, $data['referents']);
+
+            $projet->refresh();
+            if ($avant['nom'] !== $projet->nom) {
+                ProjetHistorique::noter($projet->id, ProjetHistorique::PROJET, 'Projet renommé : « '.$avant['nom'].' » → « '.$projet->nom.' »', $request->user());
+            }
+            if ($avant['date'] !== $projet->date_limite?->format('d/m/Y')) {
+                ProjetHistorique::noter($projet->id, ProjetHistorique::PROJET,
+                    'Date limite du projet : '.($avant['date'] ?? 'aucune').' → '.($projet->date_limite?->format('d/m/Y') ?? 'aucune'), $request->user());
+            }
+            if ($avant['referents'] !== $projet->referents()->pluck('users.id')->sort()->values()->all()) {
+                ProjetHistorique::noter($projet->id, ProjetHistorique::PROJET,
+                    'Référents : '.$projet->referents()->orderBy('name')->pluck('users.name')->join(', '), $request->user());
+            }
         });
 
         return response()->json(['ok' => true, 'id' => $projet->id]);
@@ -174,7 +194,7 @@ class ProjetController extends Controller
             'etat.required' => 'Choisissez un état.',
         ]);
 
-        $change = $projet->changerEtat(ProjetEtat::from($data['etat']), $data['raison'] ?? null);
+        $change = $projet->changerEtat(ProjetEtat::from($data['etat']), $data['raison'] ?? null, $request->user());
 
         return response()->json([
             'ok' => true,

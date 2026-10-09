@@ -18,7 +18,7 @@
         <div class="pt-kpis">
             @foreach([
                 ['Projets actifs', $kpis['projets'], '#4263eb', 'folders'],
-                ['Tâches ouvertes', $kpis['ouvertes'], '#4299e1', 'list-check'],
+                ['Tâches en cours', $kpis['ouvertes'], '#4299e1', 'list-check'],
                 ['En retard', $kpis['retard'], '#d63939', 'alert-triangle'],
                 ['À valider', $kpis['a_valider'], '#ae3ec9', 'eye-check'],
             ] as [$libelle, $nb, $couleur, $icone])

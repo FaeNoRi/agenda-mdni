@@ -155,6 +155,30 @@
         @endif
 
         <div class="row g-3 mt-2">
+            <div class="col-12">
+                <div class="pt-panneau">
+                    <h3><x-icone name="clock" :size="16" /> Historique du projet <span style="font-weight: 400; color: #9aa0ac;">({{ $historiques->count() }})</span></h3>
+                    @if($historiques->isEmpty())
+                        <div style="font-size: 12px; color: #9aa0ac;">Aucun changement enregistré.</div>
+                    @else
+                        <div class="pt-histo" tabindex="0" aria-label="Historique du projet, défilable">
+                            @foreach($historiques as $h)
+                                <div class="pt-histo__ligne">
+                                    <span class="pt-histo__puce" style="background: {{ $h->type === 'tache' ? '#4299e1' : '#f59f00' }};" title="{{ $h->type === 'tache' ? 'Tâche' : 'Projet' }}"></span>
+                                    <div style="min-width: 0;">
+                                        @if($h->tache_id)
+                                            <a href="#" data-tache="{{ $h->tache_id }}" onclick="event.preventDefault()" class="pt-histo__texte">{{ $h->libelle }}</a>
+                                        @else
+                                            <span class="pt-histo__texte">{{ $h->libelle }}</span>
+                                        @endif
+                                        <div class="pt-histo__meta">{{ $h->user?->name ?? 'Ancien utilisateur' }} · {{ $h->created_at->format('d/m/Y à H:i') }}</div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
             <div class="col-md-6">
                 <div class="pt-panneau">
                     <h3><x-icone name="messages" :size="16" /> Commentaires</h3>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\TacheStatut;
 use App\Models\Projet;
+use App\Models\ProjetHistorique;
 use App\Models\Recurrence;
 use App\Models\Tache;
 use App\Models\User;
@@ -20,6 +21,9 @@ use Illuminate\Validation\Rule;
  */
 class TacheController extends Controller
 {
+    /** Statuts proposés à la création (on ne crée pas une tâche déjà terminée ou annulée). */
+    public const STATUTS_DE_DEPART = ['a_faire', 'en_cours', 'a_valider', 'en_attente', 'bloque'];
+
     public function index(): View
     {
         Gate::authorize('viewAny', Tache::class);
@@ -99,7 +103,8 @@ class TacheController extends Controller
                 'titre' => $data['titre'],
                 'details' => $data['details'] ?? null,
                 'date_limite' => $data['date_limite'],
-                'statut' => TacheStatut::AFaire,
+                'statut' => TacheStatut::from($data['statut'] ?? TacheStatut::AFaire->value),
+                'raison' => $data['raison'] ?? null,
                 'created_by' => $request->user()->id,
             ]);
 
@@ -125,7 +130,14 @@ class TacheController extends Controller
 
         $data = $this->valider($request);
 
-        DB::transaction(function () use ($data, $tache) {
+        DB::transaction(function () use ($data, $tache, $request) {
+            $avant = [
+                'titre' => $tache->titre,
+                'date' => $tache->date_limite->format('d/m/Y'),
+                'projet' => $tache->projet_id,
+                'resp' => $tache->responsables()->pluck('users.id')->sort()->values()->all(),
+            ];
+
             $tache->update([
                 'projet_id' => $data['projet_id'] ?? null,
                 'titre' => $data['titre'],
@@ -135,6 +147,8 @@ class TacheController extends Controller
 
             $tache->responsables()->sync($data['responsables']);
             $this->remplacerLiens($tache, $data['liens']);
+
+            $this->noterModifications($tache->refresh(), $avant, $request->user());
         });
 
         return response()->json(['ok' => true, 'id' => $tache->id]);
@@ -144,6 +158,7 @@ class TacheController extends Controller
     {
         Gate::authorize('delete', $tache);
 
+        ProjetHistorique::noter($tache->projet_id, ProjetHistorique::TACHE, 'Tâche « '.$tache->titre.' » supprimée', request()->user());
         $tache->delete();
 
         return response()->json(['ok' => true]);
@@ -176,6 +191,7 @@ class TacheController extends Controller
             'projets' => Projet::orderBy('nom')->get(),
             'personnes' => User::personnes()->orderBy('name')->get(),
             'choisis' => $tache->exists ? $tache->responsables->pluck('id')->all() : [],
+            'statutsDepart' => array_map(fn ($v) => TacheStatut::from($v), self::STATUTS_DE_DEPART),
             'liens' => $tache->exists
                 ? $tache->liens->map(fn ($l) => ['libelle' => $l->libelle, 'url' => $l->url])->values()->all()
                 : [],
@@ -190,7 +206,12 @@ class TacheController extends Controller
             'date_fin' => ['required_if:recurrent,1', 'nullable', 'date', 'after:date_limite'],
         ] : [];
 
-        $data = $request->validate($recurrence + [
+        $depart = $creation ? [
+            'statut' => ['nullable', Rule::in(self::STATUTS_DE_DEPART)],
+            'raison' => ['nullable', 'string', 'max:1000'],
+        ] : [];
+
+        $data = $request->validate($recurrence + $depart + [
             'titre' => ['required', 'string', 'max:190'],
             'projet_id' => ['nullable', 'integer', 'exists:projets,id'],
             'details' => ['nullable', 'string', 'max:5000'],
@@ -209,6 +230,16 @@ class TacheController extends Controller
             'liens.*.url.url' => 'Un des liens n\'est pas une adresse valide (https://…).',
         ]);
 
+        // « En attente » et « Bloqué » exigent une raison, comme lors d'un changement de statut.
+        if ($creation && ($statut = TacheStatut::tryFrom($data['statut'] ?? '')) && $statut->exigeRaison() && !filled($data['raison'] ?? null)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'raison' => 'Précisez la raison pour le statut « '.$statut->label().' ».',
+            ]);
+        }
+        if ($creation && !(TacheStatut::tryFrom($data['statut'] ?? '')?->exigeRaison())) {
+            $data['raison'] = null;
+        }
+
         $data['liens'] = collect($data['liens'] ?? [])
             ->filter(fn ($l) => filled($l['url'] ?? null))
             ->map(fn ($l) => ['libelle' => filled($l['libelle'] ?? null) ? $l['libelle'] : null, 'url' => $l['url']])
@@ -216,6 +247,27 @@ class TacheController extends Controller
             ->all();
 
         return $data;
+    }
+
+    /** Journal du projet : ce qui a changé sur la tâche (intitulé, date, projet, responsables). */
+    private function noterModifications(Tache $tache, array $avant, User $par): void
+    {
+        $projetAvant = $avant['projet'];
+        $t = '« '.$tache->titre.' »';
+
+        if ($projetAvant !== $tache->projet_id) {
+            ProjetHistorique::noter($projetAvant, ProjetHistorique::TACHE, 'Tâche '.$t.' retirée du projet', $par);
+            ProjetHistorique::noter($tache->projet_id, ProjetHistorique::TACHE, 'Tâche '.$t.' ajoutée au projet', $par, $tache->id);
+        }
+        if ($avant['titre'] !== $tache->titre) {
+            ProjetHistorique::noter($tache->projet_id, ProjetHistorique::TACHE, 'Tâche renommée : « '.$avant['titre'].' » → '.$t, $par, $tache->id);
+        }
+        if ($avant['date'] !== $tache->date_limite->format('d/m/Y')) {
+            ProjetHistorique::noter($tache->projet_id, ProjetHistorique::TACHE, $t.' : date limite '.$avant['date'].' → '.$tache->date_limite->format('d/m/Y'), $par, $tache->id);
+        }
+        if ($avant['resp'] !== $tache->responsables()->pluck('users.id')->sort()->values()->all()) {
+            ProjetHistorique::noter($tache->projet_id, ProjetHistorique::TACHE, $t.' : responsables '.$tache->responsables()->orderBy('name')->pluck('users.name')->join(', '), $par, $tache->id);
+        }
     }
 
     private function remplacerLiens(Tache $tache, array $liens): void

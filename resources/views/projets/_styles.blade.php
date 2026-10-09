@@ -117,5 +117,14 @@
     .pt-mini--clic { cursor: pointer; transition: box-shadow .15s; }
     .pt-mini--clic:hover, .pt-mini--clic:focus-visible { box-shadow: 0 3px 10px rgba(24, 36, 51, .12); outline: none; }
 
+    /* Historique d'un projet : hauteur bornée, défilement interne, le plus récent en haut */
+    .pt-histo { max-height: 300px; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+    .pt-histo__ligne { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f1f3f5; }
+    .pt-histo__ligne:last-child { border-bottom: 0; }
+    .pt-histo__puce { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; }
+    .pt-histo__texte { font-size: 13px; color: #182433; text-decoration: none; overflow-wrap: anywhere; }
+    a.pt-histo__texte:hover { color: var(--tblr-primary); text-decoration: underline; }
+    .pt-histo__meta { font-size: 11.5px; color: #9aa0ac; }
+
     @media (max-width: 576px) { .pt-meta { grid-template-columns: 1fr; } .pt-kpi { width: calc(50% - 5px); padding: 8px 10px; } }
 </style>

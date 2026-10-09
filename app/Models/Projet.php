@@ -81,6 +81,11 @@ class Projet extends Model
         return $this->hasMany(Tache::class);
     }
 
+    public function historiques(): HasMany
+    {
+        return $this->hasMany(ProjetHistorique::class)->orderByDesc('created_at')->orderByDesc('id');
+    }
+
     public function commentaires(): MorphMany
     {
         return $this->morphMany(Commentaire::class, 'commentable')->orderBy('created_at')->orderBy('id');
@@ -127,7 +132,7 @@ class Projet extends Model
      * Les autres incohérences ne bloquent pas : voir avertissements().
      * Retourne false si l'état est déjà celui demandé.
      */
-    public function changerEtat(ProjetEtat $nouveau, ?string $raison = null): bool
+    public function changerEtat(ProjetEtat $nouveau, ?string $raison = null, ?User $par = null): bool
     {
         $raison = $raison !== null ? trim($raison) : null;
 
@@ -147,7 +152,11 @@ class Projet extends Model
             return false;
         }
 
+        $avant = $this->etat;
         $this->forceFill(['etat' => $nouveau, 'raison' => $nouveau->exigeRaison() ? $raison : null])->save();
+
+        ProjetHistorique::noter($this->id, ProjetHistorique::PROJET,
+            'État du projet : '.$avant->label().' → '.$nouveau->label().($nouveau->exigeRaison() ? ' ('.$raison.')' : ''), $par);
 
         return true;
     }

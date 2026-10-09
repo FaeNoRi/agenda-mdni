@@ -41,6 +41,10 @@ class Tache extends Model
                 'statut' => $tache->statut,
                 'raison' => $tache->raison,
             ]);
+
+            ProjetHistorique::noter($tache->projet_id, ProjetHistorique::TACHE,
+                'Tâche « '.$tache->titre.' » créée'.($tache->statut === TacheStatut::AFaire ? '' : ' ('.$tache->statut->label().')'),
+                $tache->createur, $tache->id);
         });
     }
 
@@ -148,7 +152,11 @@ class Tache extends Model
         $garder = $nouveau->exigeRaison() ? $raison : null;
 
         DB::transaction(function () use ($nouveau, $par, $garder, $serie, $portee) {
+            $avant = $this->statut;
             $this->forceFill(['statut' => $nouveau, 'raison' => $garder])->save();
+
+            ProjetHistorique::noter($this->projet_id, ProjetHistorique::TACHE,
+                '« '.$this->titre.' » : '.$avant->label().' → '.$nouveau->label().($garder ? ' ('.$garder.')' : ''), $par, $this->id);
 
             $this->historiques()->create([
                 'user_id' => $par?->id,
