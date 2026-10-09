@@ -193,6 +193,12 @@ class Projet extends Model
      *  - actives : hors annulées, base de l'anneau « terminées / total » ;
      *  - par_statut : [valeur du statut => nombre] (statuts à 0 omis).
      */
+    /** Filtre « En retard » : date limite du projet dépassée, ou au moins une tâche en retard. */
+    public function aDuRetard(): bool
+    {
+        return $this->estEnRetard() || $this->tachesCollection()->contains(fn (Tache $t) => $t->estEnRetard());
+    }
+
     public function resume(): array
     {
         $taches = $this->tachesCollection();

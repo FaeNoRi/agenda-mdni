@@ -107,6 +107,25 @@ class ProjetsPageTest extends TestCase
         $this->assertMatchesRegularExpression('/data-etat="termine" data-mien="0" data-retard="0"/', $html);
     }
 
+    public function test_une_tache_en_retard_met_le_projet_en_retard_et_affiche_un_badge(): void
+    {
+        $moi = User::factory()->create(['is_admin' => true]);
+        $p = $this->projet(['nom' => 'Date lointaine', 'date_limite' => '2026-12-01', 'etat' => 'en_cours']);
+        Tache::factory()->create(['projet_id' => $p->id, 'statut' => 'en_cours', 'date_limite' => '2026-10-01']);
+        Tache::factory()->create(['projet_id' => $p->id, 'statut' => 'a_faire', 'date_limite' => '2026-10-02']);
+        Tache::factory()->create(['projet_id' => $p->id, 'statut' => 'termine', 'date_limite' => '2026-09-01']);
+        $this->projet(['nom' => 'Sans retard', 'date_limite' => '2026-12-01', 'etat' => 'en_cours'], ['en_cours']);
+
+        $response = $this->actingAs($moi)->get('/projets');
+        $html = $response->getContent();
+
+        $this->assertTrue($p->fresh()->aDuRetard());
+        $this->assertMatchesRegularExpression('/data-etat="en_cours" data-mien="0" data-retard="1"/', $html);
+        $this->assertSame(1, $response->viewData('retardProjets'));
+        $this->assertStringContainsString('2 tâches en retard', $html);
+        $this->assertSame(1, substr_count($html, 'pt-badge pt-badge--retard'));
+    }
+
     public function test_un_projet_est_a_moi_si_je_suis_responsable_d_une_de_ses_taches(): void
     {
         $moi = User::factory()->create(['is_admin' => true]);

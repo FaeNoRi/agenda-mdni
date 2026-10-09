@@ -11,7 +11,7 @@
 <a href="{{ route('projets.show', $projet) }}"
    class="pt-carte {{ $projet->etat->estOuvert() ? '' : 'pt-carte--clos' }}"
    style="--pc: {{ $couleur }};"
-   data-projet data-etat="{{ $projet->etat->value }}" data-mien="{{ $mienne ? 1 : 0 }}" data-retard="{{ $projet->estEnRetard() ? 1 : 0 }}">
+   data-projet data-etat="{{ $projet->etat->value }}" data-mien="{{ $mienne ? 1 : 0 }}" data-retard="{{ $projet->aDuRetard() ? 1 : 0 }}">
     <div style="display: flex; align-items: flex-start; gap: 12px;">
         <span class="pt-picto" style="width: 40px; height: 40px; background: {{ $couleur }}1f; color: {{ $couleur }};">
             <x-icone :name="$projet->icone ?: 'folder'" :size="22" />
@@ -41,6 +41,14 @@
             </div>
         </div>
     </div>
+
+    @if($resume['en_retard'] > 0)
+        <div>
+            <span class="pt-badge pt-badge--retard">
+                <x-icone name="alert-triangle" :size="13" /> {{ $resume['en_retard'] }} {{ $resume['en_retard'] > 1 ? 'tâches en retard' : 'tâche en retard' }}
+            </span>
+        </div>
+    @endif
 
     {{-- Deux lignes fixes : les personnes seules sur la première, échéance à gauche et état à droite sur la seconde --}}
     <div class="pt-carte__pied">

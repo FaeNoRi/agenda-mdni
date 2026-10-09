@@ -65,7 +65,7 @@ class ProjetController extends Controller
             'kpis' => $kpis,
             'etats' => ProjetEtat::cases(),
             'statutsCarte' => self::STATUTS_CARTE,
-            'retardProjets' => $projets->filter(fn (Projet $p) => $p->estEnRetard())->count(),
+            'retardProjets' => $projets->filter(fn (Projet $p) => $p->aDuRetard())->count(),
         ]);
     }
 

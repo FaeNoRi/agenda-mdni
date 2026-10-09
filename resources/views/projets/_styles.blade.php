@@ -26,6 +26,8 @@
 
     .pt-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
 
+    .pt-badge--retard { background: #d639391f; color: #d63939; }
+
     .pt-kpis { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
     .pt-kpi { display: flex; align-items: center; gap: 10px; width: 178px; padding: 10px 12px; border: 1px solid #e6e7e9; border-radius: 12px; background: #fff; }
     .pt-kpi__rond { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 36px; height: 36px; border-radius: 50%; }
