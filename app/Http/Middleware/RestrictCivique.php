@@ -27,6 +27,10 @@ class RestrictCivique
         'taches.statut',
         'taches.commentaires.store',
         'projets.commentaires.store',
+        // Notifications : marquer comme lue et régler ses préférences.
+        'notifications.vue',
+        'notifications.tout-vu',
+        'profile.notifications',
     ];
 
     public function handle(Request $request, Closure $next): Response

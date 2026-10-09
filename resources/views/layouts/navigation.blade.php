@@ -1,3 +1,4 @@
+@php $nbNotifications = Auth::user()->voitNotifications() ? Auth::user()->notificationsApp()->nonVues()->count() : 0; @endphp
 <nav x-data="{ open: false }" class="shadow bg-primary text-white border-b border-gray-100">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -257,10 +258,26 @@
                         </div>
                     </x-slot>
                 </x-dropdown>
+
+                @if(Auth::user()->voitNotifications())
+                    {{-- Cloche : ouvre le tiroir de notifications (à droite du bouton de profil) --}}
+                    <button type="button" style="position: relative;" class="inline-flex items-center justify-center ms-2 px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
+                            data-bs-toggle="offcanvas" data-bs-target="#offcanvasNotifications" aria-controls="offcanvasNotifications" aria-label="Notifications">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/></svg>
+                        <span class="js-notif-badge {{ $nbNotifications ? '' : 'd-none' }}">{{ $nbNotifications > 9 ? '9+' : $nbNotifications }}</span>
+                    </button>
+                @endif
             </div>
 
             <!-- Hamburger -->
             <div class="-me-2 flex items-center sm:hidden">
+                @if(Auth::user()->voitNotifications())
+                    <button type="button" style="position: relative;" class="inline-flex items-center justify-center p-2 me-1 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none"
+                            data-bs-toggle="offcanvas" data-bs-target="#offcanvasNotifications" aria-controls="offcanvasNotifications" aria-label="Notifications">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/></svg>
+                        <span class="js-notif-badge {{ $nbNotifications ? '' : 'd-none' }}">{{ $nbNotifications > 9 ? '9+' : $nbNotifications }}</span>
+                    </button>
+                @endif
                 <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': !open}" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />

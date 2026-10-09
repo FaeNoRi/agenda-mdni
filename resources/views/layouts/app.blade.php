@@ -115,6 +115,11 @@ $themeColor = auth()->check()
         }, timeoutDuration);
     </script>
 
+    {{-- Tiroir de notifications (ouvert par la cloche de la barre de navigation) --}}
+    @if(auth()->check() && auth()->user()->voitNotifications())
+        @include('notifications._tiroir')
+    @endif
+
     {{-- Scripts additionnels --}}
     @stack('scripts')
 </body>

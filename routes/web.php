@@ -15,6 +15,7 @@ use App\Http\Controllers\PresenceController;
 use App\Http\Controllers\SyncController;
 use App\Http\Controllers\ReglementSignatureController;
 use App\Http\Controllers\CommentaireController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\TacheController;
 
@@ -117,6 +118,15 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/reglement/signature', [ReglementSignatureController::class, 'sign'])
         ->name('reglement.signature');
+});
+
+// Notifications internes (cloche) : même calendrier d'ouverture que Projets & tâches
+Route::middleware(['auth', 'projets.acces'])->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/compte', [NotificationController::class, 'compte'])->name('notifications.compte');
+    Route::post('/notifications/tout-vu', [NotificationController::class, 'toutVu'])->name('notifications.tout-vu');
+    Route::post('/notifications/{notification}/vue', [NotificationController::class, 'vue'])->name('notifications.vue');
+    Route::patch('/profile/notifications', [NotificationController::class, 'preferences'])->name('profile.notifications');
 });
 
 // Projets & tâches : réservé aux administrateurs tant que le module n'est pas ouvert (config/features.php)

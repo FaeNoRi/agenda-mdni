@@ -70,6 +70,23 @@ class User extends Authenticatable
         return $query->where('id', '!=', 0)->where('name', '!=', 'Non');
     }
 
+    /** Notifications internes (tiroir). Pas « notifications » : ce nom appartient au trait Notifiable de Laravel. */
+    public function notificationsApp(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AppNotification::class);
+    }
+
+    public function notificationPreferences(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
+    /** La cloche suit le même calendrier d'ouverture que le module Projets & tâches. */
+    public function voitNotifications(): bool
+    {
+        return config('features.projets_taches') || $this->is_admin;
+    }
+
     /** Tâches dont la personne est responsable. */
     public function tachesResponsable()
     {
