@@ -56,7 +56,7 @@
     .js-notif-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #ff4d4f; color: #fff; font-size: 11px; font-weight: 700; line-height: 14px; border: 2px solid #fff; text-align: center; }
 </style>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNotifications" aria-labelledby="offcanvasNotificationsLabel">
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNotifications" aria-labelledby="offcanvasNotificationsLabel" data-bs-backdrop="false" data-bs-scroll="true">
     <div class="offcanvas-header">
         <h4 id="offcanvasNotificationsLabel" class="mb-0">Notifications <span class="nt-n d-none" id="ntNb"></span></h4>
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>

@@ -234,6 +234,15 @@ class NotificationsTest extends TestCase
         $this->assertStringNotContainsString('offcanvasNotifications', $html);
     }
 
+    public function test_le_tiroir_se_ferme_par_clic_exterieur_sans_voile(): void
+    {
+        $html = $this->actingAs($this->admin)->get('/profile')->assertOk()->getContent();
+
+        // pas de voile Bootstrap (créé en double, il restait affiché) et fermeture par clic en dehors
+        $this->assertMatchesRegularExpression('/id="offcanvasNotifications"[^>]*data-bs-backdrop="false"/', $html);
+        $this->assertStringContainsString("document.querySelectorAll('.offcanvas.show')", $html);
+    }
+
     // ---- Préférences du Profil ------------------------------------------
 
     public function test_la_page_profil_liste_les_preferences(): void

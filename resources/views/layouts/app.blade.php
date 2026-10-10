@@ -120,6 +120,24 @@ $themeColor = auth()->check()
         @include('notifications._tiroir')
     @endif
 
+    {{-- Tiroirs (filtres, notifications) : un clic en dehors les referme, sans voile sombre.
+         Bootstrap est présent deux fois (bundle + Tabler) : un voile serait créé en double et resterait affiché,
+         d'où data-bs-backdrop="false" sur les tiroirs et cette fermeture par clic extérieur. --}}
+    <script>
+        document.addEventListener('click', function (e) {
+            const chemin = e.composedPath();   // calculé à l'envoi : reste valable si le clic a re-rendu le tiroir
+
+            if (chemin.some(function (n) {
+                return n.nodeType === 1 && (n.matches('[data-bs-toggle="offcanvas"], .offcanvas, .modal, .dropdown-menu, .flatpickr-calendar, .swal2-container, .toastify'));
+            })) return;
+
+            document.querySelectorAll('.offcanvas.show').forEach(function (tiroir) {
+                const fermer = tiroir.querySelector('[data-bs-dismiss="offcanvas"]');
+                if (fermer) fermer.click();   // même chemin que la croix
+            });
+        });
+    </script>
+
     {{-- Scripts additionnels --}}
     @stack('scripts')
 </body>
