@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="container py-4">
-        <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#evenementModal" onclick="openEvenementCreateForm(event)">
+        <button data-dock-plus data-dock-label="Ajouter un événement" type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#evenementModal" onclick="openEvenementCreateForm(event)">
             Ajouter un événement
         </button>
 

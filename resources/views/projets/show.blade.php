@@ -141,7 +141,7 @@
         <div class="d-flex align-items-center justify-content-between mb-2">
             <span style="font-weight: 700; font-size: 15px;">Tâches</span>
             @can('create', \App\Models\Tache::class)
-                <button type="button" class="btn pt-btn-doux" data-tache-nouvelle data-projet="{{ $projet->id }}">+ Ajouter une tâche</button>
+                <button type="button" class="btn pt-btn-doux" data-tache-nouvelle data-projet="{{ $projet->id }}" data-dock-plus data-dock-label="Ajouter une tâche">+ Ajouter une tâche</button>
             @endcan
         </div>
         @if($taches->isEmpty())

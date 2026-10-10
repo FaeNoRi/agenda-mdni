@@ -214,7 +214,7 @@
             {{-- flex-wrap : sur mobile les groupes de boutons passent à la ligne au lieu de déborder à droite --}}
             <div class="flex flex-wrap items-center gap-2 max-w-full">
                 @unless(auth()->user()->is_civique)
-                <button id="btnAddEvent" type="button" class="btn btn-primary">
+                <button id="btnAddEvent" type="button" class="btn btn-primary" data-dock-plus data-dock-label="Ajouter un événement">
                     Ajouter un événement
                 </button>
                 @endunless
@@ -327,7 +327,7 @@
         </div>
     </div>
 
-    <button id="btnOpenFilters" type="button"
+    <button id="btnOpenFilters" type="button" data-dock-filtres
         class="btn btn-primary position-fixed h2"
         style="bottom:1rem; right:1rem; z-index:1040;"
         aria-label="Ouvrir les filtres">

@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="container py-4">
-        <a href="#" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#congeModal" onclick="openCongeForm()">
+        <a data-dock-plus data-dock-label="Ajouter un congé" href="#" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#congeModal" onclick="openCongeForm()">
             Ajouter un congé
         </a>
 

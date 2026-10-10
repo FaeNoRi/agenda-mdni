@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="container py-4">
-        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#userModal" onclick="openUserForm()">
+        <button data-dock-plus data-dock-label="Ajouter un utilisateur" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#userModal" onclick="openUserForm()">
             Ajouter un utilisateur
         </button>
 

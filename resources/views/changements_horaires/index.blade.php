@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="container py-4">
-        <a href="#" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#chgmtModal" onclick="openChgmtForm()">
+        <a data-dock-plus data-dock-label="Ajouter un changement" href="#" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#chgmtModal" onclick="openChgmtForm()">
             Ajouter un changement
         </a>
 

@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="container py-4">
-        <a href="#" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#materielModal" onclick="openMaterielForm()">
+        <a data-dock-plus data-dock-label="Ajouter un matériel" href="#" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#materielModal" onclick="openMaterielForm()">
             Ajouter un matériel
         </a>
 

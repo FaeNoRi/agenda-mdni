@@ -115,6 +115,9 @@ $themeColor = auth()->check()
         }, timeoutDuration);
     </script>
 
+    {{-- Menu flottant : « + » contextuel, notifications, filtres --}}
+    <x-dock />
+
     {{-- Tiroir de notifications (ouvert par la cloche de la barre de navigation) --}}
     @if(auth()->check() && auth()->user()->voitNotifications())
         @include('notifications._tiroir')
@@ -128,7 +131,7 @@ $themeColor = auth()->check()
             const chemin = e.composedPath();   // calculé à l'envoi : reste valable si le clic a re-rendu le tiroir
 
             if (chemin.some(function (n) {
-                return n.nodeType === 1 && (n.matches('[data-bs-toggle="offcanvas"], .offcanvas, .modal, .dropdown-menu, .flatpickr-calendar, .swal2-container, .toastify'));
+                return n.nodeType === 1 && (n.matches('[data-bs-toggle="offcanvas"], .offcanvas, .modal, .dropdown-menu, .flatpickr-calendar, .swal2-container, .toastify, [data-dock], [data-dock-plus], [data-dock-filtres]'));
             })) return;
 
             document.querySelectorAll('.offcanvas.show').forEach(function (tiroir) {
