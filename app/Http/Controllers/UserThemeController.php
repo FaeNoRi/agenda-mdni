@@ -8,10 +8,13 @@ use Illuminate\Validation\Rule;
 
 class UserThemeController extends Controller
 {
+    /** Les 10 pastilles du sélecteur de la barre de navigation. */
+    public const COULEURS = ['blue', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yellow', 'lime', 'green'];
+
     public function updateThemeColor(Request $request)
     {
         $request->validate([
-            'color' => ['required', Rule::in(['blue', 'purple', 'green'])]
+            'color' => ['required', Rule::in(self::COULEURS)]
         ]);
 
     /** @var \App\Models\User $user */
