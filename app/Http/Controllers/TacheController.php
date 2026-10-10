@@ -8,6 +8,7 @@ use App\Models\ProjetHistorique;
 use App\Models\Recurrence;
 use App\Models\Tache;
 use App\Models\User;
+use App\Services\NotificationsProjets;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -114,6 +115,8 @@ class TacheController extends Controller
             return $tache;
         });
 
+        app(NotificationsProjets::class)->tacheAssignee($tache, $data['responsables'], $request->user());
+
         return response()->json(['ok' => true, 'id' => $tache->id]);
     }
 
@@ -130,7 +133,7 @@ class TacheController extends Controller
 
         $data = $this->valider($request);
 
-        DB::transaction(function () use ($data, $tache, $request) {
+        $avant = DB::transaction(function () use ($data, $tache, $request) {
             $avant = [
                 'titre' => $tache->titre,
                 'date' => $tache->date_limite->format('d/m/Y'),
@@ -149,7 +152,11 @@ class TacheController extends Controller
             $this->remplacerLiens($tache, $data['liens']);
 
             $this->noterModifications($tache->refresh(), $avant, $request->user());
+
+            return $avant;
         });
+
+        $this->notifierModifications($tache->refresh(), $avant, $request->user());
 
         return response()->json(['ok' => true, 'id' => $tache->id]);
     }
@@ -159,6 +166,7 @@ class TacheController extends Controller
         Gate::authorize('delete', $tache);
 
         ProjetHistorique::noter($tache->projet_id, ProjetHistorique::TACHE, 'Tâche « '.$tache->titre.' » supprimée', request()->user());
+        app(NotificationsProjets::class)->tacheSupprimee($tache->load(['responsables', 'projet']), request()->user());
         $tache->delete();
 
         return response()->json(['ok' => true]);
@@ -177,7 +185,12 @@ class TacheController extends Controller
             'statut.required' => 'Choisissez un statut.',
         ]);
 
+        $avant = $tache->statut;
         $change = $tache->changerStatut(TacheStatut::from($data['statut']), $request->user(), $data['raison'] ?? null, $data['portee'] ?? null);
+
+        if ($change) {
+            app(NotificationsProjets::class)->tacheStatut($tache->refresh(), $avant, $request->user());
+        }
 
         return response()->json(['ok' => true, 'change' => $change, 'id' => $tache->id]);
     }
@@ -247,6 +260,30 @@ class TacheController extends Controller
             ->all();
 
         return $data;
+    }
+
+    /** Notifications après modification : nouveaux responsables, responsables retirés, puis les autres responsables. */
+    private function notifierModifications(Tache $tache, array $avant, User $par): void
+    {
+        $notifs = app(NotificationsProjets::class);
+        $apres = $tache->responsables()->pluck('users.id')->all();
+        $ajoutes = array_values(array_diff($apres, $avant['resp']));
+        $retires = array_values(array_diff($avant['resp'], $apres));
+
+        $changements = [];
+        if ($avant['titre'] !== $tache->titre) {
+            $changements[] = 'renommée en « '.$tache->titre.' »';
+        }
+        if ($avant['date'] !== $tache->date_limite->format('d/m/Y')) {
+            $changements[] = 'date limite '.$avant['date'].' → '.$tache->date_limite->format('d/m/Y');
+        }
+        if ($avant['projet'] !== $tache->projet_id) {
+            $changements[] = 'projet : '.($tache->projet?->nom ?? 'sans projet');
+        }
+
+        $notifs->tacheAssignee($tache, $ajoutes, $par);
+        $notifs->tacheRetiree($tache, $retires, $par);
+        $notifs->tacheModifiee($tache, $changements, $ajoutes, $par);
     }
 
     /** Journal du projet : ce qui a changé sur la tâche (intitulé, date, projet, responsables). */

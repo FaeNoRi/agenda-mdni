@@ -8,6 +8,7 @@ use App\Models\Projet;
 use App\Models\ProjetHistorique;
 use App\Models\Tache;
 use App\Models\User;
+use App\Services\NotificationsProjets;
 use App\Support\Icones;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -127,6 +128,8 @@ class ProjetController extends Controller
             return $projet;
         });
 
+        app(NotificationsProjets::class)->projetReferents($projet, $data['referents'], [], $request->user());
+
         return response()->json(['ok' => true, 'id' => $projet->id]);
     }
 
@@ -143,7 +146,7 @@ class ProjetController extends Controller
 
         $data = $this->valider($request, false);
 
-        DB::transaction(function () use ($data, $projet, $request) {
+        $referentsAvant = DB::transaction(function () use ($data, $projet, $request) {
             $avant = ['nom' => $projet->nom, 'date' => $projet->date_limite?->format('d/m/Y'), 'referents' => $projet->referents()->pluck('users.id')->sort()->values()->all()];
 
             $projet->update([
@@ -168,7 +171,14 @@ class ProjetController extends Controller
                 ProjetHistorique::noter($projet->id, ProjetHistorique::PROJET,
                     'Référents : '.$projet->referents()->orderBy('name')->pluck('users.name')->join(', '), $request->user());
             }
+
+            return $avant['referents'];
         });
+
+        $apres = $projet->referents()->pluck('users.id')->all();
+        app(NotificationsProjets::class)->projetReferents(
+            $projet, array_values(array_diff($apres, $referentsAvant)), array_values(array_diff($referentsAvant, $apres)), $request->user(),
+        );
 
         return response()->json(['ok' => true, 'id' => $projet->id]);
     }
@@ -177,6 +187,7 @@ class ProjetController extends Controller
     {
         Gate::authorize('delete', $projet);
 
+        app(NotificationsProjets::class)->projetSupprime($projet, request()->user());
         $projet->delete();
 
         return response()->json(['ok' => true]);
@@ -194,7 +205,12 @@ class ProjetController extends Controller
             'etat.required' => 'Choisissez un état.',
         ]);
 
+        $avant = $projet->etat;
         $change = $projet->changerEtat(ProjetEtat::from($data['etat']), $data['raison'] ?? null, $request->user());
+
+        if ($change) {
+            app(NotificationsProjets::class)->projetEtat($projet->refresh(), $avant, $request->user());
+        }
 
         return response()->json([
             'ok' => true,

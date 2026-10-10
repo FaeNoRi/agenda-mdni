@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Commentaire;
 use App\Models\Projet;
 use App\Models\Tache;
+use App\Services\NotificationsProjets;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,10 +51,12 @@ class CommentaireController extends Controller
 
     private function enregistrer(Request $request, Model $cible): JsonResponse
     {
-        $cible->commentaires()->create([
+        $commentaire = $cible->commentaires()->create([
             'user_id' => $request->user()->id,
             'contenu' => $this->contenu($request),
         ]);
+
+        app(NotificationsProjets::class)->commentaire($cible, $commentaire, $request->user());
 
         return response()->json(['ok' => true, 'id' => $cible->getKey()]);
     }
