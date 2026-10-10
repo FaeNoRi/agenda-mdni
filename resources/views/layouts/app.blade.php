@@ -72,6 +72,8 @@ $themeColor = $theme['nom'];
         nav.bg-primary, nav.bg-primary a, nav.bg-primary .text-white { color: var(--tblr-primary-fg) !important; }
         nav.bg-primary .border-white { border-color: var(--tblr-primary-fg) !important; }
         nav.bg-primary .bg-white, nav.bg-primary .bg-white * { color: #182433 !important; }
+        /* Menus déroulants (fond clair) : texte sombre, quelle que soit la couleur du thème. */
+        nav.bg-primary .dropdown-menu, nav.bg-primary .dropdown-menu a, nav.bg-primary .dropdown-menu .dropdown-item { color: #182433 !important; }
         html[data-primary-fg="dark"] nav img[alt="Logo"] { filter: brightness(0); }
 
     </style>
