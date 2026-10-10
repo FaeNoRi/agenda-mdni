@@ -88,6 +88,15 @@ class ThemeColorTest extends TestCase
         $this->assertStringContainsString('data-primary-fg="light"', $html);
     }
 
+    public function test_aucun_element_ne_peut_redefinir_la_couleur_du_theme(): void
+    {
+        // Tabler redéfinit --tblr-primary (bleu par défaut) sur tout élément portant data-bs-theme, sans toucher
+        // au texte : le thème apparaissait bleu avec un texte sombre. Chaque élément reprend la valeur de son parent.
+        $html = $this->actingAs(User::factory()->create(['theme' => 'mauve']))->get('/dashboard')->getContent();
+
+        $this->assertMatchesRegularExpression('/html \*, html \*::before, html \*::after \{\s*--tblr-primary: inherit !important;/', $html);
+    }
+
     public function test_le_selecteur_est_dans_le_profil_et_plus_dans_la_barre(): void
     {
         $user = User::factory()->create(['theme' => 'sauge']);

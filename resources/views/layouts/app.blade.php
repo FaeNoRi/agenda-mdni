@@ -44,6 +44,17 @@ $themeColor = $theme['nom'];
             padding-bottom: .5rem;
         }
 
+        /* La couleur du thème est posée sur <html> : aucun élément en dessous ne doit la redéfinir
+           (Tabler le fait pour tout élément portant data-bs-theme). Chaque élément reprend celle de son parent. */
+        html *, html *::before, html *::after {
+            --tblr-primary: inherit !important;
+            --tblr-primary-rgb: inherit !important;
+            --tblr-primary-fg: inherit !important;
+            --tblr-primary-darken: inherit !important;
+            --tblr-primary-lt: inherit !important;
+            --tblr-primary-lt-rgb: inherit !important;
+        }
+
         /* Teinte claire (pastel, couleur libre) : le texte de la barre de navigation devient sombre. */
         nav.bg-primary, nav.bg-primary a, nav.bg-primary .text-white { color: var(--tblr-primary-fg) !important; }
         nav.bg-primary .border-white { border-color: var(--tblr-primary-fg) !important; }
