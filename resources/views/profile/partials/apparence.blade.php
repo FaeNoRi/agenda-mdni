@@ -74,13 +74,15 @@
     function appliquer(hex) {
         const fg = contraste(hex, '#ffffff') >= contraste(hex, SOMBRE) ? '#ffffff' : SOMBRE;
         const lt = melanger(hex, '#ffffff', .9);
-        const s = racine.style;
-        s.setProperty('--tblr-primary', hex);
-        s.setProperty('--tblr-primary-rgb', rgb(hex).join(', '));
-        s.setProperty('--tblr-primary-fg', fg);
-        s.setProperty('--tblr-primary-darken', melanger(hex, '#000000', .12));
-        s.setProperty('--tblr-primary-lt', lt);
-        s.setProperty('--tblr-primary-lt-rgb', rgb(lt).join(', '));
+        // Même feuille (#theme-vars) que celle écrite par le serveur : l'aperçu a donc la même priorité.
+        document.getElementById('theme-vars').textContent =
+            ':root:root:root {'
+            + ' --tblr-primary: ' + hex + ' !important;'
+            + ' --tblr-primary-rgb: ' + rgb(hex).join(', ') + ' !important;'
+            + ' --tblr-primary-fg: ' + fg + ' !important;'
+            + ' --tblr-primary-darken: ' + melanger(hex, '#000000', .12) + ' !important;'
+            + ' --tblr-primary-lt: ' + lt + ' !important;'
+            + ' --tblr-primary-lt-rgb: ' + rgb(lt).join(', ') + ' !important; }';
         racine.setAttribute('data-primary-fg', fg === '#ffffff' ? 'light' : 'dark');
 
         const r = contraste(hex, fg);

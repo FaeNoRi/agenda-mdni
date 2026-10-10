@@ -27,6 +27,19 @@ $themeColor = $theme['nom'];
     {{-- DataTables Bootstrap5 --}}
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
+    {{-- Couleur du thème : déclarée en !important (spécificité renforcée) pour qu'aucun script ni attribut
+         posé après le chargement (thème Tabler, etc.) ne puisse la remplacer. Le profil la met à jour en direct. --}}
+    <style id="theme-vars">
+        :root:root:root {
+            --tblr-primary: {{ $theme['hex'] }} !important;
+            --tblr-primary-rgb: {{ $theme['rgb'] }} !important;
+            --tblr-primary-fg: {{ $theme['fg'] }} !important;
+            --tblr-primary-darken: {{ $theme['darken'] }} !important;
+            --tblr-primary-lt: {{ $theme['lt'] }} !important;
+            --tblr-primary-lt-rgb: {{ $theme['lt_rgb'] }} !important;
+        }
+    </style>
+
     {{-- Styles additionnels --}}
     <style>
         /* Pas d'overflow-y sur <html> : Bootstrap verrouille le scroll via body { overflow: hidden }
