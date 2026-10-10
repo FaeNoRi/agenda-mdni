@@ -33,11 +33,11 @@ class NotificationsEvenements
     {
         rescue(function () use ($evenement, $mode, $before, $par) {
             $evenement->load(['users', 'salles']);
-            $actuels = $this->destinataires($evenement->users->pluck('id')->all());
+            $actuels = $this->participants($evenement->users->pluck('id')->all());
             $annuleMaintenant = $mode === SendEventEmailService::CANCELLED || $evenement->isCancelled();
 
             if ($mode === SendEventEmailService::UPDATED && $before) {
-                $avant = $this->destinataires($before['user_ids']);
+                $avant = $this->participants($before['user_ids']);
                 $retires = $avant->diff($actuels);
 
                 if ($annuleMaintenant) {
@@ -75,7 +75,7 @@ class NotificationsEvenements
     }
 
     /** Personnes citées, plus l'équipe entière pour « Toute l'équipe » (id 0). */
-    private function destinataires(array $userIds): Collection
+    public function participants(array $userIds): Collection
     {
         $ids = collect($userIds)->map(fn ($id) => (int) $id);
 
