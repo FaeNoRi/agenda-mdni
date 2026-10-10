@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
+            // Un changement de mot de passe (Profil ou « mot de passe oublié ») déconnecte les autres appareils.
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
             \App\Http\Middleware\RestrictCivique::class,
         ]);
     })

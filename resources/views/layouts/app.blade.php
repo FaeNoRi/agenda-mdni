@@ -1,11 +1,11 @@
 @php
-$themeColor = auth()->check()
-? (auth()->user()->theme ?? 'blue')
-: 'blue';
+$theme = \App\Support\ThemeColors::resolve(auth()->check() ? auth()->user()->theme : null);
+$themeColor = $theme['nom'];
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme-primary="{{ $themeColor }}" style="--tblr-primary: {{ $themeColor }};">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme-primary="{{ $themeColor }}" data-primary-fg="{{ $theme['sombre'] ? 'dark' : 'light' }}"
+      style="--tblr-primary: {{ $theme['hex'] }}; --tblr-primary-rgb: {{ $theme['rgb'] }}; --tblr-primary-fg: {{ $theme['fg'] }}; --tblr-primary-darken: {{ $theme['darken'] }}; --tblr-primary-lt: {{ $theme['lt'] }}; --tblr-primary-lt-rgb: {{ $theme['lt_rgb'] }};">
 
 <head>
     <meta charset="utf-8">
@@ -43,6 +43,12 @@ $themeColor = auth()->check()
         .dataTables_filter {
             padding-bottom: .5rem;
         }
+
+        /* Teinte claire (pastel, couleur libre) : le texte de la barre de navigation devient sombre. */
+        nav.bg-primary, nav.bg-primary a, nav.bg-primary .text-white { color: var(--tblr-primary-fg) !important; }
+        nav.bg-primary .border-white { border-color: var(--tblr-primary-fg) !important; }
+        nav.bg-primary .bg-white, nav.bg-primary .bg-white * { color: #182433 !important; }
+        html[data-primary-fg="dark"] nav img[alt="Logo"] { filter: brightness(0); }
 
     </style>
 

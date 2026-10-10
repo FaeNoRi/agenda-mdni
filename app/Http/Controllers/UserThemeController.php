@@ -2,27 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\ThemeColors;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class UserThemeController extends Controller
 {
-    /** Les 10 pastilles du sélecteur de la barre de navigation. */
+    /** Pastilles « classiques » de l'ancien sélecteur (conservé pour les tests et la compatibilité). */
     public const COULEURS = ['blue', 'azure', 'indigo', 'purple', 'pink', 'red', 'orange', 'yellow', 'lime', 'green'];
 
-    public function updateThemeColor(Request $request)
+    /**
+     * Enregistre la couleur du thème : un nom de la palette (classique ou pastel) ou une couleur
+     * libre #rrggbb. Renvoie les valeurs résolues (couleur, texte, variantes) pour l'aperçu.
+     */
+    public function updateThemeColor(Request $request): JsonResponse
     {
         $request->validate([
-            'color' => ['required', Rule::in(self::COULEURS)]
+            'color' => ['required', 'string', function (string $attribut, mixed $valeur, \Closure $echec) {
+                if (!ThemeColors::estValide($valeur)) {
+                    $echec('Cette couleur n\'est pas valide.');
+                }
+            }],
         ]);
 
-    /** @var \App\Models\User $user */
-    $user = Auth::user();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->update(['theme' => $request->string('color')->toString()]);
 
-    $user->update(['theme' => $request->color]);
-    $user->fresh(); // utile si tu veux utiliser $user ensuite
-
-    return response()->json(['status' => 'ok']);
+        return response()->json(['status' => 'ok', 'couleur' => ThemeColors::resolve($user->theme)]);
     }
 }
