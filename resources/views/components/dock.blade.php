@@ -4,7 +4,7 @@
       - [data-dock-plus data-dock-label="Ajouter un …"] : le bouton d'ajout de la page (proxy du clic) ;
       - [data-dock-filtres] : le bouton qui ouvre le tiroir des filtres ;
       - la cloche ouvre #offcanvasNotifications.
-    Quand le dock est affiché, ces boutons d'origine sont masqués ; sous 992 px de large (téléphone, tablette
+    Sur grand écran ces boutons d'origine sont masqués, que le dock soit affiché ou rangé ; sous 992 px de large (téléphone, tablette
     portrait) le dock n'existe pas et la page garde ses boutons habituels. Le dock se range comme un tiroir
     (choix mémorisé) ; par défaut il est rangé sous 1400 px, où la marge est trop étroite.
 --}}
@@ -14,25 +14,26 @@
 @endphp
 
 <style>
-    .dock { position: fixed; top: 50%; right: 10px; transform: translateY(-50%); z-index: 1030; display: none; flex-direction: column; align-items: center; gap: 14px; transition: opacity .15s; }
+    .dock { position: fixed; top: 50%; right: 10px; transform: translateY(-50%); z-index: 1030; display: none; flex-direction: column; align-items: center; gap: 14px; padding: 16px 6px 10px; border-radius: 44px; background: #fff; box-shadow: 0 6px 24px rgba(24, 36, 51, .18); transition: opacity .15s; }
     body.dock-ok:not(.dock-masque) .dock { display: flex; }
-    .dock-item { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 78px; padding: 0; border: 0; background: none; color: #495057; text-align: center; cursor: pointer; }
+    .dock-item { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 72px; padding: 0; border: 0; background: none; color: #495057; text-align: center; cursor: pointer; }
     .dock-item[hidden] { display: none; }
     .dock-rond { position: relative; display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; transition: transform .12s, box-shadow .12s; }
     .dock-rond--plein { background: var(--tblr-primary); color: #fff; box-shadow: 0 6px 16px color-mix(in srgb, var(--tblr-primary) 40%, transparent); }
-    .dock-rond--blanc { background: #fff; color: var(--tblr-primary); box-shadow: 0 4px 14px rgba(24, 36, 51, .2); }
+    .dock-rond--blanc { background: color-mix(in srgb, var(--tblr-primary) 11%, white); color: var(--tblr-primary); }
+    .dock-item:hover .dock-rond--blanc { background: color-mix(in srgb, var(--tblr-primary) 20%, white); }
     .dock-item:hover .dock-rond { transform: translateY(-2px); }
     .dock-item:focus-visible { outline: 2px solid var(--tblr-primary); outline-offset: 4px; border-radius: 12px; }
     .dock-cap { font-size: 11px; font-weight: 600; line-height: 1.15; }
-    .dock-ranger { display: flex; align-items: center; justify-content: center; width: 30px; height: 22px; border: 0; border-radius: 11px; background: rgba(24, 36, 51, .08); color: #667382; padding: 0; }
-    .dock-ranger:hover { background: rgba(24, 36, 51, .16); }
+    .dock-ranger { display: flex; align-items: center; justify-content: center; width: 34px; height: 22px; border: 0; border-radius: 11px; background: #f1f3f5; color: #667382; padding: 0; }
+    .dock-ranger:hover { background: #e3e6ea; }
     .dock-onglet { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 1030; display: none; align-items: center; justify-content: center; width: 20px; height: 68px; padding: 0; border: 0; border-radius: 10px 0 0 10px; background: #fff; color: var(--tblr-primary); box-shadow: -2px 2px 10px rgba(24, 36, 51, .18); }
     body.dock-ok.dock-masque .dock-onglet { display: flex; }
     body.modal-open .dock, body:has(.offcanvas.show) .dock,
     body.modal-open .dock-onglet, body:has(.offcanvas.show) .dock-onglet { opacity: 0; pointer-events: none; }
 
-    /* Dock affiché : les boutons d'origine de la page sont remplacés par ceux du dock. */
-    body.dock-on [data-dock-plus], body.dock-on [data-dock-filtres], body.dock-on .js-nav-bell { display: none !important; }
+    /* Grand écran : les boutons d'origine de la page sont remplacés par ceux du dock, même rangé (languette). */
+    body.dock-ok [data-dock-plus], body.dock-ok [data-dock-filtres], body.dock-ok .js-nav-bell { display: none !important; }
 </style>
 
 <div class="dock" id="dock" data-dock role="toolbar" aria-label="Actions rapides" aria-orientation="vertical">
@@ -95,7 +96,6 @@
 
         body.classList.toggle('dock-ok', large.matches && contenu);
         body.classList.toggle('dock-masque', masque);
-        body.classList.toggle('dock-on', large.matches && contenu && !masque);
     }
 
     // Le dock ne fait que relayer le clic vers l'élément déjà présent dans la page.
