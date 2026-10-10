@@ -23,6 +23,27 @@
                     </x-nav-link>
                 </div>
 
+                @if(auth()->user()->accedeProjetsTaches())
+                <div class="hidden sm:-my-px sm:ms-10 sm:flex items-center">
+                    <div class="dropdown">
+                        <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('projets.*', 'taches.*') ? 'active' : '' }}" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" /></svg>
+                            Projets &amp; tâches
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="{{ route('projets.index') }}" class="dropdown-item {{ request()->routeIs('projets.*') ? 'active' : '' }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" /></svg>
+                                Projets
+                            </a>
+                            <a href="{{ route('taches.index') }}" class="dropdown-item {{ request()->routeIs('taches.*') ? 'active' : '' }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3.5 5.5l1.5 1.5l2.5 -2.5" /><path d="M3.5 11.5l1.5 1.5l2.5 -2.5" /><path d="M3.5 17.5l1.5 1.5l2.5 -2.5" /><path d="M11 6l9 0" /><path d="M11 12l9 0" /><path d="M11 18l9 0" /></svg>
+                                Tâches
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 @if(auth()->user()->is_admin)
                 <div class="hidden sm:-my-px sm:ms-10 sm:flex items-center">
                     <div class="dropdown">  
@@ -230,6 +251,14 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            @if(auth()->user()->accedeProjetsTaches())
+                <x-responsive-nav-link :href="route('projets.index')" :active="request()->routeIs('projets.*')">
+                    Projets
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('taches.index')" :active="request()->routeIs('taches.*')">
+                    Tâches
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

@@ -2,9 +2,9 @@
 
 return [
     /*
-     | Module « Projets & tâches ». Tant qu'il n'est pas ouvert (FEATURE_PROJETS_TACHES=true dans le
-     | .env), seuls les administrateurs peuvent y accéder, par l'adresse directe : aucune entrée de
-     | menu n'est affichée.
+     | Module « Projets & tâches » (avec ses notifications et la cloche). Ouvert à tous les utilisateurs.
+     | Pour le refermer en cas de besoin (réservé aux administrateurs, sans entrée de menu) :
+     | FEATURE_PROJETS_TACHES=false dans le .env.
      */
-    'projets_taches' => (bool) env('FEATURE_PROJETS_TACHES', false),
+    'projets_taches' => (bool) env('FEATURE_PROJETS_TACHES', true),
 ];

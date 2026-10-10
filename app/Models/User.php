@@ -81,10 +81,16 @@ class User extends Authenticatable
         return $this->hasMany(NotificationPreference::class);
     }
 
+    /** Accès au module Projets & tâches : ouvert à tous, ou aux administrateurs seulement s'il est fermé. */
+    public function accedeProjetsTaches(): bool
+    {
+        return config('features.projets_taches') || $this->is_admin;
+    }
+
     /** La cloche suit le même calendrier d'ouverture que le module Projets & tâches. */
     public function voitNotifications(): bool
     {
-        return config('features.projets_taches') || $this->is_admin;
+        return $this->accedeProjetsTaches();
     }
 
     /** Tâches dont la personne est responsable. */

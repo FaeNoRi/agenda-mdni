@@ -70,13 +70,35 @@ class ProjetsPageTest extends TestCase
         }
     }
 
-    public function test_aucune_entree_de_menu(): void
+    public function test_le_menu_propose_projets_et_taches_a_tout_le_monde_quand_le_module_est_ouvert(): void
     {
         config(['features.projets_taches' => true]);
 
-        $this->actingAs(User::factory()->create(['is_admin' => true]))->get('/dashboard')
-            ->assertOk()
+        foreach ([User::factory()->create(), User::factory()->create(['is_admin' => true]), User::factory()->create(['is_civique' => true])] as $u) {
+            $this->actingAs($u)->get('/dashboard')->assertOk()
+                ->assertSee('Projets &amp; tâches', false)
+                ->assertSee(route('projets.index'), false)
+                ->assertSee(route('taches.index'), false);
+        }
+    }
+
+    public function test_le_module_ferme_n_a_pas_d_entree_de_menu_sauf_pour_les_administrateurs(): void
+    {
+        config(['features.projets_taches' => false]);
+
+        $this->actingAs(User::factory()->create())->get('/dashboard')->assertOk()
             ->assertDontSee(route('projets.index'), false);
+        $this->actingAs(User::factory()->create())->get('/projets')->assertNotFound();
+
+        $this->actingAs(User::factory()->create(['is_admin' => true]))->get('/dashboard')->assertOk()
+            ->assertSee(route('projets.index'), false);
+    }
+
+    public function test_le_module_est_ouvert_par_defaut(): void
+    {
+        $config = require base_path('config/features.php');
+
+        $this->assertTrue($config['projets_taches']);
     }
 
     // ---- Liste -----------------------------------------------------------
