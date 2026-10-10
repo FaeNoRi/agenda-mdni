@@ -16,6 +16,7 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Services\NotificationsEvenements;
 use App\Services\SendEventEmailService;
 
 class EvenementController extends Controller
@@ -478,6 +479,7 @@ class EvenementController extends Controller
 
             // ✅ Envoi d’email une fois la transaction réussie
             app(SendEventEmailService::class)->send($evenement, SendEventEmailService::CREATED);
+            app(NotificationsEvenements::class)->envoyer($evenement, SendEventEmailService::CREATED, null, $request->user());
 
         } catch (\Throwable $e) {
             Log::error("Erreur store() Evenement: " . $e->getMessage());
@@ -571,6 +573,7 @@ class EvenementController extends Controller
             });
 
             app(SendEventEmailService::class)->send($evenement, SendEventEmailService::UPDATED, $before);
+            app(NotificationsEvenements::class)->envoyer($evenement, SendEventEmailService::UPDATED, $before, $request->user());
 
         } catch (\Throwable $e) {
             Log::error("Erreur update() Evenement: " . $e->getMessage());
@@ -600,6 +603,7 @@ class EvenementController extends Controller
         // (inutile si l'événement était déjà passé au type "Annulé" : l'annulation a déjà été envoyée)
         if (!in_array($evenement->type_event, ['Annule', 'Annulé'], true)) {
             app(SendEventEmailService::class)->send($evenement, SendEventEmailService::CANCELLED);
+            app(NotificationsEvenements::class)->envoyer($evenement, SendEventEmailService::CANCELLED, null, $request->user());
         }
 
         DB::transaction(function () use ($evenement) {

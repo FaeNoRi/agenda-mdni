@@ -45,7 +45,10 @@ class Notifier
         $cle = isset($data['cle']) ? $type.':'.$data['cle'] : null;
         $cree = 0;
 
-        foreach (User::whereIn('id', $ids)->pluck('id') as $userId) {
+        // Seules les personnes qui voient la cloche sont notifiées : pas d'arriéré à l'ouverture du module.
+        $concernes = User::whereIn('id', $ids)->get()->filter(fn (User $u) => $u->voitNotifications())->pluck('id');
+
+        foreach ($concernes as $userId) {
             if ($cle && AppNotification::where('user_id', $userId)->where('cle', $cle)->exists()) {
                 continue;
             }
