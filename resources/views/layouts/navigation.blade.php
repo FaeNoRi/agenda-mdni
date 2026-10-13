@@ -1,4 +1,18 @@
 @php $nbNotifications = Auth::user()->voitNotifications() ? Auth::user()->notificationsApp()->nonVues()->count() : 0; @endphp
+<style>
+    /* Menu mobile : texte et icônes à la couleur de texte du thème (blanc ou sombre selon la teinte). */
+    .nm-bouton { color: var(--tblr-primary-fg) !important; background: none; border: 0; }
+    .nm-bouton:hover, .nm-bouton:focus-visible { background: color-mix(in srgb, var(--tblr-primary-fg) 16%, transparent); }
+    .nm-panneau { border-top: 1px solid color-mix(in srgb, var(--tblr-primary-fg) 28%, transparent); padding-bottom: .5rem; }
+    .nm-lien { display: flex; align-items: center; gap: .8rem; width: 100%; padding: .7rem 1rem; border: 0; border-left: 4px solid transparent; background: none;
+               color: var(--tblr-primary-fg) !important; font-size: 1rem; font-weight: 500; text-align: left; text-decoration: none; }
+    .nm-lien:hover, .nm-lien:focus-visible { background: color-mix(in srgb, var(--tblr-primary-fg) 12%, transparent); }
+    .nm-lien.on { background: color-mix(in srgb, var(--tblr-primary-fg) 18%, transparent); border-left-color: var(--tblr-primary-fg); }
+    .nm-lien svg { flex: none; opacity: .95; }
+    .nm-compte { margin-top: .4rem; padding: .8rem 1rem .5rem 1.25rem; border-top: 1px solid color-mix(in srgb, var(--tblr-primary-fg) 28%, transparent); }
+    .nm-nom { font-weight: 600; color: var(--tblr-primary-fg); }
+    .nm-mail { font-size: .85rem; color: var(--tblr-primary-fg); opacity: .8; overflow-wrap: anywhere; }
+</style>
 <nav x-data="{ open: false }" class="shadow bg-primary text-white border-b border-gray-100">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -229,13 +243,13 @@
             <!-- Hamburger -->
             <div class="-me-2 flex items-center sm:hidden">
                 @if(Auth::user()->voitNotifications())
-                    <button type="button" style="position: relative;" class="inline-flex items-center justify-center p-2 me-1 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none"
+                    <button type="button" style="position: relative;" class="nm-bouton inline-flex items-center justify-center p-2 me-1 rounded-md focus:outline-none"
                             data-bs-toggle="offcanvas" data-bs-target="#offcanvasNotifications" aria-controls="offcanvasNotifications" aria-label="Notifications">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/></svg>
                         <span class="js-notif-badge {{ $nbNotifications ? '' : 'd-none' }}">{{ $nbNotifications > 9 ? '9+' : $nbNotifications }}</span>
                     </button>
                 @endif
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                <button @click="open = ! open" class="nm-bouton inline-flex items-center justify-center p-2 rounded-md focus:outline-none" aria-label="Menu">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                         <path :class="{'hidden': open, 'inline-flex': !open}" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                         <path :class="{'hidden': !open, 'inline-flex': open}" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -245,51 +259,27 @@
         </div>
     </div>
 
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-            @if(auth()->user()->accedeProjetsTaches())
-                <x-responsive-nav-link :href="route('projets.index')" :active="request()->routeIs('projets.*')">
-                    Projets
-                </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('taches.index')" :active="request()->routeIs('taches.*')">
-                    Tâches
-                </x-responsive-nav-link>
-            @endif
+    <!-- Menu mobile : accès de consultation uniquement (les écrans de saisie ne sont pas adaptés au téléphone) -->
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden nm-panneau">
+        <a href="{{ route('dashboard') }}" class="nm-lien {{ request()->routeIs('dashboard') ? 'on' : '' }}"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></svg> Tableau de bord</a>
+
+        @if(auth()->user()->accedeProjetsTaches())
+            <a href="{{ route('projets.index') }}" class="nm-lien {{ request()->routeIs('projets.*') ? 'on' : '' }}"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2"/></svg> Projets</a>
+            <a href="{{ route('taches.index') }}" class="nm-lien {{ request()->routeIs('taches.*') ? 'on' : '' }}"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 5.5l1.5 1.5l2.5 -2.5"/><path d="M3.5 11.5l1.5 1.5l2.5 -2.5"/><path d="M3.5 17.5l1.5 1.5l2.5 -2.5"/><path d="M11 6l9 0"/><path d="M11 12l9 0"/><path d="M11 18l9 0"/></svg> Tâches</a>
+        @endif
+
+        <a href="{{ route('presence') }}" class="nm-lien {{ request()->routeIs('presence') ? 'on' : '' }}" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6"/><path d="M11 13l9 -9"/><path d="M15 4h5v5"/></svg> Floppy Là</a>
+
+        <div class="nm-compte">
+            <div class="nm-nom">{{ Auth::user()->name }}</div>
+            <div class="nm-mail">{{ Auth::user()->email }}</div>
         </div>
 
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200 bg-white shadow">
-            <div class="pt-2 pb-3 space-y-1">
-                <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                    {{ __('Dashboard') }}
-                </x-responsive-nav-link>
-            </div>
+        <a href="{{ route('profile.edit') }}" class="nm-lien {{ request()->routeIs('profile.*') ? 'on' : '' }}"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg> Profil</a>
 
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
-            </div>
-
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
-
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-
-                    <x-responsive-nav-link :href="route('logout')" onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
-
-            </div>
-        </div>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="nm-lien nm-bouton-lien"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/></svg> Se déconnecter</button>
+        </form>
     </div>
 </nav>
