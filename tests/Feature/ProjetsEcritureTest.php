@@ -224,6 +224,26 @@ class ProjetsEcritureTest extends TestCase
         $this->assertSame(0, Tache::count());
     }
 
+    public function test_la_suppression_passe_aussi_par_post_avec_method_delete_et_emporte_commentaires_et_liens(): void
+    {
+        // C'est ainsi que la page envoie la demande (certains hébergements refusent le verbe DELETE).
+        $p = $this->projet();
+        $t = Tache::factory()->create(['projet_id' => $p->id, 'statut' => 'en_cours']);
+        $p->commentaires()->create(['user_id' => $this->admin->id, 'contenu' => 'Sur le projet']);
+        $p->liens()->create(['url' => 'https://example.test']);
+        $t->commentaires()->create(['user_id' => $this->admin->id, 'contenu' => 'Sur la tâche']);
+        $t->liens()->create(['url' => 'https://example.test/t']);
+        $autreProjet = $this->projet();
+        $autreProjet->commentaires()->create(['user_id' => $this->admin->id, 'contenu' => 'À garder']);
+
+        $this->actingAs($this->admin)->postJson("/projets/{$p->id}", ['_method' => 'DELETE'])->assertOk();
+
+        $this->assertSame(1, Projet::count());
+        $this->assertSame(0, Tache::count());
+        $this->assertSame(1, \App\Models\Commentaire::count(), "seul le commentaire de l'autre projet reste");
+        $this->assertSame(0, \App\Models\Lien::count());
+    }
+
     public function test_un_admin_supprime(): void
     {
         $p = $this->projet();

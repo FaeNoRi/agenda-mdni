@@ -77,14 +77,18 @@
             const suppr = t.closest('[data-supprimer]');
             if (suppr) {
                 suppr.disabled = true;
+                // POST + _method=DELETE, comme les autres suppressions de l'outil (certains hébergements refusent le verbe DELETE).
+                const corps = new FormData();
+                corps.append('_method', 'DELETE');
                 fetch(`/taches/${suppr.dataset.supprimer}`, {
-                    method: 'DELETE',
+                    method: 'POST',
+                    body: corps,
                     headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
                 }).then(r => {
                     if (!r.ok) throw new Error(r.status);
                     modifie = true;
                     bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-                }).catch(() => { suppr.disabled = false; });
+                }).catch(() => { suppr.disabled = false; alert('La suppression a échoué. Réessayez, ou rechargez la page.'); });
                 return;
             }
 

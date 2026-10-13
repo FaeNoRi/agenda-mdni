@@ -35,6 +35,12 @@ class Tache extends Model
     /** L'état de départ est toujours la première ligne de l'historique. */
     protected static function booted(): void
     {
+        // Commentaires et liens sont polymorphes (pas de clé étrangère) : ils partent avec la tâche.
+        static::deleting(function (Tache $tache) {
+            $tache->commentaires()->delete();
+            $tache->liens()->delete();
+        });
+
         static::created(function (Tache $tache) {
             $tache->historiques()->create([
                 'user_id' => $tache->created_by,

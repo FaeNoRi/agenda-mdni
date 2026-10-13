@@ -27,6 +27,20 @@ class Projet extends Model
 
     protected $attributes = ['etat' => 'en_attente', 'couleur' => '#4263eb', 'icone' => 'folder'];
 
+    protected static function booted(): void
+    {
+        // Commentaires et liens sont polymorphes (pas de clé étrangère) : ceux du projet et de ses tâches
+        // partent avec lui (les tâches elles-mêmes sont supprimées par cascade en base).
+        static::deleting(function (Projet $projet) {
+            $projet->taches()->get()->each(function (Tache $tache) {
+                $tache->commentaires()->delete();
+                $tache->liens()->delete();
+            });
+            $projet->commentaires()->delete();
+            $projet->liens()->delete();
+        });
+    }
+
     public function statutActuel(): ProjetEtat
     {
         return $this->etat;
