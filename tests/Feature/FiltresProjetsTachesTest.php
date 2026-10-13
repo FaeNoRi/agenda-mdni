@@ -89,6 +89,8 @@ class FiltresProjetsTachesTest extends TestCase
         $clos = substr($html, strpos($html, 'id="ptClos"'));
         $this->assertStringContainsString('Fini', $clos);
         $this->assertStringContainsString('Abandonné', $clos);
+        $this->assertStringContainsString('pt-mini-projet', $clos, 'les projets clos sont en mini-cartes');
+        $this->assertStringNotContainsString('class="pt-carte ', $clos);
     }
 
     public function test_pas_d_accordeon_sans_projet_termine(): void

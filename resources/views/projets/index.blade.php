@@ -62,9 +62,9 @@
                         <span class="pt-groupe__nb" id="ptClosNb" data-total="{{ $clos->count() }}">{{ $clos->count() }}</span>
                     </button>
                     <div class="d-none" id="ptClosCorps" style="padding: 14px;">
-                        <div class="pt-grille" id="ptGrilleClos">
+                        <div class="pt-grille pt-grille--mini" id="ptGrilleClos">
                             @foreach($clos as $projet)
-                                @include('projets._carte', ['projet' => $projet, 'mienne' => $mienne($projet)])
+                                @include('projets._mini', ['projet' => $projet, 'mienne' => $mienne($projet)])
                             @endforeach
                         </div>
                     </div>

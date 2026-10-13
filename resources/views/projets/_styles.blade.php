@@ -41,6 +41,10 @@
     .pt-carte { display: flex; flex-direction: column; gap: 16px; padding: 18px 18px 14px; border: 1px solid #e6e7e9; border-top: 4px solid var(--pc); border-radius: 14px; background: #fff; color: inherit; text-decoration: none; transition: box-shadow .15s, transform .15s; }
     .pt-carte:hover { box-shadow: 0 6px 18px rgba(24, 36, 51, .1); transform: translateY(-1px); color: inherit; }
     .pt-carte--clos { opacity: .8; }
+    .pt-grille--mini { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+    .pt-mini-projet { display: block; padding: 10px 12px; border: 1px solid #e6e7e9; border-left: 4px solid var(--pc); border-radius: 10px; background: #fff; color: inherit; text-decoration: none; transition: box-shadow .12s; }
+    .pt-mini-projet:hover { box-shadow: 0 4px 12px rgba(24, 36, 51, .1); color: inherit; }
+    .pt-mini-projet__nom { flex: 1; min-width: 0; font-size: 13.5px; font-weight: 700; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pt-carte__pied { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid #f1f3f5; margin-top: auto; }
     .pt-carte__ligne { display: flex; align-items: center; min-height: 28px; }
     .pt-carte__ligne--ecarte { justify-content: space-between; gap: 8px; }
