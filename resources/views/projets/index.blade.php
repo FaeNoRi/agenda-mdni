@@ -32,23 +32,10 @@
             @endforeach
         </div>
 
-        {{-- Filtres on/off --}}
-        <div class="pt-filtres" id="ptFiltres">
-            <button type="button" class="pt-pastille pt-pastille--texte" data-filtre="mien" style="--pc: var(--tblr-primary);">
-                <x-icone name="user" :size="14" /> Mes projets
-            </button>
-            <button type="button" class="pt-pastille pt-pastille--texte" data-filtre="retard" style="--pc: #d63939;">
-                <x-icone name="alert-triangle" :size="14" /> En retard <b>{{ $retardProjets }}</b>
-            </button>
-            <span class="pt-filtres__sep"></span>
-            <span class="pt-filtres__t">État</span>
-            @foreach($etats as $etat)
-                <button type="button" class="pt-pastille" data-etat-filtre="{{ $etat->value }}" style="--pc: {{ $etat->couleur() }};">
-                    <x-statut-carre :statut="$etat" :size="22" />{{ $etat->label() }}
-                </button>
-            @endforeach
-            <a href="#" id="ptEffacer" class="d-none" style="margin-left: 6px; font-size: 11.5px; font-weight: 600;">Effacer les filtres</a>
-        </div>
+        @include('projets._filtres', [
+            'libMien' => 'Mes projets', 'nbRetard' => $retardProjets, 'etats' => $etats, 'libEtat' => 'État',
+            'personnes' => $personnes,
+        ])
 
         @if($projets->isEmpty())
             <div class="pt-vide">
@@ -69,42 +56,47 @@
 
     <script>
         (function () {
-            const filtres = document.getElementById('ptFiltres');
             const cartes = Array.from(document.querySelectorAll('[data-projet]'));
+            const grille = document.getElementById('ptGrille');
             const aucun = document.getElementById('ptAucun');
-            const effacer = document.getElementById('ptEffacer');
-            if (!filtres) return;
+            cartes.forEach((c, i) => { c.dataset.ordre = i; });
 
-            function appliquer() {
-                const mien = filtres.querySelector('[data-filtre="mien"]').classList.contains('on');
-                const retard = filtres.querySelector('[data-filtre="retard"]').classList.contains('on');
-                const etats = Array.from(filtres.querySelectorAll('[data-etat-filtre].on')).map(b => b.dataset.etatFiltre);
+            function visible(c, f) {
+                if (f.mien && c.dataset.mien !== '1') return false;
+                if (f.retard && c.dataset.retard !== '1') return false;
+                if (f.etats.length && !f.etats.includes(c.dataset.etat)) return false;
+                if (f.pers.length && !c.dataset.pers.split(',').some(id => f.pers.includes(id))) return false;
+                if (f.texte && !c.dataset.titre.includes(f.texte)) return false;
+                if (f.de || f.a) {
+                    const d = c.dataset.date;             // un projet sans échéance ne peut pas être dans une période
+                    if (!d || (f.de && d < f.de) || (f.a && d > f.a)) return false;
+                }
+                return true;
+            }
 
+            function appliquer(f) {
                 let visibles = 0;
                 cartes.forEach(c => {
-                    const ok = (!mien || c.dataset.mien === '1')
-                        && (!retard || c.dataset.retard === '1')
-                        && (!etats.length || etats.includes(c.dataset.etat));
+                    const ok = visible(c, f);
                     c.classList.toggle('d-none', !ok);
                     if (ok) visibles++;
                 });
 
+                // « Mes projets » : du plus proche au plus éloigné de l'échéance (sans échéance en dernier, projets clos après).
+                if (grille) {
+                    const cle = (c) => (c.classList.contains('pt-carte--clos') ? '1' : '0') + (c.dataset.date || '9999-12-31');
+                    cartes.slice()
+                        .sort((x, y) => f.mien
+                            ? (cle(x) < cle(y) ? -1 : cle(x) > cle(y) ? 1 : x.dataset.ordre - y.dataset.ordre)
+                            : x.dataset.ordre - y.dataset.ordre)
+                        .forEach(c => grille.appendChild(c));
+                }
+
                 aucun?.classList.toggle('d-none', visibles > 0 || !cartes.length);
-                effacer.classList.toggle('d-none', !(mien || retard || etats.length));
             }
 
-            filtres.addEventListener('click', (e) => {
-                const bouton = e.target.closest('.pt-pastille');
-                if (!bouton) return;
-                bouton.classList.toggle('on');
-                appliquer();
-            });
-
-            effacer.addEventListener('click', (e) => {
-                e.preventDefault();
-                filtres.querySelectorAll('.pt-pastille.on').forEach(b => b.classList.remove('on'));
-                appliquer();
-            });
+            document.addEventListener('pt-filtres', (e) => appliquer(e.detail));
+            if (window.ptFiltres) appliquer(window.ptFiltres.lire());
         })();
     </script>
 </x-app-layout>

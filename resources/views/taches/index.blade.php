@@ -14,47 +14,10 @@
     </x-slot>
 
     <div class="container mx-auto py-4 px-4">
-        {{-- Filtres on/off, instantanés --}}
-        <div class="pt-filtres" id="ptFiltres" style="flex-direction: column; align-items: stretch; gap: 10px;">
-            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
-                <button type="button" class="pt-pastille pt-pastille--texte" data-filtre="mien" style="--pc: var(--tblr-primary);">
-                    <x-icone name="user" :size="14" /> Mes tâches
-                </button>
-                <button type="button" class="pt-pastille pt-pastille--texte" data-filtre="retard" style="--pc: #d63939;">
-                    <x-icone name="alert-triangle" :size="14" /> En retard <b>{{ $nbRetard }}</b>
-                </button>
-                <span class="pt-filtres__sep"></span>
-                <span class="pt-filtres__t">Personne</span>
-                @foreach($personnes as $u)
-                    <button type="button" class="pt-personne" data-personne="{{ $u->id }}" title="{{ $u->name }}">
-                        <x-avatars :users="[$u]" :size="28" />
-                    </button>
-                @endforeach
-                <span style="flex: 1;"></span>
-                <select id="ptProjet" class="form-select form-select-sm" style="width: auto; max-width: 220px;" aria-label="Projet">
-                    <option value="">Tous les projets</option>
-                    <option value="0">Sans projet</option>
-                    @foreach($projets as $p)
-                        <option value="{{ $p->id }}">{{ $p->nom }}</option>
-                    @endforeach
-                </select>
-                <select id="ptEcheance" class="form-select form-select-sm" style="width: auto;" aria-label="Date limite">
-                    <option value="">Toutes les dates limites</option>
-                    <option value="jour">Aujourd'hui</option>
-                    <option value="semaine">Cette semaine</option>
-                    <option value="mois">Ce mois-ci</option>
-                </select>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px;">
-                <span class="pt-filtres__t" style="margin-right: 2px;">Statut</span>
-                @foreach($statuts as $statut)
-                    <button type="button" class="pt-pastille" data-statut-filtre="{{ $statut->value }}" style="--pc: {{ $statut->couleur() }};">
-                        <x-statut-carre :statut="$statut" :size="22" />{{ $statut->label() }}
-                    </button>
-                @endforeach
-                <a href="#" id="ptEffacer" class="d-none" style="margin-left: 6px; font-size: 11.5px; font-weight: 600;">Effacer les filtres</a>
-            </div>
-        </div>
+        @include('projets._filtres', [
+            'libMien' => 'Mes tâches', 'nbRetard' => $nbRetard, 'etats' => $statuts, 'libEtat' => 'Statut',
+            'personnes' => $personnes, 'projets' => $projets,
+        ])
 
         @if($groupes->isEmpty())
             <div class="pt-vide">
@@ -62,6 +25,7 @@
                 Aucune tâche pour le moment.
             </div>
         @else
+            <div id="ptGroupes">
             @foreach($groupes as $groupe)
                 @php
                     $projet = $groupe['projet'];
@@ -71,7 +35,7 @@
                     $actives = $taches->count() - ($parStatut['annule'] ?? 0);
                     $clos = $projet && !$projet->etat->estOuvert();
                 @endphp
-                <section class="pt-groupe" data-groupe data-ouvert="{{ $clos ? 0 : 1 }}">
+                <section class="pt-groupe" data-groupe data-ouvert="{{ $clos ? 0 : 1 }}" data-clos="{{ $clos ? 1 : 0 }}" data-sans-projet="{{ $projet ? 0 : 1 }}" data-nom="{{ mb_strtolower($projet?->nom ?? 'sans projet') }}">
                     <button type="button" class="pt-groupe__tete" data-bascule aria-expanded="{{ $clos ? 'false' : 'true' }}">
                         <span class="pt-chevron"><x-icone name="chevron-down" :size="16" /></span>
                         <span class="pt-picto" style="width: 30px; height: 30px; background: {{ $couleur }}1f; color: {{ $couleur }};">
@@ -106,6 +70,7 @@
                     </div>
                 </section>
             @endforeach
+            </div>
             <div class="pt-vide d-none" id="ptAucun">
                 <x-icone name="list-check" :size="32" /><br>
                 Aucune tâche ne correspond à ces filtres.
@@ -117,57 +82,41 @@
 
     <script>
         (function () {
-            const racine = document.getElementById('ptFiltres');
+            const conteneur = document.getElementById('ptGroupes');
             const groupes = Array.from(document.querySelectorAll('[data-groupe]'));
             const aucun = document.getElementById('ptAucun');
-            const effacer = document.getElementById('ptEffacer');
-            const selProjet = document.getElementById('ptProjet');
-            const selEcheance = document.getElementById('ptEcheance');
-            const aujourdhui = @json($aujourdhui->toDateString());
-            if (!racine) return;
+            groupes.forEach((g, i) => { g.dataset.ordre = i; });
 
-            const ymd = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-            const base = new Date(aujourdhui + 'T00:00:00');
-            const finSemaine = new Date(base); finSemaine.setDate(base.getDate() + ((7 - base.getDay()) % 7)); // dimanche
-            const finMois = new Date(base.getFullYear(), base.getMonth() + 1, 0);
-            const bornes = { jour: ymd(base), semaine: ymd(finSemaine), mois: ymd(finMois) };
-
-            const etat = () => ({
-                mien: racine.querySelector('[data-filtre="mien"]').classList.contains('on'),
-                retard: racine.querySelector('[data-filtre="retard"]').classList.contains('on'),
-                qui: racine.querySelector('[data-personne].on')?.dataset.personne || '',
-                projet: selProjet.value,
-                echeance: selEcheance.value,
-                statuts: Array.from(racine.querySelectorAll('[data-statut-filtre].on')).map(b => b.dataset.statutFiltre),
-            });
-
-            function afficher(carte, f) {
+            function afficher(carte, g, f) {
                 if (f.mien && carte.dataset.mien !== '1') return false;
                 if (f.retard && carte.dataset.retard !== '1') return false;
-                if (f.qui && !carte.dataset.resp.split(',').includes(f.qui)) return false;
+                if (f.pers.length && !carte.dataset.resp.split(',').some(id => f.pers.includes(id))) return false;
                 if (f.projet !== '' && carte.dataset.projet !== f.projet) return false;
-                if (f.statuts.length && !f.statuts.includes(carte.dataset.statut)) return false;
-                if (f.echeance) {
+                if (f.etats.length && !f.etats.includes(carte.dataset.statut)) return false;
+                // Intitulé : titre de la tâche ou nom de son projet.
+                if (f.texte && !carte.dataset.titre.includes(f.texte) && !g.dataset.nom.includes(f.texte)) return false;
+                if (f.de || f.a) {
                     const d = carte.dataset.date;
-                    if (f.echeance === 'jour' ? d !== bornes.jour : d > bornes[f.echeance] || d < bornes.jour) return false;
+                    if ((f.de && d < f.de) || (f.a && d > f.a)) return false;
                 }
                 return true;
             }
 
-            function appliquer() {
-                const f = etat();
-                const filtre = f.mien || f.retard || f.qui || f.projet !== '' || f.echeance || f.statuts.length;
+            function appliquer(f) {
+                const filtre = f.actifs > 0;
                 let total = 0;
 
                 groupes.forEach(g => {
                     const cartes = Array.from(g.querySelectorAll('[data-tache]'));
                     let n = 0;
+                    let proche = '9999-12-31';
                     cartes.forEach(c => {
-                        const ok = afficher(c, f);
+                        const ok = afficher(c, g, f);
                         c.classList.toggle('d-none', !ok);
-                        if (ok) n++;
+                        if (ok) { n++; if (c.dataset.date < proche) proche = c.dataset.date; }
                     });
                     total += n;
+                    g.dataset.proche = proche;
 
                     g.classList.toggle('d-none', n === 0);
                     // Un filtre actif déplie les projets concernés ; sans filtre on retrouve l'état choisi.
@@ -180,40 +129,27 @@
                     nb.textContent = n + ' tâche' + (n > 1 ? 's' : '') + (filtre && n !== cartes.length ? ' sur ' + cartes.length : '');
                 });
 
+                // « Mes tâches » : les projets sont classés par leur tâche la plus proche (« sans projet » en dernier).
+                if (conteneur) {
+                    const cle = (g) => g.dataset.sansProjet + g.dataset.clos + g.dataset.proche;
+                    groupes.slice()
+                        .sort((x, y) => f.mien
+                            ? (cle(x) < cle(y) ? -1 : cle(x) > cle(y) ? 1 : x.dataset.ordre - y.dataset.ordre)
+                            : x.dataset.ordre - y.dataset.ordre)
+                        .forEach(g => conteneur.appendChild(g));
+                }
+
                 aucun?.classList.toggle('d-none', total > 0);
-                effacer.classList.toggle('d-none', !filtre);
             }
 
-            racine.addEventListener('click', (e) => {
-                const bouton = e.target.closest('.pt-pastille, .pt-personne');
-                if (!bouton) return;
-                if (bouton.matches('[data-personne]')) {
-                    const dejaActif = bouton.classList.contains('on');
-                    racine.querySelectorAll('[data-personne].on').forEach(b => b.classList.remove('on'));
-                    bouton.classList.toggle('on', !dejaActif);
-                } else {
-                    bouton.classList.toggle('on');
-                }
-                appliquer();
-            });
-
-            selProjet.addEventListener('change', appliquer);
-            selEcheance.addEventListener('change', appliquer);
-
-            effacer.addEventListener('click', (e) => {
-                e.preventDefault();
-                racine.querySelectorAll('.on').forEach(b => b.classList.remove('on'));
-                selProjet.value = '';
-                selEcheance.value = '';
-                appliquer();
-            });
+            document.addEventListener('pt-filtres', (e) => appliquer(e.detail));
 
             groupes.forEach(g => g.querySelector('[data-bascule]').addEventListener('click', () => {
                 g.dataset.ouvert = g.dataset.ouvert === '1' ? '0' : '1';
-                appliquer();
+                if (window.ptFiltres) appliquer(window.ptFiltres.lire());
             }));
 
-            appliquer();
+            if (window.ptFiltres) appliquer(window.ptFiltres.lire());
         })();
     </script>
 </x-app-layout>

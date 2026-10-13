@@ -62,7 +62,7 @@ class DockTest extends TestCase
         }
     }
 
-    public function test_pas_de_plus_ni_de_filtres_sur_le_profil_et_les_filtres_seulement_au_tableau_de_bord(): void
+    public function test_pas_de_plus_ni_de_filtres_sur_le_profil_et_des_filtres_sur_projets_et_taches(): void
     {
         // (le dock lui-même cite ces noms dans son CSS : on cherche les attributs portés par un bouton de la page)
         $plus = '/<(?:button|a)\s[^>]*data-dock-label="/';
@@ -74,7 +74,10 @@ class DockTest extends TestCase
 
         $html = $this->actingAs($this->admin)->get('/projets')->assertOk()->getContent();
         $this->assertMatchesRegularExpression($plus, $html);
-        $this->assertDoesNotMatchRegularExpression($filtres, $html);
+        $this->assertMatchesRegularExpression($filtres, $html, 'Projets a son tiroir de filtres');
+
+        $html = $this->actingAs($this->admin)->get('/taches')->assertOk()->getContent();
+        $this->assertMatchesRegularExpression($filtres, $html, 'Tâches a son tiroir de filtres');
     }
 
     public function test_la_cloche_du_dock_n_existe_pas_tant_que_le_module_n_est_pas_ouvert(): void

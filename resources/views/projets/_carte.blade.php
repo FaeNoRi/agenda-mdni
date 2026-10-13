@@ -11,7 +11,9 @@
 <a href="{{ route('projets.show', $projet) }}"
    class="pt-carte {{ $projet->etat->estOuvert() ? '' : 'pt-carte--clos' }}"
    style="--pc: {{ $couleur }};"
-   data-projet data-etat="{{ $projet->etat->value }}" data-mien="{{ $mienne ? 1 : 0 }}" data-retard="{{ $projet->aDuRetard() ? 1 : 0 }}">
+   data-projet data-etat="{{ $projet->etat->value }}" data-mien="{{ $mienne ? 1 : 0 }}" data-retard="{{ $projet->aDuRetard() ? 1 : 0 }}"
+   data-titre="{{ mb_strtolower($projet->nom) }}" data-pers="{{ $personnes->pluck('id')->join(',') }}"
+   data-date="{{ $projet->date_limite?->toDateString() }}">
     <div style="display: flex; align-items: flex-start; gap: 12px;">
         <span class="pt-picto" style="width: 40px; height: 40px; background: {{ $couleur }}1f; color: {{ $couleur }};">
             <x-icone :name="$projet->icone ?: 'folder'" :size="22" />

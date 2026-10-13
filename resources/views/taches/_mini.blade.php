@@ -12,7 +12,8 @@
      role="button" tabindex="0"
      data-tache="{{ $tache->id }}" data-statut="{{ $s->value }}" data-projet="{{ $tache->projet_id ?? 0 }}"
      data-retard="{{ $tache->estEnRetard() ? 1 : 0 }}" data-resp="{{ $ids->join(',') }}"
-     data-mien="{{ $ids->contains(auth()->id()) ? 1 : 0 }}" data-date="{{ $tache->date_limite->toDateString() }}">
+     data-mien="{{ $ids->contains(auth()->id()) ? 1 : 0 }}" data-date="{{ $tache->date_limite->toDateString() }}"
+     data-titre="{{ mb_strtolower($tache->titre) }}">
     <div style="display: flex; align-items: flex-start; gap: 8px;">
         <x-statut-carre :statut="$s" :size="24" />
         <div class="pt-mini__titre" @if($annule) style="text-decoration: line-through; color: #9aa0ac;" @endif>{{ $tache->titre }}@if($tache->recurrence_id) <span title="Tâche récurrente" style="color: #9aa0ac;"><x-icone name="repeat" :size="13" /></span>@endif</div>

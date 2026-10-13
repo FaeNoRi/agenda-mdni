@@ -68,6 +68,7 @@ class ProjetController extends Controller
             'etats' => ProjetEtat::cases(),
             'statutsCarte' => self::STATUTS_CARTE,
             'retardProjets' => $projets->filter(fn (Projet $p) => $p->aDuRetard())->count(),
+            'personnes' => $projets->flatMap(fn (Projet $p) => $p->personnesImpliquees())->unique('id')->sortBy('name')->values(),
         ]);
     }
 

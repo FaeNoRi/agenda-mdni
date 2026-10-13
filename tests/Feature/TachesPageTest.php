@@ -127,7 +127,7 @@ class TachesPageTest extends TestCase
         $this->tache([], null, [$resp]);
 
         $this->actingAs($this->admin)->get('/taches')
-            ->assertSee('data-personne="'.$resp->id.'"', false)
+            ->assertSee('data-pf-pers="'.$resp->id.'"', false)
             ->assertDontSee('Jamais Assigné');
     }
 
