@@ -696,6 +696,9 @@ class EvenementController extends Controller
             $reason = 'Occupé : ' . ($evenement->nom_event ?: 'Événement') . " ({$periode})";
 
             foreach ($evenement->users as $user) {
+                if ($user->name === 'Non') {
+                    continue;   // « Non » n'est pas une personne : jamais « occupé »
+                }
                 $userReasons[$user->id][] = $reason;
             }
             foreach ($evenement->salles as $salle) {

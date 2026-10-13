@@ -284,6 +284,25 @@ class RappelsPlanifiesTest extends TestCase
         $this->assertStringContainsString('personne : Marie Durand', $this->de($this->admin, 'admin.conflit')->firstOrFail()->contexte);
     }
 
+    public function test_non_n_est_pas_une_personne_mais_toute_l_equipe_est_verifiee(): void
+    {
+        $non = User::factory()->create(['name' => 'Non']);
+
+        // « Non » sur deux événements simultanés : aucun conflit.
+        $this->evenement('2026-10-16 14:00:00', [$non->id], ['nom_event' => 'A']);
+        $this->evenement('2026-10-16 15:00:00', [$non->id], ['nom_event' => 'B']);
+        $this->lancer();
+        $this->assertSame(0, $this->de($this->admin, 'admin.conflit')->count());
+
+        // « Toute l'équipe » (id 0) sur deux événements simultanés : conflit.
+        $this->evenement('2026-10-16 14:00:00', [0], ['nom_event' => 'C']);
+        $this->evenement('2026-10-16 15:00:00', [0], ['nom_event' => 'D']);
+        $this->lancer();
+        $n = $this->de($this->admin, 'admin.conflit')->get();
+        $this->assertCount(1, $n);
+        $this->assertStringContainsString("personne : Toute l'équipe", $n->first()->contexte);
+    }
+
     // ---- Nettoyage -------------------------------------------------------
 
     public function test_les_notifications_lues_depuis_plus_de_30_jours_sont_supprimees(): void

@@ -184,7 +184,10 @@ class RappelsPlanifies
 
         foreach ($autres as $autre) {
             $salles = $evenement->salles->pluck('id')->intersect($autre->salles->pluck('id'))->reject(fn ($id) => $id === 0);
-            $personnes = $evenement->users->pluck('id')->intersect($autre->users->pluck('id'))->reject(fn ($id) => $id === 0);
+            // « Non » n'est pas une vraie personne (il peut figurer sur plusieurs événements simultanés) : ignoré.
+            // « Toute l'équipe » (id 0) est en revanche vérifiée : elle ne peut être sur deux événements à la fois.
+            $nonPersonnes = $evenement->users->merge($autre->users)->where('name', 'Non')->pluck('id');
+            $personnes = $evenement->users->pluck('id')->intersect($autre->users->pluck('id'))->diff($nonPersonnes);
 
             if ($salles->isEmpty() && $personnes->isEmpty()) {
                 continue;
