@@ -69,4 +69,32 @@ class FiltresProjetsTachesTest extends TestCase
         $this->assertStringContainsString('data-titre="peindre le mur"', $html);
         $this->assertStringContainsString('data-nom="rénovation salle"', $html);
     }
+
+    public function test_les_projets_termines_ou_annules_sont_ranges_dans_un_accordeon(): void
+    {
+        Projet::factory()->create(['nom' => 'En route', 'etat' => 'en_cours']);
+        Projet::factory()->create(['nom' => 'Fini', 'etat' => 'termine']);
+        Projet::factory()->create(['nom' => 'Abandonné', 'etat' => 'annule']);
+
+        $html = $this->actingAs($this->admin)->get('/projets')->assertOk()->getContent();
+
+        $this->assertStringContainsString('id="ptClos"', $html);
+        $this->assertStringContainsString('Projets terminés ou annulés', $html);
+
+        $enCours = substr($html, strpos($html, 'id="ptGrille"'), strpos($html, 'id="ptClos"') - strpos($html, 'id="ptGrille"'));
+        $this->assertStringContainsString('En route', $enCours);
+        $this->assertStringNotContainsString('Fini', $enCours);
+        $this->assertStringNotContainsString('Abandonné', $enCours);
+
+        $clos = substr($html, strpos($html, 'id="ptClos"'));
+        $this->assertStringContainsString('Fini', $clos);
+        $this->assertStringContainsString('Abandonné', $clos);
+    }
+
+    public function test_pas_d_accordeon_sans_projet_termine(): void
+    {
+        Projet::factory()->create(['etat' => 'en_cours']);
+
+        $this->actingAs($this->admin)->get('/projets')->assertOk()->assertDontSee('id="ptClos"', false);
+    }
 }

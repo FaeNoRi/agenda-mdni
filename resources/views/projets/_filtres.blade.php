@@ -132,7 +132,7 @@
         const actifs = (attr) => Array.from(racine.querySelectorAll('[' + attr + '].on')).map(b => b.getAttribute(attr));
 
         function lire() {
-            return {
+            const f = {
                 texte: texte.value.trim().toLowerCase(),
                 de: de.value,
                 a: periode ? a.value : de.value,     // sans période : le jour choisi, exactement
@@ -142,6 +142,11 @@
                 pers: actifs('data-pf-pers'),
                 projet: projet ? projet.value : '',
             };
+            // Nombre de filtres actifs (un champ = un filtre).
+            f.actifs = (f.texte ? 1 : 0) + ((f.de || f.a) ? 1 : 0) + (f.mien ? 1 : 0) + (f.retard ? 1 : 0)
+                + (f.etats.length ? 1 : 0) + (f.pers.length ? 1 : 0) + (f.projet !== '' ? 1 : 0);
+
+            return f;
         }
 
         function pastille(el, n) {
@@ -155,13 +160,12 @@
             pastille(racine.querySelector('[data-pf-compte="etat"]'), f.etats.length);
             pastille(racine.querySelector('[data-pf-compte="pers"]'), f.pers.length);
 
-            const n = (f.texte ? 1 : 0) + ((f.de || f.a) ? 1 : 0) + (f.mien ? 1 : 0) + (f.retard ? 1 : 0)
-                + (f.etats.length ? 1 : 0) + (f.pers.length ? 1 : 0) + (f.projet !== '' ? 1 : 0);
+            const n = f.actifs;
             pastille(compte, n);
             effacerBarre.classList.toggle('d-none', n === 0);
             barre.classList.toggle('pf-actif', n > 0);
 
-            document.dispatchEvent(new CustomEvent('pt-filtres', { detail: Object.assign(f, { actifs: n }) }));
+            document.dispatchEvent(new CustomEvent('pt-filtres', { detail: f }));
         }
 
         function effacer() {

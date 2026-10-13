@@ -43,11 +43,33 @@
                 Aucun projet pour le moment.
             </div>
         @else
+            @php
+                [$enCours, $clos] = [$projets->filter(fn ($p) => $p->etat->estOuvert()), $projets->reject(fn ($p) => $p->etat->estOuvert())];
+            @endphp
+
             <div class="pt-grille" id="ptGrille">
-                @foreach($projets as $projet)
+                @foreach($enCours as $projet)
                     @include('projets._carte', ['projet' => $projet, 'mienne' => $mienne($projet)])
                 @endforeach
             </div>
+
+            {{-- Projets terminés ou annulés : rangés sous les projets en cours, repliés par défaut --}}
+            @if($clos->isNotEmpty())
+                <section class="pt-groupe pt-groupe--ferme" id="ptClos" style="margin-top: 18px;">
+                    <button type="button" class="pt-groupe__tete" id="ptClosBascule" aria-expanded="false">
+                        <span class="pt-chevron"><x-icone name="chevron-down" :size="16" /></span>
+                        <span class="pt-groupe__nom">Projets terminés ou annulés</span>
+                        <span class="pt-groupe__nb" id="ptClosNb" data-total="{{ $clos->count() }}">{{ $clos->count() }}</span>
+                    </button>
+                    <div class="d-none" id="ptClosCorps" style="padding: 14px;">
+                        <div class="pt-grille" id="ptGrilleClos">
+                            @foreach($clos as $projet)
+                                @include('projets._carte', ['projet' => $projet, 'mienne' => $mienne($projet)])
+                            @endforeach
+                        </div>
+                    </div>
+                </section>
+            @endif
             <div class="pt-vide d-none" id="ptAucun">Aucun projet ne correspond à ces filtres.</div>
         @endif
     </div>
@@ -57,8 +79,11 @@
     <script>
         (function () {
             const cartes = Array.from(document.querySelectorAll('[data-projet]'));
-            const grille = document.getElementById('ptGrille');
             const aucun = document.getElementById('ptAucun');
+            const clos = document.getElementById('ptClos');
+            const closCorps = document.getElementById('ptClosCorps');
+            const closNb = document.getElementById('ptClosNb');
+            let closManuel = null;   // choix de l'utilisateur ; à défaut, un filtre actif déplie le rangement s'il contient des résultats
             cartes.forEach((c, i) => { c.dataset.ordre = i; });
 
             function visible(c, f) {
@@ -74,6 +99,8 @@
                 return true;
             }
 
+            let closEtat = false;
+
             function appliquer(f) {
                 let visibles = 0;
                 cartes.forEach(c => {
@@ -82,20 +109,36 @@
                     if (ok) visibles++;
                 });
 
-                // « Mes projets » : du plus proche au plus éloigné de l'échéance (sans échéance en dernier, projets clos après).
-                if (grille) {
-                    const cle = (c) => (c.classList.contains('pt-carte--clos') ? '1' : '0') + (c.dataset.date || '9999-12-31');
-                    cartes.slice()
-                        .sort((x, y) => f.mien
-                            ? (cle(x) < cle(y) ? -1 : cle(x) > cle(y) ? 1 : x.dataset.ordre - y.dataset.ordre)
-                            : x.dataset.ordre - y.dataset.ordre)
-                        .forEach(c => grille.appendChild(c));
+                // « Mes projets » : du plus proche au plus éloigné de l'échéance (sans échéance en dernier).
+                // Chaque carte reste dans sa propre grille (en cours / terminés).
+                const cle = (c) => c.dataset.date || '9999-12-31';
+                cartes.slice()
+                    .sort((x, y) => f.mien
+                        ? (cle(x) < cle(y) ? -1 : cle(x) > cle(y) ? 1 : x.dataset.ordre - y.dataset.ordre)
+                        : x.dataset.ordre - y.dataset.ordre)
+                    .forEach(c => c.parentElement.appendChild(c));
+
+                if (clos) {
+                    const dedans = cartes.filter(c => clos.contains(c));
+                    const n = dedans.filter(c => !c.classList.contains('d-none')).length;
+                    const total = dedans.length;
+                    closNb.textContent = f.actifs > 0 && n !== total ? n + ' sur ' + total : String(total);
+                    clos.classList.toggle('d-none', f.actifs > 0 && n === 0);
+                    const ouvert = closManuel ?? (f.actifs > 0 && n > 0);
+                    closEtat = ouvert;
+                    closCorps.classList.toggle('d-none', !ouvert);
+                    clos.classList.toggle('pt-groupe--ferme', !ouvert);
+                    document.getElementById('ptClosBascule').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
                 }
 
                 aucun?.classList.toggle('d-none', visibles > 0 || !cartes.length);
             }
 
-            document.addEventListener('pt-filtres', (e) => appliquer(e.detail));
+            document.addEventListener('pt-filtres', (e) => { closManuel = null; appliquer(e.detail); });
+            document.getElementById('ptClosBascule')?.addEventListener('click', () => {
+                closManuel = !closEtat;
+                if (window.ptFiltres) appliquer(window.ptFiltres.lire());
+            });
             if (window.ptFiltres) appliquer(window.ptFiltres.lire());
         })();
     </script>
