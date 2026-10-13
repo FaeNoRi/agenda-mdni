@@ -690,6 +690,8 @@ class EvenementController extends Controller
             ->with(['users', 'salles'])
             ->get();
 
+        $equipe = User::where('is_equipe', 1)->where('id', '!=', 0)->where('name', '!=', 'Non')->get(['id']);
+
         foreach ($evenements as $evenement) {
             $periode = Carbon::parse($evenement->date_heure_debut)->format('d/m H:i')
                 . '–' . Carbon::parse($evenement->date_heure_fin)->format('H:i');
@@ -700,6 +702,18 @@ class EvenementController extends Controller
                     continue;   // « Non » n'est pas une personne : jamais « occupé »
                 }
                 $userReasons[$user->id][] = $reason;
+            }
+
+            // « Toute l'équipe » (id 0) engage chaque membre de l'équipe, et inversement :
+            // le membre d'un événement rend « Toute l'équipe » occupée.
+            if ($evenement->users->contains('id', 0)) {
+                foreach ($equipe as $membre) {
+                    if (! $evenement->users->contains('id', $membre->id)) {
+                        $userReasons[$membre->id][] = $reason;
+                    }
+                }
+            } elseif ($evenement->users->contains(fn ($u) => $u->is_equipe && $u->id !== 0 && $u->name !== 'Non')) {
+                $userReasons[0][] = $reason;
             }
             foreach ($evenement->salles as $salle) {
                 $salleReasons[$salle->id][] = $reason;

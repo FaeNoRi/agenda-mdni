@@ -189,6 +189,18 @@ class RappelsPlanifies
             $nonPersonnes = $evenement->users->merge($autre->users)->where('name', 'Non')->pluck('id');
             $personnes = $evenement->users->pluck('id')->intersect($autre->users->pluck('id'))->diff($nonPersonnes);
 
+            // « Toute l'équipe » engage aussi chaque membre de l'équipe : un événement « équipe » chevauchant
+            // celui d'un membre précis (dans un sens ou dans l'autre) est un conflit.
+            $membres = fn ($u) => $u->id !== 0 && $u->is_equipe && $u->name !== 'Non';
+            if ($evenement->users->contains('id', 0)) {
+                $personnes = $personnes->merge($autre->users->filter($membres)->pluck('id'));
+            }
+            if ($autre->users->contains('id', 0)) {
+                $personnes = $personnes->merge($evenement->users->filter($membres)->pluck('id'));
+            }
+            $personnes = $personnes->unique()->values();
+            $noms = $evenement->users->merge($autre->users)->unique('id')->keyBy('id');
+
             if ($salles->isEmpty() && $personnes->isEmpty()) {
                 continue;
             }
@@ -198,7 +210,7 @@ class RappelsPlanifies
                 $quoi->push('salle : '.$evenement->salles->whereIn('id', $salles->all())->pluck('nom_salle')->join(', '));
             }
             if ($personnes->isNotEmpty()) {
-                $quoi->push('personne : '.$evenement->users->whereIn('id', $personnes->all())->pluck('name')->join(', '));
+                $quoi->push('personne : '.$noms->only($personnes->all())->pluck('name')->join(', '));
             }
 
             $paire = min($evenement->id, $autre->id).'-'.max($evenement->id, $autre->id);

@@ -303,6 +303,37 @@ class RappelsPlanifiesTest extends TestCase
         $this->assertStringContainsString("personne : Toute l'équipe", $n->first()->contexte);
     }
 
+    public function test_toute_l_equipe_est_en_conflit_avec_un_membre_precis(): void
+    {
+        $membre = User::factory()->create(['name' => 'Léa Martin', 'is_equipe' => true]);
+        $exterieur = User::factory()->create(['name' => 'Invité', 'is_equipe' => false]);
+
+        $this->evenement('2026-10-16 14:00:00', [0], ['nom_event' => 'Équipe']);
+        $this->evenement('2026-10-16 15:00:00', [$membre->id, $exterieur->id], ['nom_event' => 'Léa seule']);
+
+        $this->lancer();
+
+        $n = $this->de($this->admin, 'admin.conflit')->get();
+        $this->assertCount(1, $n);
+        $this->assertStringContainsString('personne : Léa Martin', $n->first()->contexte);
+        $this->assertStringNotContainsString('Invité', $n->first()->contexte, "un non-membre de l'équipe n'est pas concerné");
+    }
+
+    public function test_les_disponibilites_croisent_equipe_et_membres(): void
+    {
+        $membre = User::factory()->create(['name' => 'Léa Martin', 'is_equipe' => true]);
+        $this->evenement('2026-10-16 14:00:00', [0], ['nom_event' => 'Équipe']);
+
+        $r = $this->actingAs($this->admin)->getJson('/evenements/disponibilites?debut=2026-10-16T14:30&fin=2026-10-16T15:30')->assertOk();
+        $this->assertArrayHasKey((string) $membre->id, (array) $r->json('users'));
+
+        $membre2 = User::factory()->create(['name' => 'Tom Roy', 'is_equipe' => true]);
+        $this->evenement('2026-10-17 10:00:00', [$membre2->id], ['nom_event' => 'Tom']);
+
+        $r = $this->actingAs($this->admin)->getJson('/evenements/disponibilites?debut=2026-10-17T10:30&fin=2026-10-17T11:30')->assertOk();
+        $this->assertArrayHasKey('0', (array) $r->json('users'), "« Toute l'équipe » est occupée si un membre l'est");
+    }
+
     // ---- Nettoyage -------------------------------------------------------
 
     public function test_les_notifications_lues_depuis_plus_de_30_jours_sont_supprimees(): void
