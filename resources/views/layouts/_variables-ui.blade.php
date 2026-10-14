@@ -73,6 +73,28 @@
     html[data-bs-theme="dark"] main a:not([class]) { color: var(--c-accent); }
     html[data-bs-theme="dark"] .pt-personne.on { border-color: color-mix(in srgb, var(--tblr-primary) 55%, #fff); }
 
+    /* ---- Ombres : en mode sombre une ombre noire ne se voit pas ; on la remplace par un léger halo de la couleur du thème ---- */
+    html[data-bs-theme="dark"] {
+        --c-halo: 0 2px 16px -2px color-mix(in srgb, var(--c-accent) 20%, transparent);
+        --c-halo-fort: 0 6px 26px -2px color-mix(in srgb, var(--c-accent) 34%, transparent);
+    }
+    html[data-bs-theme="dark"] .pt-carte,
+    html[data-bs-theme="dark"] .pt-mini-projet,
+    html[data-bs-theme="dark"] .pt-groupe,
+    html[data-bs-theme="dark"] .pt-kpi,
+    html[data-bs-theme="dark"] .pf-carte,
+    html[data-bs-theme="dark"] .pf-bandeau,
+    html[data-bs-theme="dark"] .card { box-shadow: var(--c-halo); }
+    html[data-bs-theme="dark"] .pt-carte:hover,
+    html[data-bs-theme="dark"] .pt-mini-projet:hover,
+    html[data-bs-theme="dark"] .pt-mini--clic:hover,
+    html[data-bs-theme="dark"] .pt-mini--clic:focus-visible,
+    html[data-bs-theme="dark"] .card:hover { box-shadow: var(--c-halo-fort); }
+    html[data-bs-theme="dark"] .dock,
+    html[data-bs-theme="dark"] .modal-content,
+    html[data-bs-theme="dark"] .dropdown-menu:not(nav *) { box-shadow: var(--c-halo-fort); }
+    html[data-bs-theme="dark"] .offcanvas { box-shadow: -8px 0 32px -4px color-mix(in srgb, var(--c-accent) 26%, transparent) !important; }
+
     /* ---- Composants tiers ---- */
     html[data-bs-theme="dark"] .fc {
         --fc-page-bg-color: var(--c-surface);

@@ -74,4 +74,12 @@ class ModeSombreTest extends TestCase
             ->assertSee('data-mode="sombre"', false)
             ->assertSee("Mode d'affichage", false);
     }
+
+    public function test_les_ombres_du_mode_sombre_prennent_la_couleur_du_theme(): void
+    {
+        $html = $this->actingAs(User::factory()->create(['mode' => 'sombre']))->get('/dashboard')->getContent();
+
+        $this->assertStringContainsString('--c-halo:', $html);
+        $this->assertMatchesRegularExpression('/html\[data-bs-theme="dark"\] \.pt-carte:hover[^}]*var\(--c-halo-fort\)/s', $html);
+    }
 }
