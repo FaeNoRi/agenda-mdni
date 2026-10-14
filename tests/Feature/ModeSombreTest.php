@@ -82,4 +82,11 @@ class ModeSombreTest extends TestCase
         $this->assertStringContainsString('--c-halo:', $html);
         $this->assertMatchesRegularExpression('/html\[data-bs-theme="dark"\] \.pt-carte:hover[^}]*var\(--c-halo-fort\)/s', $html);
     }
+
+    public function test_le_texte_des_menus_deroulants_suit_le_mode(): void
+    {
+        $html = $this->actingAs(User::factory()->create(['mode' => 'sombre']))->get('/dashboard')->getContent();
+
+        $this->assertStringContainsString('nav.bg-primary .dropdown-menu .dropdown-item { color: var(--c-text) !important; }', $html);
+    }
 }
