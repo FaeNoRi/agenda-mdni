@@ -110,4 +110,16 @@ class FiltresProjetsTachesTest extends TestCase
         $this->assertMatchesRegularExpression('/@media \(max-width: 575\.98px\) \{\s*\.pt-groupe\[data-groupe\] \.pt-groupe__tete \{ display: grid;/', $html);
         $this->assertStringContainsString('.pt-groupe[data-groupe] .pt-groupe__nb { grid-column: 3; grid-row: 2;', $html);
     }
+
+    public function test_la_page_taches_propose_tout_reduire_quand_il_y_a_des_groupes(): void
+    {
+        $this->actingAs($this->admin)->get('/taches')->assertOk()->assertDontSee('id="ptToutBascule"', false);
+
+        $projet = Projet::factory()->create();
+        Tache::factory()->create(['projet_id' => $projet->id]);
+
+        $this->actingAs($this->admin)->get('/taches')->assertOk()
+            ->assertSee('id="ptToutBascule"', false)
+            ->assertSee('Tout réduire');
+    }
 }

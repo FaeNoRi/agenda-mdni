@@ -25,6 +25,11 @@
                 Aucune tâche pour le moment.
             </div>
         @else
+            <div class="d-flex justify-content-end mb-2">
+                <button type="button" id="ptToutBascule" class="btn btn-sm btn-link link-secondary px-0" style="font-size: 12.5px; font-weight: 600;">
+                    <x-icone name="chevron-down" :size="14" /> <span id="ptToutLibelle">Tout réduire</span>
+                </button>
+            </div>
             <div id="ptGroupes">
             @foreach($groupes as $groupe)
                 @php
@@ -86,6 +91,9 @@
             const groupes = Array.from(document.querySelectorAll('[data-groupe]'));
             const aucun = document.getElementById('ptAucun');
             groupes.forEach((g, i) => { g.dataset.ordre = i; });
+            const toutBascule = document.getElementById('ptToutBascule');
+            const toutLibelle = document.getElementById('ptToutLibelle');
+            let choixManuel = false;   // vrai dès que l'utilisateur plie/déplie lui-même : un filtre actif ne rouvre plus tout
 
             function afficher(carte, g, f) {
                 if (f.mien && carte.dataset.mien !== '1') return false;
@@ -120,7 +128,7 @@
 
                     g.classList.toggle('d-none', n === 0);
                     // Un filtre actif déplie les projets concernés ; sans filtre on retrouve l'état choisi.
-                    const ouvert = filtre ? true : g.dataset.ouvert === '1';
+                    const ouvert = (filtre && !choixManuel) ? true : g.dataset.ouvert === '1';
                     g.querySelector('[data-corps]').classList.toggle('d-none', !ouvert);
                     g.querySelector('[data-bascule]').setAttribute('aria-expanded', ouvert ? 'true' : 'false');
                     g.classList.toggle('pt-groupe--ferme', !ouvert);
@@ -140,12 +148,32 @@
                 }
 
                 aucun?.classList.toggle('d-none', total > 0);
+
+                // Le bouton propose l'action utile : tout réduire tant qu'un groupe visible est ouvert, sinon tout déplier.
+                const visibles = groupes.filter(g => !g.classList.contains('d-none'));
+                const unOuvert = visibles.some(g => !g.classList.contains('pt-groupe--ferme'));
+                toutLibelle.textContent = unOuvert ? 'Tout réduire' : 'Tout déplier';
+                toutBascule.classList.toggle('d-none', visibles.length === 0);
             }
 
-            document.addEventListener('pt-filtres', (e) => appliquer(e.detail));
+            // Fige l'état affiché dans chaque groupe avant un choix manuel (un filtre peut en avoir ouvert certains).
+            function figer() {
+                groupes.forEach(g => { g.dataset.ouvert = g.classList.contains('pt-groupe--ferme') ? '0' : '1'; });
+                choixManuel = true;
+            }
+
+            document.addEventListener('pt-filtres', (e) => { choixManuel = false; appliquer(e.detail); });
+
+            toutBascule.addEventListener('click', () => {
+                const reduire = !groupes.filter(g => !g.classList.contains('d-none')).every(g => g.classList.contains('pt-groupe--ferme'));
+                figer();
+                groupes.forEach(g => { g.dataset.ouvert = reduire ? '0' : '1'; });
+                appliquer(window.ptFiltres.lire());
+            });
 
             groupes.forEach(g => g.querySelector('[data-bascule]').addEventListener('click', () => {
-                g.dataset.ouvert = g.dataset.ouvert === '1' ? '0' : '1';
+                figer();
+                g.dataset.ouvert = g.classList.contains('pt-groupe--ferme') ? '1' : '0';
                 if (window.ptFiltres) appliquer(window.ptFiltres.lire());
             }));
 
