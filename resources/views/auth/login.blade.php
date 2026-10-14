@@ -1,47 +1,38 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+<x-auth-layout titre="Connexion" sousTitre="Connectez-vous pour accéder à votre agenda.">
+    @if (session('status'))
+        <div class="auth-statut" role="status">{{ session('status') }}</div>
+    @endif
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="auth-champ">
+            <label for="email" class="form-label">Adresse e-mail</label>
+            <input id="email" type="email" name="email" value="{{ old('email') }}" class="form-control" required autofocus autocomplete="username" placeholder="prenom.nom@exemple.fr">
+            @error('email') <div class="auth-erreur">{{ $message }}</div> @enderror
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Mot de Passe')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div class="auth-champ">
+            <label for="password" class="form-label">Mot de passe</label>
+            <div class="auth-mdp">
+                <input id="password" type="password" name="password" class="form-control" required autocomplete="current-password">
+                <button type="button" class="auth-oeil" data-auth-oeil="password" aria-label="Afficher le mot de passe" aria-pressed="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>
+                </button>
+            </div>
+            @error('password') <div class="auth-erreur">{{ $message }}</div> @enderror
         </div>
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Rester connecté') }}</span>
+        <div class="auth-ligne">
+            <label class="form-check mb-0" for="remember_me">
+                <input id="remember_me" type="checkbox" class="form-check-input" name="remember">
+                <span class="form-check-label">Rester connecté</span>
             </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Mot de passe oublié ?') }}
-                </a>
+                <a class="auth-lien" href="{{ route('password.request') }}">Mot de passe oublié ?</a>
             @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Se connecter') }}
-            </x-primary-button>
         </div>
+
+        <button type="submit" class="btn btn-primary">Se connecter</button>
     </form>
-</x-guest-layout>
+</x-auth-layout>

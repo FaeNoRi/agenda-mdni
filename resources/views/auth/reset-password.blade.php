@@ -1,39 +1,32 @@
-<x-guest-layout>
+<x-auth-layout titre="Nouveau mot de passe" sousTitre="Choisissez un mot de passe d'au moins 10 caractères.">
     <form method="POST" action="{{ route('password.store') }}">
         @csrf
 
-        <!-- Password Reset Token -->
         <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="auth-champ">
+            <label for="email" class="form-label">Adresse e-mail</label>
+            <input id="email" type="email" name="email" value="{{ old('email', $request->email) }}" class="form-control" required autofocus autocomplete="username">
+            @error('email') <div class="auth-erreur">{{ $message }}</div> @enderror
         </div>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+        <div class="auth-champ">
+            <label for="password" class="form-label">Nouveau mot de passe</label>
+            <div class="auth-mdp">
+                <input id="password" type="password" name="password" class="form-control" required autocomplete="new-password">
+                <button type="button" class="auth-oeil" data-auth-oeil="password" aria-label="Afficher le mot de passe" aria-pressed="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>
+                </button>
+            </div>
+            @error('password') <div class="auth-erreur">{{ $message }}</div> @enderror
         </div>
 
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
+        <div class="auth-champ">
+            <label for="password_confirmation" class="form-label">Confirmer le mot de passe</label>
+            <input id="password_confirmation" type="password" name="password_confirmation" class="form-control" required autocomplete="new-password">
+            @error('password_confirmation') <div class="auth-erreur">{{ $message }}</div> @enderror
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer le mot de passe</button>
     </form>
-</x-guest-layout>
+</x-auth-layout>
