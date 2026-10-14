@@ -20,6 +20,7 @@ class RestrictCivique
         'profile.update',
         'password.update',
         'user.theme.color',
+        'user.mode',
         'export',
         // Projets & tâches : le Service civique peut changer le statut d'une tâche et commenter.
         // La règle fine (« uniquement là où il est impliqué ») est portée par les politiques

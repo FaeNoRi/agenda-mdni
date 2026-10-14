@@ -84,12 +84,12 @@
     </div>
 
     @if($tache->recurrence)
-        <div class="mb-4 p-2 rounded d-flex align-items-center gap-2" style="background: #f1f3f5; font-size: 13px;">
+        <div class="mb-4 p-2 rounded d-flex align-items-center gap-2" style="background: var(--c-surface-3); font-size: 13px;">
             <x-icone name="repeat" :size="15" />
             <span>
                 <strong>{{ $tache->recurrence->libelle() }}</strong> jusqu'au {{ $tache->recurrence->date_fin->format('d/m/Y') }}
                 @if($tache->recurrence->arretee) · <span style="color: #d63939;">série arrêtée</span>
-                @else <span style="color: #667382;">· l'occurrence suivante est créée quand celle-ci est terminée</span>@endif
+                @else <span style="color: var(--c-muted);">· l'occurrence suivante est créée quand celle-ci est terminée</span>@endif
             </span>
         </div>
     @endif
@@ -150,9 +150,9 @@
                         $referents->contains('id', $u->id) ? 'Référent' : null,
                     ]);
                 @endphp
-                <span class="d-inline-flex align-items-center gap-2 pe-2" style="border: 1px solid #e6e7e9; border-radius: 999px; font-size: 12.5px;">
+                <span class="d-inline-flex align-items-center gap-2 pe-2" style="border: 1px solid var(--c-bord); border-radius: 999px; font-size: 12.5px;">
                     <x-avatars :users="[$u]" :size="26" />
-                    <span><strong>{{ $u->name }}</strong> <span style="color: #667382;">· {{ implode(' et ', $roles) }}</span></span>
+                    <span><strong>{{ $u->name }}</strong> <span style="color: var(--c-muted);">· {{ implode(' et ', $roles) }}</span></span>
                 </span>
             @empty
                 <span style="color: #9aa0ac; font-size: 12.5px;">Personne</span>
@@ -177,8 +177,8 @@
                 <x-statut-carre :statut="$h->statut" :size="20" />
                 <div>
                     <strong>{{ $h->statut->label() }}</strong>
-                    <span style="color: #667382;">· {{ $h->user?->name ?? 'Ancien utilisateur' }}, le {{ $h->created_at->format('d/m/Y') }}</span>
-                    @if($h->raison)<div style="color: #667382;">{{ $h->raison }}</div>@endif
+                    <span style="color: var(--c-muted);">· {{ $h->user?->name ?? 'Ancien utilisateur' }}, le {{ $h->created_at->format('d/m/Y') }}</span>
+                    @if($h->raison)<div style="color: var(--c-muted);">{{ $h->raison }}</div>@endif
                 </div>
             </div>
         @endforeach

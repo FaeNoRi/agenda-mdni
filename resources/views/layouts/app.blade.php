@@ -1,10 +1,11 @@
 @php
 $theme = \App\Support\ThemeColors::resolve(auth()->check() ? auth()->user()->theme : null);
 $themeColor = $theme['nom'];
+$modeSombre = auth()->check() && auth()->user()->modeSombre();
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-bs-theme-primary="{{ $themeColor }}" data-primary-fg="{{ $theme['sombre'] ? 'dark' : 'light' }}"
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @if($modeSombre) data-bs-theme="dark" @endif data-bs-theme-primary="{{ $themeColor }}" data-primary-fg="{{ $theme['sombre'] ? 'dark' : 'light' }}"
       style="--tblr-primary: {{ $theme['hex'] }}; --tblr-primary-rgb: {{ $theme['rgb'] }}; --tblr-primary-fg: {{ $theme['fg'] }}; --tblr-primary-darken: {{ $theme['darken'] }}; --tblr-primary-lt: {{ $theme['lt'] }}; --tblr-primary-lt-rgb: {{ $theme['lt_rgb'] }};">
 
 <head>
@@ -39,6 +40,9 @@ $themeColor = $theme['nom'];
             --tblr-primary-lt-rgb: {{ $theme['lt_rgb'] }} !important;
         }
     </style>
+
+    {{-- Couleurs de l'interface en variables (clair par défaut ; sombre via data-bs-theme="dark" sur <html>) --}}
+    @include('layouts._variables-ui')
 
     {{-- Styles additionnels --}}
     <style>
@@ -113,7 +117,8 @@ $themeColor = $theme['nom'];
     {{-- Bootstrap, Tabler JS & Alpine --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('assets/tabler/js/tabler.min.js') }}"></script>
-    <script src="{{ asset('assets/tabler/js/tabler-theme.min.js') }}"></script>
+    {{-- tabler-theme.min.js n'est plus chargé : il réécrivait data-bs-theme depuis le stockage du navigateur.
+         Le mode (clair / sombre) est celui du profil, posé côté serveur. --}}
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
     <script src=" https://cdn.jsdelivr.net/npm/fullcalendar@6.1.18/index.global.min.js "></script>

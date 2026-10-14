@@ -11,7 +11,7 @@
         <div style="display: flex; gap: 8px; margin-bottom: 8px;">
             @if($c->user)<x-avatars :users="[$c->user]" :size="26" />@endif
             <div style="flex: 1; min-width: 0;">
-                <div style="padding: 6px 9px; border-radius: 0 10px 10px 10px; background: #f6f8fb; font-size: 12.5px;" data-commentaire-vue>
+                <div style="padding: 6px 9px; border-radius: 0 10px 10px 10px; background: var(--c-surface-2); font-size: 12.5px;" data-commentaire-vue>
                     <b>{{ $c->user?->name ?? 'Ancien utilisateur' }}</b>
                     <span style="color: #9aa0ac;">{{ $c->created_at->format('d/m/Y à H:i') }}@if($modifie) · modifié @endif</span><br>
                     <span style="white-space: pre-line; overflow-wrap: anywhere;">{{ $c->contenu }}</span>

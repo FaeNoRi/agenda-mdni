@@ -14,11 +14,11 @@
     body.dock-ok .pf-barre:not(.pf-actif) { display: none; }
     body.dock-ok .pf-barre [data-dock-filtres] { display: none !important; }
 
-    .fpill { --pc: var(--tblr-primary); display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--tblr-border-color, #dfe3e8); border-radius: 999px; background: #fff; color: var(--tblr-body-color, #182433); font-size: 13px; font-weight: 600; line-height: 1.3; cursor: pointer; transition: background .12s, border-color .12s, color .12s; }
+    .fpill { --pc: var(--tblr-primary); display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--tblr-border-color, var(--c-bord)); border-radius: 999px; background: var(--c-surface); color: var(--tblr-body-color, #182433); font-size: 13px; font-weight: 600; line-height: 1.3; cursor: pointer; transition: background .12s, border-color .12s, color .12s; }
     .fpill:hover { border-color: var(--pc); }
-    .fpill.on { background: color-mix(in srgb, var(--pc) 13%, white); border-color: var(--pc); color: var(--pc); }
+    .fpill.on { background: color-mix(in srgb, var(--pc) 13%, var(--c-surface)); border-color: var(--pc); color: var(--pc); }
     .fpill--carre { padding: 4px 12px 4px 4px; border-radius: 8px; }
-    .fsec { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #4b5563; }
+    .fsec { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--c-muted); }
     details.fgroup > summary { list-style: none; cursor: pointer; user-select: none; }
     details.fgroup > summary::-webkit-details-marker { display: none; }
     details.fgroup > summary::after { content: ""; margin-left: auto; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); transition: transform .15s; }

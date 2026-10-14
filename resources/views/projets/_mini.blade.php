@@ -24,7 +24,7 @@
         <span title="État du projet" class="pt-badge" style="background: {{ $projet->etat->couleur() }}1f; color: {{ $projet->etat->couleur() }};">
             <x-icone :name="$projet->etat->icone()" :size="13" /> {{ $projet->etat->label() }}
         </span>
-        <span style="font-size: 11.5px; color: #667382; white-space: nowrap;">
+        <span style="font-size: 11.5px; color: var(--c-muted); white-space: nowrap;">
             @if($projet->date_limite)
                 {{ $projet->date_limite->format('d/m/Y') }}
             @endif

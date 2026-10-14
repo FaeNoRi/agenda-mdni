@@ -30,9 +30,9 @@
         align-items: center;
         gap: 6px;
         padding: 5px 12px;
-        border: 1px solid var(--tblr-border-color, #dfe3e8);
+        border: 1px solid var(--tblr-border-color, var(--c-bord));
         border-radius: 999px;
-        background: #fff;
+        background: var(--c-surface);
         color: var(--tblr-body-color, #182433);
         font-size: 13px;
         font-weight: 600;
@@ -46,7 +46,7 @@
     }
 
     .fpill.on {
-        background: color-mix(in srgb, var(--pc) 13%, white);
+        background: color-mix(in srgb, var(--pc) 13%, var(--c-surface));
         border-color: var(--pc);
         color: var(--pc);
     }
@@ -60,7 +60,7 @@
         font-weight: 700;
         letter-spacing: .04em;
         text-transform: uppercase;
-        color: #4b5563;
+        color: var(--c-muted);
     }
 
     details.fgroup > summary {

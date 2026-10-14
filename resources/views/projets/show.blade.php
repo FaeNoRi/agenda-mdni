@@ -52,12 +52,12 @@
 
         <div class="pt-fiche">
             <div class="pt-fiche__entete" style="background: {{ $couleur }}1f;">
-                <span class="pt-picto" style="width: 44px; height: 44px; background: #fff; color: {{ $couleur }};">
+                <span class="pt-picto" style="width: 44px; height: 44px; background: var(--c-surface); color: {{ $couleur }};">
                     <x-icone :name="$projet->icone ?: 'folder'" :size="24" />
                 </span>
                 <div style="flex: 1; min-width: 0;">
                     <div style="font-size: 19px; font-weight: 700; color: {{ $couleur }};">{{ $projet->nom }}</div>
-                    @if($projet->description)<div style="font-size: 12.5px; color: #495057;">{{ $projet->description }}</div>@endif
+                    @if($projet->description)<div style="font-size: 12.5px; color: var(--c-muted);">{{ $projet->description }}</div>@endif
                 </div>
                 <span class="pt-badge" style="background: {{ $etat->couleur() }}; color: #fff;">
                     <x-icone :name="$etat->icone()" :size="13" /> {{ $etat->label() }}
@@ -80,7 +80,7 @@
                             @endif
                         @endforeach
                     </div>
-                    <div style="margin-top: 8px; font-size: 12.5px; color: #495057;">{{ $resume['texte'] }}</div>
+                    <div style="margin-top: 8px; font-size: 12.5px; color: var(--c-muted);">{{ $resume['texte'] }}</div>
 
                     <div class="pt-meta">
                         <span class="pt-meta__k">Référent{{ $referents->count() > 1 ? 's' : '' }}</span>

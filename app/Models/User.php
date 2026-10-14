@@ -25,6 +25,7 @@ class User extends Authenticatable
         'id_horaire',
         'is_email',
         'theme',
+        'mode',
     ];
 
     /**
@@ -85,6 +86,12 @@ class User extends Authenticatable
     public function accedeProjetsTaches(): bool
     {
         return config('features.projets_taches') || $this->is_admin;
+    }
+
+    /** Mode d'affichage sombre choisi dans le profil (clair par défaut). */
+    public function modeSombre(): bool
+    {
+        return $this->mode === 'sombre';
     }
 
     /** La cloche suit le même calendrier d'ouverture que le module Projets & tâches. */

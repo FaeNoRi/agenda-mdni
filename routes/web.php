@@ -163,6 +163,10 @@ Route::post('/user/theme-color', [App\Http\Controllers\UserThemeController::clas
     ->middleware('auth')
     ->name('user.theme.color');
 
+Route::post('/user/mode', [App\Http\Controllers\UserThemeController::class, 'updateMode'])
+    ->middleware('auth')
+    ->name('user.mode');
+
 Route::middleware(['auth'])->post('/debug-sign-auth', function (\Illuminate\Http\Request $request) {
     \Illuminate\Support\Facades\Log::info('debug-sign-auth atteint', [
         'user' => $request->user()?->email,

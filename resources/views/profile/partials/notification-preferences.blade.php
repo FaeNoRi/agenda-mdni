@@ -40,6 +40,6 @@
             </div>
         @endforeach
 
-        <button type="submit" class="btn pt-btn-doux" style="padding: .5rem 1.1rem; border-radius: 8px; font-weight: 600; background: color-mix(in srgb, var(--tblr-primary) 13%, white); color: var(--tblr-primary); border: 1px solid transparent;">Enregistrer</button>
+        <button type="submit" class="btn pt-btn-doux" style="padding: .5rem 1.1rem; border-radius: 8px; font-weight: 600; background: color-mix(in srgb, var(--tblr-primary) 13%, var(--c-surface)); color: var(--tblr-primary); border: 1px solid transparent;">Enregistrer</button>
     </form>
 </section>

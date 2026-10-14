@@ -14,20 +14,20 @@
 @endphp
 
 <style>
-    .dock { position: fixed; top: 50%; right: 10px; transform: translateY(-50%); z-index: 1030; display: none; flex-direction: column; align-items: center; gap: 14px; padding: 16px 6px 10px; border-radius: 44px; background: #fff; box-shadow: 0 6px 24px rgba(24, 36, 51, .18); transition: opacity .15s; }
+    .dock { position: fixed; top: 50%; right: 10px; transform: translateY(-50%); z-index: 1030; display: none; flex-direction: column; align-items: center; gap: 14px; padding: 16px 6px 10px; border-radius: 44px; background: var(--c-surface); box-shadow: 0 6px 24px rgba(24, 36, 51, .18); transition: opacity .15s; }
     body.dock-ok:not(.dock-masque) .dock { display: flex; }
-    .dock-item { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 72px; padding: 0; border: 0; background: none; color: #495057; text-align: center; cursor: pointer; }
+    .dock-item { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 72px; padding: 0; border: 0; background: none; color: var(--c-muted); text-align: center; cursor: pointer; }
     .dock-item[hidden] { display: none; }
     .dock-rond { position: relative; display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; transition: transform .12s, box-shadow .12s; }
     .dock-rond--plein { background: var(--tblr-primary); color: #fff; box-shadow: 0 6px 16px color-mix(in srgb, var(--tblr-primary) 40%, transparent); }
-    .dock-rond--blanc { background: color-mix(in srgb, var(--tblr-primary) 11%, white); color: var(--tblr-primary); }
-    .dock-item:hover .dock-rond--blanc { background: color-mix(in srgb, var(--tblr-primary) 20%, white); }
+    .dock-rond--blanc { background: color-mix(in srgb, var(--tblr-primary) 11%, var(--c-surface)); color: var(--tblr-primary); }
+    .dock-item:hover .dock-rond--blanc { background: color-mix(in srgb, var(--tblr-primary) 20%, var(--c-surface)); }
     .dock-item:hover .dock-rond { transform: translateY(-2px); }
     .dock-item:focus-visible { outline: 2px solid var(--tblr-primary); outline-offset: 4px; border-radius: 12px; }
     .dock-cap { font-size: 11px; font-weight: 600; line-height: 1.15; }
-    .dock-ranger { display: flex; align-items: center; justify-content: center; width: 34px; height: 22px; border: 0; border-radius: 11px; background: #f1f3f5; color: #667382; padding: 0; }
-    .dock-ranger:hover { background: #e3e6ea; }
-    .dock-onglet { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 1030; display: none; align-items: center; justify-content: center; width: 20px; height: 68px; padding: 0; border: 0; border-radius: 10px 0 0 10px; background: #fff; color: var(--tblr-primary); box-shadow: -2px 2px 10px rgba(24, 36, 51, .18); }
+    .dock-ranger { display: flex; align-items: center; justify-content: center; width: 34px; height: 22px; border: 0; border-radius: 11px; background: var(--c-surface-3); color: var(--c-muted); padding: 0; }
+    .dock-ranger:hover { background: var(--c-fill); }
+    .dock-onglet { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 1030; display: none; align-items: center; justify-content: center; width: 20px; height: 68px; padding: 0; border: 0; border-radius: 10px 0 0 10px; background: var(--c-surface); color: var(--tblr-primary); box-shadow: -2px 2px 10px rgba(24, 36, 51, .18); }
     body.dock-ok.dock-masque .dock-onglet { display: flex; }
     body.modal-open .dock, body:has(.offcanvas.show) .dock,
     body.modal-open .dock-onglet, body:has(.offcanvas.show) .dock-onglet { opacity: 0; pointer-events: none; }
