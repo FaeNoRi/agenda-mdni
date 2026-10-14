@@ -137,11 +137,11 @@
                     nb.textContent = n + ' tâche' + (n > 1 ? 's' : '') + (filtre && n !== cartes.length ? ' sur ' + cartes.length : '');
                 });
 
-                // « Mes tâches » : les projets sont classés par leur tâche la plus proche (« sans projet » en dernier).
+                // Tri « Échéance la plus proche » : les projets sont classés par leur tâche la plus proche (« sans projet » en dernier).
                 if (conteneur) {
                     const cle = (g) => g.dataset.sansProjet + g.dataset.clos + g.dataset.proche;
                     groupes.slice()
-                        .sort((x, y) => f.mien
+                        .sort((x, y) => f.tri
                             ? (cle(x) < cle(y) ? -1 : cle(x) > cle(y) ? 1 : x.dataset.ordre - y.dataset.ordre)
                             : x.dataset.ordre - y.dataset.ordre)
                         .forEach(g => conteneur.appendChild(g));

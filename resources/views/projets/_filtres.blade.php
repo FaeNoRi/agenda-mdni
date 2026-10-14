@@ -69,6 +69,10 @@
                 <button type="button" class="fpill" data-pf-rapide="retard" aria-pressed="false" style="--pc: #d63939;">
                     <x-icone name="alert-triangle" :size="16" /> En retard <b>{{ $nbRetard }}</b>
                 </button>
+                {{-- Un tri, pas un filtre : il ne masque rien et n'est pas compté dans les filtres actifs. --}}
+                <button type="button" class="fpill" data-pf-rapide="tri" aria-pressed="false" style="--pc: #4299e1;" title="Classer de l'échéance la plus proche à la plus éloignée">
+                    <x-icone name="calendar" :size="16" /> Échéance la plus proche
+                </button>
             </div>
         </div>
 
@@ -138,6 +142,7 @@
                 a: periode ? a.value : de.value,     // sans période : le jour choisi, exactement
                 mien: !!racine.querySelector('[data-pf-rapide="mien"].on'),
                 retard: !!racine.querySelector('[data-pf-rapide="retard"].on'),
+                tri: !!racine.querySelector('[data-pf-rapide="tri"].on'),   // tri par échéance : n'est pas un filtre
                 etats: actifs('data-pf-etat'),
                 pers: actifs('data-pf-pers'),
                 projet: projet ? projet.value : '',

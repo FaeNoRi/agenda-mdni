@@ -122,4 +122,16 @@ class FiltresProjetsTachesTest extends TestCase
             ->assertSee('id="ptToutBascule"', false)
             ->assertSee('Tout réduire');
     }
+
+    /** @dataProvider pages */
+    public function test_le_tri_par_echeance_est_un_filtre_rapide_a_part(string $url): void
+    {
+        $html = $this->actingAs($this->admin)->get($url)->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-pf-rapide="tri"', $html);
+        $this->assertStringContainsString('Échéance la plus proche', $html);
+        $this->assertStringNotContainsString('f.mien
+                        ? (cle', $html);
+        $this->assertStringContainsString('.sort((x, y) => f.tri', $html, 'le tri dépend de son propre bouton, plus de « Mes… »');
+    }
 }

@@ -109,11 +109,11 @@
                     if (ok) visibles++;
                 });
 
-                // « Mes projets » : du plus proche au plus éloigné de l'échéance (sans échéance en dernier).
+                // Tri « Échéance la plus proche » : du plus proche au plus éloigné de l'échéance (sans échéance en dernier).
                 // Chaque carte reste dans sa propre grille (en cours / terminés).
                 const cle = (c) => c.dataset.date || '9999-12-31';
                 cartes.slice()
-                    .sort((x, y) => f.mien
+                    .sort((x, y) => f.tri
                         ? (cle(x) < cle(y) ? -1 : cle(x) > cle(y) ? 1 : x.dataset.ordre - y.dataset.ordre)
                         : x.dataset.ordre - y.dataset.ordre)
                     .forEach(c => c.parentElement.appendChild(c));
