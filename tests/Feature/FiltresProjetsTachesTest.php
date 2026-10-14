@@ -99,4 +99,15 @@ class FiltresProjetsTachesTest extends TestCase
 
         $this->actingAs($this->admin)->get('/projets')->assertOk()->assertDontSee('id="ptClos"', false);
     }
+
+    public function test_sur_telephone_le_compte_et_les_badges_passent_sur_une_seconde_ligne(): void
+    {
+        $projet = Projet::factory()->create();
+        Tache::factory()->create(['projet_id' => $projet->id]);
+
+        $html = $this->actingAs($this->admin)->get('/taches')->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/@media \(max-width: 575\.98px\) \{\s*\.pt-groupe\[data-groupe\] \.pt-groupe__tete \{ display: grid;/', $html);
+        $this->assertStringContainsString('.pt-groupe[data-groupe] .pt-groupe__nb { grid-column: 3; grid-row: 2;', $html);
+    }
 }

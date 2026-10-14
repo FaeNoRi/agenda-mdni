@@ -117,6 +117,18 @@
     .pt-groupe__fait { padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
     .pt-groupe__corps { padding: 12px 14px; background: #fafbfc; }
     .pt-chevron { display: inline-flex; color: #9aa0ac; transition: transform .15s; }
+
+    /* Téléphone, page Tâches : le nom du projet garde toute la largeur, « n tâches » et les badges d'état passent sur une seconde ligne. */
+    @media (max-width: 575.98px) {
+        .pt-groupe[data-groupe] .pt-groupe__tete { display: grid; grid-template-columns: 16px 30px auto 1fr auto; column-gap: 10px; row-gap: 6px; align-items: center; }
+        .pt-groupe[data-groupe] .pt-groupe__tete > span:empty { display: none; }
+        .pt-groupe[data-groupe] .pt-chevron { grid-column: 1; grid-row: 1; }
+        .pt-groupe[data-groupe] .pt-groupe__tete > .pt-picto { grid-column: 2; grid-row: 1; }
+        .pt-groupe[data-groupe] .pt-groupe__nom { grid-column: 3 / 5; grid-row: 1; min-width: 0; }
+        .pt-groupe[data-groupe] .pt-groupe__fait { grid-column: 5; grid-row: 1; justify-self: end; }
+        .pt-groupe[data-groupe] .pt-groupe__nb { grid-column: 3; grid-row: 2; white-space: nowrap; }
+        .pt-groupe[data-groupe] .pt-compteurs { grid-column: 4 / 6; grid-row: 2; justify-self: start; flex-wrap: wrap; }
+    }
     .pt-groupe--ferme .pt-chevron { transform: rotate(-90deg); }
     .pt-mini--clic { cursor: pointer; transition: box-shadow .15s; }
     .pt-mini--clic:hover, .pt-mini--clic:focus-visible { box-shadow: 0 3px 10px rgba(24, 36, 51, .12); outline: none; }
