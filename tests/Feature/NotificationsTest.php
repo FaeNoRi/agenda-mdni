@@ -279,4 +279,12 @@ class NotificationsTest extends TestCase
         $this->assertMatchesRegularExpression('/value="tache\.commentaire"\s*>/', $html);
         $this->assertMatchesRegularExpression('/value="tache\.modifiee"\s*checked/', $html);
     }
+
+    public function test_les_liens_sont_sans_domaine_pour_garder_la_session(): void
+    {
+        $this->assertSame('/taches?tache=3', \App\Models\AppNotification::cheminRelatif('https://autre-domaine.test/taches?tache=3'));
+        $this->assertSame('/projets?projet=2#haut', \App\Models\AppNotification::cheminRelatif('http://127.0.0.1:8000/projets?projet=2#haut'));
+        $this->assertSame('/dashboard?from=2026-10-16', \App\Models\AppNotification::cheminRelatif('/dashboard?from=2026-10-16'));
+        $this->assertNull(\App\Models\AppNotification::cheminRelatif(null));
+    }
 }

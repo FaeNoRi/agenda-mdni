@@ -39,7 +39,7 @@ class NotificationController extends Controller
                 'projet' => $n->projet_nom,
                 'jalon' => $n->jalon,
                 'jours' => $n->echeance ? (int) today()->diffInDays($n->echeance->copy()->startOfDay(), false) : null,
-                'url' => $n->url,
+                'url' => AppNotification::cheminRelatif($n->url),
                 'vue' => $n->vue_at !== null,
                 'cree' => $n->created_at->toIso8601String(),
             ])->values(),

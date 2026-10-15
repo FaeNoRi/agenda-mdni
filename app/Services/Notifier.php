@@ -62,7 +62,7 @@ class Notifier
                 'projet_nom' => $data['projet_nom'] ?? null,
                 'echeance' => $data['echeance'] ?? null,
                 'jalon' => $data['jalon'] ?? null,
-                'url' => $data['url'] ?? null,
+                'url' => AppNotification::cheminRelatif($data['url'] ?? null),
                 'cle' => $cle,
             ]);
             $cree++;
