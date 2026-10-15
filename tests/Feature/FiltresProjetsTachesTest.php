@@ -205,5 +205,8 @@ class FiltresProjetsTachesTest extends TestCase
         $this->assertStringContainsString('window.afficherChargement', $html);
         $this->assertStringContainsString('@keyframes cible-flash', $html);
         $this->assertStringContainsString('prefers-reduced-motion', $html, 'respecte « réduire les animations »');
+        $this->assertStringContainsString('#chargementVoile', $html, 'voile « Application du filtre… »');
+        $this->assertStringContainsString('Application du filtre…', $html);
+        $this->assertStringNotContainsString("matchMedia('(prefers-reduced-motion: reduce)').matches) return;", $html, 'le retour visuel reste, même sans animation');
     }
 }

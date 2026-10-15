@@ -243,7 +243,7 @@
                 if (!n.vue) marquer(n, true);
                 if (n.url) {
                     it.classList.add('nt-it--ouvre');
-                    if (window.afficherChargement) window.afficherChargement();   // retour immédiat : la page se recharge
+                    if (window.afficherChargement) window.afficherChargement(0, 'Ouverture…');   // retour immédiat : la page se recharge
                     location.href = n.url;
                 }
             };

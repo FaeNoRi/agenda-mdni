@@ -178,33 +178,50 @@ $modeSombre = auth()->check() && auth()->user()->modeSombre();
         });
     </script>
 
-    {{-- Retour visuel : barre de chargement en haut de page + surbrillance des éléments ciblés par une notification.
-         Sans lui, un filtrage quasi instantané passe inaperçu quand on est déjà sur la page concernée. --}}
+    {{-- Retour visuel : voile « Application du filtre… » + barre de chargement en haut de page + surbrillance des éléments
+         ciblés par une notification. Sans lui, un filtrage quasi instantané passe inaperçu quand on est déjà sur la page. --}}
     <style>
-        #chargementHaut { position: fixed; top: 0; left: 0; right: 0; z-index: 2000; height: 3px; overflow: hidden; pointer-events: none;
-                          background: color-mix(in srgb, var(--tblr-primary) 18%, transparent); }
+        /* Barre fine en haut de l'écran */
+        #chargementHaut { position: fixed; top: 0; left: 0; right: 0; z-index: 2001; height: 4px; overflow: hidden; pointer-events: none;
+                          background: color-mix(in srgb, var(--tblr-primary) 20%, transparent); }
         #chargementHaut::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; border-radius: 3px; background: var(--tblr-primary);
-                                 animation: chargement-barre 1s ease-in-out infinite; }
+                                 animation: chargement-barre .9s ease-in-out infinite; }
         @keyframes chargement-barre { from { left: -40%; } to { left: 100%; } }
 
-        [data-cible], [data-cible-evenements] { animation: cible-entree .5s ease-out both; }
+        /* Voile avec pastille « chargement » : bien visible, sans bloquer les clics */
+        #chargementVoile { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; pointer-events: none;
+                           background: color-mix(in srgb, var(--c-surface) 58%, transparent); animation: voile-entree .15s ease-out both; }
+        #chargementVoile.voile-sortie { animation: voile-sortie .35s ease-in both; }
+        .voile-carte { display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-radius: 14px; background: var(--c-surface); color: var(--c-text);
+                       font-size: 15px; font-weight: 600; box-shadow: 0 10px 34px rgba(24, 36, 51, .22), 0 0 0 1px var(--c-bord); }
+        .voile-rond { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--tblr-primary) 25%, transparent);
+                      border-top-color: var(--tblr-primary); animation: voile-tour .75s linear infinite; }
+        @keyframes voile-entree { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes voile-sortie { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes voile-tour { to { transform: rotate(360deg); } }
+
+        [data-cible], [data-cible-evenements] { animation: cible-entree .6s ease-out both; }
         @keyframes cible-entree { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
 
         .nt-it--ouvre { opacity: .55; }
-        .cible-flash { animation: cible-flash 1.8s ease-out 1; position: relative; z-index: 1; }
+        .cible-flash { animation: cible-flash 2.2s ease-out 1; position: relative; z-index: 1; }
         @keyframes cible-flash {
-            0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tblr-primary) 55%, transparent); }
-            35%  { box-shadow: 0 0 0 7px color-mix(in srgb, var(--tblr-primary) 32%, transparent); }
+            0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tblr-primary) 60%, transparent); }
+            25%  { box-shadow: 0 0 0 8px color-mix(in srgb, var(--tblr-primary) 38%, transparent); }
+            55%  { box-shadow: 0 0 0 4px color-mix(in srgb, var(--tblr-primary) 28%, transparent); }
             100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tblr-primary) 0%, transparent); }
         }
+        /* « Réduire les animations » : plus de mouvement, mais le retour visuel reste (voile fixe, contour statique). */
         @media (prefers-reduced-motion: reduce) {
             #chargementHaut::after { animation: none; left: 0; width: 100%; }
-            [data-cible], [data-cible-evenements], .cible-flash { animation: none; }
+            .voile-rond { animation: none; border-top-color: var(--tblr-primary); }
+            [data-cible], [data-cible-evenements] { animation: none; }
+            .cible-flash { animation: none; outline: 3px solid var(--tblr-primary); outline-offset: 2px; }
         }
     </style>
     <script>
-        // Affiche la barre de chargement ; avec une durée (ms) elle disparaît d'elle-même.
-        window.afficherChargement = function (duree) {
+        // Retour visuel de chargement. duree (ms) : disparaît tout seul ; message : ajoute le voile avec pastille.
+        window.afficherChargement = function (duree, message) {
             var barre = document.getElementById('chargementHaut');
             if (!barre) {
                 barre = document.createElement('div');
@@ -213,25 +230,48 @@ $modeSombre = auth()->check() && auth()->user()->modeSombre();
                 barre.setAttribute('aria-label', 'Chargement');
                 document.body.appendChild(barre);
             }
-            if (duree) setTimeout(function () { barre.remove(); }, duree);
+
+            var voile = document.getElementById('chargementVoile');
+            if (message && !voile) {
+                voile = document.createElement('div');
+                voile.id = 'chargementVoile';
+                voile.setAttribute('role', 'status');
+                voile.innerHTML = '<div class="voile-carte"><span class="voile-rond"></span><span></span></div>';
+                voile.querySelector('span:last-child').textContent = message;
+                document.body.appendChild(voile);
+            }
+
+            if (duree) {
+                setTimeout(function () {
+                    if (voile) {
+                        voile.classList.add('voile-sortie');
+                        setTimeout(function () { voile.remove(); }, 380);
+                    }
+                    barre.remove();
+                }, duree);
+            }
         };
 
-        // Arrivée depuis une notification : bandeau animé, barre de chargement et surbrillance des éléments affichés.
+        // Retour arrière (cache de navigation) : ne jamais laisser le voile affiché.
+        window.addEventListener('pageshow', function (e) {
+            if (!e.persisted) return;
+            ['chargementVoile', 'chargementHaut'].forEach(function (id) { var el = document.getElementById(id); if (el) el.remove(); });
+        });
+
+        // Arrivée depuis une notification : voile « Application du filtre… », puis bandeau animé et surbrillance des éléments affichés.
         (function () {
             if (!document.querySelector('[data-cible], [data-cible-evenements]')) return;
-            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-            var fait = false;
             function surbrillance() {
                 var cibles = document.querySelectorAll('[data-tache]:not(.d-none), [data-projet]:not(.d-none), #cardsContainer .card');
                 cibles.forEach(function (el) {
                     el.classList.add('cible-flash');
-                    setTimeout(function () { el.classList.remove('cible-flash'); }, 1900);
+                    setTimeout(function () { el.classList.remove('cible-flash'); }, 2300);
                 });
             }
 
-            window.afficherChargement(1100);
-            setTimeout(function () { fait = true; surbrillance(); }, 650);
+            window.afficherChargement(1400, 'Application du filtre…');
+            setTimeout(surbrillance, 1100);   // pendant que le voile s'efface : on voit où est l'élément
 
             // Tableau de bord : les cartes sont rechargées en Ajax juste après l'ouverture de la page.
             var cartes = document.getElementById('cardsContainer');
@@ -242,7 +282,7 @@ $modeSombre = auth()->check() && auth()->user()->modeSombre();
                     rappel = setTimeout(function () { surbrillance(); observateur.disconnect(); }, 80);
                 });
                 observateur.observe(cartes, { childList: true });
-                setTimeout(function () { observateur.disconnect(); }, 4000);
+                setTimeout(function () { observateur.disconnect(); }, 4500);
             }
         })();
     </script>
