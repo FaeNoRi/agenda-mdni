@@ -91,4 +91,24 @@ class DockTest extends TestCase
         $this->assertMatchesRegularExpression('/id="btnAddEvent"[^>]*data-dock-plus/', $html, 'le « + » reste disponible');
         $this->assertMatchesRegularExpression('/id="btnOpenFilters"[^>]*data-dock-filtres/', $html);
     }
+
+    public function test_le_speed_dial_mobile_reprend_les_actions_du_dock(): void
+    {
+        $html = $this->actingAs($this->admin)->get('/taches')->assertOk()->getContent();
+
+        $this->assertStringContainsString('id="sd"', $html);
+        $this->assertStringContainsString('id="sdFab"', $html);
+        $this->assertStringContainsString('id="sdPlus"', $html);
+        $this->assertStringContainsString('id="sdFiltres"', $html);
+        $this->assertStringContainsString('id="sdCloche"', $html);
+        // Les boutons d'origine (ajout, filtres, cloche de la barre) sont masqués avec le speed dial, comme avec le dock.
+        $this->assertStringContainsString('body.speed-ok [data-dock-plus], body.speed-ok [data-dock-filtres], body.speed-ok .js-nav-bell { display: none !important; }', $html);
+    }
+
+    public function test_la_cloche_de_la_barre_mobile_est_masquable_par_le_speed_dial(): void
+    {
+        $html = $this->actingAs($this->admin)->get('/dashboard')->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression('/class="js-nav-bell nm-bouton[^"]*"[^>]*\s+data-bs-toggle="offcanvas"/s', $html);
+    }
 }
