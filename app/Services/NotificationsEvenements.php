@@ -107,7 +107,7 @@ class NotificationsEvenements
             'contexte' => $contexte,
             'echeance' => $debut->toDateString(),
             'jalon' => $jours < 0 ? 'Passé' : ($jours === 0 ? "Aujourd'hui" : 'J-'.$jours),
-            'url' => route('dashboard', ['from' => $debut->toDateString(), 'to' => $debut->toDateString()]),
+            'url' => route('dashboard', ['from' => $debut->toDateString(), 'to' => $debut->toDateString(), 'evenement' => $evenement->id]),
         ], $par);
     }
 

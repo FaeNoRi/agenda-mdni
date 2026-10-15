@@ -35,9 +35,12 @@ class ProjetController extends Controller
         '#17a2b8', '#f59f00', '#0ca678', '#667382', '#d63939',
     ];
 
-    public function index(): View
+    public function index(Request $request): View
     {
         Gate::authorize('viewAny', Projet::class);
+
+        // Lien d'une notification : « ?projet=ID » limite l'affichage à ce projet.
+        $cible = $request->integer('projet') ? Projet::find($request->integer('projet')) : null;
 
         $moi = auth()->user();
 
@@ -68,6 +71,7 @@ class ProjetController extends Controller
             'etats' => ProjetEtat::cases(),
             'statutsCarte' => self::STATUTS_CARTE,
             'retardProjets' => $projets->filter(fn (Projet $p) => $p->aDuRetard())->count(),
+            'cible' => $cible,
             'personnes' => $projets->flatMap(fn (Projet $p) => $p->personnesImpliquees())->unique('id')->sortBy('name')->values(),
         ]);
     }

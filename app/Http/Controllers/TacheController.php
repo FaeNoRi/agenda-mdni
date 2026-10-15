@@ -25,9 +25,12 @@ class TacheController extends Controller
     /** Statuts proposés à la création (on ne crée pas une tâche déjà terminée ou annulée). */
     public const STATUTS_DE_DEPART = ['a_faire', 'en_cours', 'a_valider', 'en_attente', 'bloque'];
 
-    public function index(): View
+    public function index(Request $request): View
     {
         Gate::authorize('viewAny', Tache::class);
+
+        // Lien d'une notification : « ?tache=ID » limite l'affichage à cette tâche (et ouvre sa fiche).
+        $cible = $request->integer('tache') ? Tache::with('projet')->find($request->integer('tache')) : null;
 
         $trier = fn ($taches) => $taches
             ->sortBy(fn (Tache $t) => [$t->statut->estOuvert() ? 0 : 1, $t->date_limite->toDateString(), $t->id])
@@ -59,6 +62,7 @@ class TacheController extends Controller
             'statutsCarte' => ProjetController::STATUTS_CARTE,
             'nbRetard' => $toutes->filter(fn (Tache $t) => $t->estEnRetard())->count(),
             'aujourdhui' => today(),
+            'cible' => $cible,
         ]);
     }
 

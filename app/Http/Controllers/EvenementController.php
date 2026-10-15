@@ -716,6 +716,9 @@ class EvenementController extends Controller
                 $userReasons[0][] = $reason;
             }
             foreach ($evenement->salles as $salle) {
+                if ($salle->estFictive()) {
+                    continue;   // « En extérieur » : emplacement fictif, jamais « occupé »
+                }
                 $salleReasons[$salle->id][] = $reason;
             }
         }
@@ -755,13 +758,25 @@ class EvenementController extends Controller
         $from = $request->query('from', today()->toDateString());
         $to = $request->query('to', $from);
 
-        $events = Evenements::with(['users','salles','materiels','objets'])
+        // Lien d'une notification : « ?evenement=12 » ou « ?evenement=12,15 » limite l'affichage à ces événements.
+        $ciblesIds = collect(explode(',', (string) $request->query('evenement', '')))
+            ->map(fn ($id) => (int) trim($id))->filter(fn ($id) => $id > 0)->unique()->values();
+
+        $requete = fn () => Evenements::with(['users','salles','materiels','objets'])
             ->whereDate('date_heure_debut', '>=', $from)
             ->whereDate('date_heure_debut', '<=', $to)
             ->orderByRaw("CASE WHEN type_event IN ('Annulé', 'Annule') THEN 1 ELSE 0 END")
             ->orderBy('type_event')
-            ->orderBy('date_heure_debut')
-            ->get();
+            ->orderBy('date_heure_debut');
+
+        $events = $ciblesIds->isNotEmpty() ? $requete()->whereIn('id', $ciblesIds)->get() : collect();
+
+        // Événement supprimé ou hors période : on retombe sur l'affichage normal plutôt que sur une page vide.
+        $ciblesEvenements = $events;
+        if ($events->isEmpty()) {
+            $events = $requete()->get();
+            $ciblesEvenements = collect();
+        }
 
         $this->applyEventColorsToCollection($events);
 
@@ -808,7 +823,8 @@ class EvenementController extends Controller
             'animateursDisponibles',
             'typeColors',
             'notifications',
-            'eventsForCalendar'
+            'eventsForCalendar',
+            'ciblesEvenements'
         ));
 
     }
@@ -863,6 +879,14 @@ class EvenementController extends Controller
     public function cards(Request $request)
     {
         $query = Evenements::with(['users','salles','materiels','objets']);
+
+        // Arrivée depuis une notification : « evenement=12,15 » limite l'affichage à ces événements
+        // (ignoré s'ils n'existent plus : on retombe sur l'affichage normal).
+        $ciblesIds = collect(explode(',', (string) $request->query('evenement', '')))
+            ->map(fn ($id) => (int) trim($id))->filter(fn ($id) => $id > 0)->unique()->values();
+        if ($ciblesIds->isNotEmpty() && Evenements::whereIn('id', $ciblesIds)->exists()) {
+            $query->whereIn('id', $ciblesIds);
+        }
 
         if (! $request->filled('from') && ! $request->filled('to')) {
             $query->whereDate('date_heure_debut', today());

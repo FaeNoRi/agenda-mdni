@@ -32,6 +32,13 @@
             @endforeach
         </div>
 
+        @if($cible)
+            <div class="alert alert-info d-flex flex-wrap align-items-center gap-2 py-2" role="status" data-cible>
+                <span style="flex: 1;">Affichage limité au projet <strong>{{ $cible->nom }}</strong></span>
+                <a class="btn btn-sm btn-outline-primary" href="{{ route('projets.index') }}">Afficher tous les projets</a>
+            </div>
+        @endif
+
         @include('projets._filtres', [
             'libMien' => 'Mes projets', 'nbRetard' => $retardProjets, 'etats' => $etats, 'libEtat' => 'État',
             'personnes' => $personnes,
@@ -79,6 +86,7 @@
     <script>
         (function () {
             const cartes = Array.from(document.querySelectorAll('[data-projet]'));
+            const cibleId = @json($cible?->id);   // projet visé par une notification
             const aucun = document.getElementById('ptAucun');
             const clos = document.getElementById('ptClos');
             const closCorps = document.getElementById('ptClosCorps');
@@ -87,6 +95,7 @@
             cartes.forEach((c, i) => { c.dataset.ordre = i; });
 
             function visible(c, f) {
+                if (cibleId && c.dataset.id !== String(cibleId)) return false;
                 if (f.mien && c.dataset.mien !== '1') return false;
                 if (f.retard && c.dataset.retard !== '1') return false;
                 if (f.etats.length && !f.etats.includes(c.dataset.etat)) return false;
@@ -122,9 +131,10 @@
                     const dedans = cartes.filter(c => clos.contains(c));
                     const n = dedans.filter(c => !c.classList.contains('d-none')).length;
                     const total = dedans.length;
-                    closNb.textContent = f.actifs > 0 && n !== total ? n + ' sur ' + total : String(total);
-                    clos.classList.toggle('d-none', f.actifs > 0 && n === 0);
-                    const ouvert = closManuel ?? (f.actifs > 0 && n > 0);
+                    const filtre = f.actifs > 0 || !!cibleId;
+                    closNb.textContent = filtre && n !== total ? n + ' sur ' + total : String(total);
+                    clos.classList.toggle('d-none', filtre && n === 0);
+                    const ouvert = closManuel ?? (filtre && n > 0);
                     closEtat = ouvert;
                     closCorps.classList.toggle('d-none', !ouvert);
                     clos.classList.toggle('pt-groupe--ferme', !ouvert);

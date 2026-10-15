@@ -44,7 +44,7 @@ class NotificationsProjets
                 'titre' => "Vous n'êtes plus responsable d'une tâche",
                 'contexte' => $par->name.' vous a retiré de **'.$tache->titre.'**',
                 'projet_nom' => $tache->projet?->nom,
-                'url' => $tache->projet ? route('projets.show', $tache->projet) : null,
+                'url' => route('taches.index', ['tache' => $tache->id]),
             ], $par);
         });
     }
@@ -97,7 +97,8 @@ class NotificationsProjets
                 'titre' => 'Une de vos tâches a été supprimée',
                 'contexte' => $par->name.' a supprimé **'.$tache->titre.'**',
                 'projet_nom' => $tache->projet?->nom,
-                'url' => $tache->projet ? route('projets.show', $tache->projet) : null,
+                // La tâche n'existe plus : on amène sur son projet.
+                'url' => $tache->projet ? route('projets.index', ['projet' => $tache->projet->id]) : null,
             ], $par);
         });
     }
@@ -127,7 +128,7 @@ class NotificationsProjets
                 'titre' => 'Nouveau commentaire sur un projet',
                 'contexte' => '**'.$par->name.'** sur **'.$cible->nom.'** : '.$extrait,
                 'projet_nom' => $cible->nom,
-                'url' => route('projets.show', $cible),
+                'url' => route('projets.index', ['projet' => $cible->id]),
             ], $par);
         });
     }
@@ -139,7 +140,7 @@ class NotificationsProjets
     {
         $this->sans(function () use ($projet, $avant, $par) {
             $apres = $projet->etat;
-            $infos = ['projet_nom' => $projet->nom, 'url' => route('projets.show', $projet)]
+            $infos = ['projet_nom' => $projet->nom, 'url' => route('projets.index', ['projet' => $projet->id])]
                 + $this->jalon($projet->date_limite);
 
             $referents = $projet->referents()->get();
@@ -171,14 +172,14 @@ class NotificationsProjets
                 'titre' => 'Vous êtes référent d\'un projet',
                 'contexte' => $par->name.' vous a ajouté comme référent de **'.$projet->nom.'**',
                 'projet_nom' => $projet->nom,
-                'url' => route('projets.show', $projet),
+                'url' => route('projets.index', ['projet' => $projet->id]),
             ], $par);
 
             $this->notifier->envoyer($retires, 'projet.referent', [
                 'titre' => 'Vous n\'êtes plus référent d\'un projet',
                 'contexte' => $par->name.' vous a retiré comme référent de **'.$projet->nom.'**',
                 'projet_nom' => $projet->nom,
-                'url' => route('projets.show', $projet),
+                'url' => route('projets.index', ['projet' => $projet->id]),
             ], $par);
         });
     }
@@ -213,7 +214,7 @@ class NotificationsProjets
             'titre' => 'Toutes les tâches du projet sont terminées',
             'contexte' => 'Toutes les tâches de **'.$projet->nom.'** sont terminées : vous pouvez clore le projet.',
             'projet_nom' => $projet->nom,
-            'url' => route('projets.show', $projet),
+            'url' => route('projets.index', ['projet' => $projet->id]),
         ], $par);
     }
 

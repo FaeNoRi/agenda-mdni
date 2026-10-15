@@ -96,7 +96,7 @@ class RappelsPlanifies
             $base = [
                 'projet_nom' => $projet->nom,
                 'echeance' => $projet->date_limite->toDateString(),
-                'url' => route('projets.show', $projet),
+                'url' => route('projets.index', ['projet' => $projet->id]),
             ];
 
             if (in_array($jours, self::JALONS, true)) {
@@ -134,7 +134,7 @@ class RappelsPlanifies
             $participants = $this->evenements->participants($evenement->users->pluck('id')->all());
             $base = [
                 'echeance' => $debut->toDateString(),
-                'url' => route('dashboard', ['from' => $debut->toDateString(), 'to' => $debut->toDateString()]),
+                'url' => route('dashboard', ['from' => $debut->toDateString(), 'to' => $debut->toDateString(), 'evenement' => $evenement->id]),
             ];
             $quand = $debut->copy()->locale('fr')->translatedFormat('l j F').', '.$debut->format('H\hi');
 
@@ -183,7 +183,8 @@ class RappelsPlanifies
         $cree = 0;
 
         foreach ($autres as $autre) {
-            $salles = $evenement->salles->pluck('id')->intersect($autre->salles->pluck('id'))->reject(fn ($id) => $id === 0);
+            $fictives = $evenement->salles->merge($autre->salles)->filter(fn ($s) => $s->estFictive())->pluck('id');
+            $salles = $evenement->salles->pluck('id')->intersect($autre->salles->pluck('id'))->diff($fictives);
             // « Non » n'est pas une vraie personne (il peut figurer sur plusieurs événements simultanés) : ignoré.
             // « Toute l'équipe » (id 0) est en revanche vérifiée : elle ne peut être sur deux événements à la fois.
             $nonPersonnes = $evenement->users->merge($autre->users)->where('name', 'Non')->pluck('id');
@@ -213,12 +214,24 @@ class RappelsPlanifies
                 $quoi->push('personne : '.$noms->only($personnes->all())->pluck('name')->join(', '));
             }
 
+            // Moment du chevauchement (de la plus tardive des deux ouvertures à la plus précoce des deux fins).
+            $debutConflit = max(Carbon::parse($evenement->date_heure_debut), Carbon::parse($autre->date_heure_debut));
+            $finConflit = min(Carbon::parse($evenement->date_heure_fin), Carbon::parse($autre->date_heure_fin));
+            $quand = $debutConflit->copy()->locale('fr')->translatedFormat('l j F')
+                .', de '.$debutConflit->format('H\hi').' à '.$finConflit->format('H\hi');
+
             $paire = min($evenement->id, $autre->id).'-'.max($evenement->id, $autre->id);
             $cree += $this->notifier->envoyer($administrateurs, 'admin.conflit', [
-                'titre' => 'Conflit à J-7',
-                'contexte' => '**'.$evenement->nom_event.'** et **'.$autre->nom_event.'** se chevauchent ('.$quoi->join(' ; ').')',
+                'titre' => 'Conflit le '.$debutConflit->copy()->locale('fr')->translatedFormat('j F'),
+                'contexte' => '**'.$evenement->nom_event.'** et **'.$autre->nom_event.'** se chevauchent le '.$quand.' ('.$quoi->join(' ; ').')',
                 'jalon' => 'J-7',
                 'cle' => 'conflit:'.$paire,
+                // Le jour du conflit, limité aux deux événements en cause.
+                'url' => route('dashboard', [
+                    'from' => $debutConflit->toDateString(),
+                    'to' => $debutConflit->toDateString(),
+                    'evenement' => $evenement->id.','.$autre->id,
+                ]),
             ] + $base);
         }
 

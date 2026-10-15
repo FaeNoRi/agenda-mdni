@@ -263,6 +263,17 @@
 
 
     <div class="container mx-auto py-4 px-4">
+        {{-- Arrivée depuis une notification : l'affichage est limité aux événements concernés --}}
+        @if($ciblesEvenements->isNotEmpty())
+            <div class="alert alert-info d-flex flex-wrap align-items-center gap-2 py-2" role="status" data-cible-evenements>
+                <span style="flex: 1;">
+                    Affichage limité à :
+                    <strong>{{ $ciblesEvenements->pluck('nom_event')->join(' · ') }}</strong>
+                </span>
+                <a class="btn btn-sm btn-outline-primary" href="{{ route('dashboard', request()->only(['from', 'to'])) }}">Afficher toute la journée</a>
+            </div>
+        @endif
+
         <div id="cardsContainer">
             @include('dashboard.partials.cards', ['events' => $events])
         </div>
@@ -465,6 +476,9 @@
 
     <script>
         let calendar;
+
+        // Événements visés par la notification d'où l'on vient (« 12 » ou « 12,15 ») ; vide une fois le bandeau fermé.
+        let cibleEvenements = @json($ciblesEvenements->isNotEmpty() ? $ciblesEvenements->pluck('id')->join(',') : '');
         let _filtersBusy = false;
         let _filtersPendingOnce = null;
 
@@ -725,6 +739,7 @@
         // Construit les paramètres de filtrage à partir des champs actuels (dates + type/salle/user).
         function collectFilterParams() {
             const ps = new URLSearchParams();
+            if (cibleEvenements) ps.append('evenement', cibleEvenements);
 
             ['from', 'to'].forEach(k => {
                 const v = document.getElementById(`filter-${k}`)?.value;
@@ -1161,6 +1176,10 @@
                 updateFilterActiveBadges();
                 updateDayNavState();
 
+                // « Aujourd'hui » quitte l'affichage ciblé d'une notification.
+                cibleEvenements = '';
+                document.querySelector('[data-cible-evenements]')?.remove();
+
                 const ps = new URLSearchParams();
                 ps.append('from', today);
                 ps.append('to', today);
@@ -1208,6 +1227,7 @@
 
                 syncHiddenToDate();
                 const ps = new URLSearchParams();
+                if (cibleEvenements) ps.append('evenement', cibleEvenements);
                 const fromEl = document.getElementById('filter-from');
                 const toEl   = document.getElementById('filter-to');
                 if (fromEl?.value) ps.append('from', fromEl.value);

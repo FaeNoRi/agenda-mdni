@@ -14,6 +14,15 @@
     </x-slot>
 
     <div class="container mx-auto py-4 px-4">
+        @if($cible)
+            <div class="alert alert-info d-flex flex-wrap align-items-center gap-2 py-2" role="status" data-cible>
+                <span style="flex: 1;">
+                    Affichage limité à la tâche <strong>{{ $cible->titre }}</strong>@if($cible->projet) · projet {{ $cible->projet->nom }}@endif
+                </span>
+                <a class="btn btn-sm btn-outline-primary" href="{{ route('taches.index') }}">Afficher toutes les tâches</a>
+            </div>
+        @endif
+
         @include('projets._filtres', [
             'libMien' => 'Mes tâches', 'nbRetard' => $nbRetard, 'etats' => $statuts, 'libEtat' => 'Statut',
             'personnes' => $personnes, 'projets' => $projets,
@@ -88,6 +97,7 @@
     <script>
         (function () {
             const conteneur = document.getElementById('ptGroupes');
+            const cibleId = @json($cible?->id);   // tâche visée par une notification
             const groupes = Array.from(document.querySelectorAll('[data-groupe]'));
             const aucun = document.getElementById('ptAucun');
             groupes.forEach((g, i) => { g.dataset.ordre = i; });
@@ -96,6 +106,7 @@
             let choixManuel = false;   // vrai dès que l'utilisateur plie/déplie lui-même : un filtre actif ne rouvre plus tout
 
             function afficher(carte, g, f) {
+                if (cibleId && carte.dataset.tache !== String(cibleId)) return false;
                 if (f.mien && carte.dataset.mien !== '1') return false;
                 if (f.retard && carte.dataset.retard !== '1') return false;
                 if (f.pers.length && !carte.dataset.resp.split(',').some(id => f.pers.includes(id))) return false;
@@ -111,7 +122,7 @@
             }
 
             function appliquer(f) {
-                const filtre = f.actifs > 0;
+                const filtre = f.actifs > 0 || !!cibleId;
                 let total = 0;
 
                 groupes.forEach(g => {

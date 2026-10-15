@@ -134,4 +134,67 @@ class FiltresProjetsTachesTest extends TestCase
                         ? (cle', $html);
         $this->assertStringContainsString('.sort((x, y) => f.tri', $html, 'le tri dépend de son propre bouton, plus de « Mes… »');
     }
+
+    public function test_le_tableau_de_bord_se_limite_aux_evenements_d_une_notification(): void
+    {
+        $jour = '2026-10-16';
+        $a = \App\Models\Evenements::create([
+            'nom_event' => 'Atelier Cible', 'type_event' => 'Atelier', 'type_public' => 'Autres', 'desc_event' => 'x',
+            'commanditaire_event' => 'MDNI', 'nbpart' => 4, 'facture' => 'Non', 'devis' => 'Non', 'objet' => 'Non', 'auteur' => 'T',
+            'date_heure_debut' => $jour.' 14:00:00', 'date_heure_fin' => $jour.' 16:00:00',
+        ]);
+        \App\Models\Evenements::create([
+            'nom_event' => 'Autre Evenement', 'type_event' => 'Atelier', 'type_public' => 'Autres', 'desc_event' => 'x',
+            'commanditaire_event' => 'MDNI', 'nbpart' => 4, 'facture' => 'Non', 'devis' => 'Non', 'objet' => 'Non', 'auteur' => 'T',
+            'date_heure_debut' => $jour.' 10:00:00', 'date_heure_fin' => $jour.' 11:00:00',
+        ]);
+
+        $this->actingAs($this->admin)->get('/dashboard?from='.$jour.'&to='.$jour.'&evenement='.$a->id)
+            ->assertOk()
+            ->assertSee('Affichage limité à', false)
+            ->assertSee('Atelier Cible')
+            ->assertDontSee('Autre Evenement');
+
+        // Événement introuvable (supprimé…) : affichage normal de la journée.
+        $this->actingAs($this->admin)->get('/dashboard?from='.$jour.'&to='.$jour.'&evenement=99999')
+            ->assertOk()
+            ->assertDontSee('Affichage limité à', false)
+            ->assertSee('Autre Evenement');
+    }
+
+    public function test_les_pages_projets_et_taches_annoncent_le_ciblage(): void
+    {
+        $projet = Projet::factory()->create(['nom' => 'Projet Cible']);
+        $tache = Tache::factory()->create(['projet_id' => $projet->id, 'titre' => 'Tâche Cible']);
+
+        $this->actingAs($this->admin)->get('/projets?projet='.$projet->id)
+            ->assertOk()->assertSee('Affichage limité au projet', false)->assertSee('Projet Cible');
+
+        $this->actingAs($this->admin)->get('/taches?tache='.$tache->id)
+            ->assertOk()->assertSee('Affichage limité à la tâche', false)->assertSee('Tâche Cible');
+
+        // Identifiant inconnu : pas de bandeau, pas de page vide.
+        $this->actingAs($this->admin)->get('/projets?projet=99999')->assertOk()->assertDontSee('Affichage limité', false);
+        $this->actingAs($this->admin)->get('/taches?tache=99999')->assertOk()->assertDontSee('Affichage limité', false);
+    }
+
+    public function test_l_endpoint_des_cartes_respecte_le_ciblage_d_une_notification(): void
+    {
+        $jour = '2026-10-16';
+        $base = [
+            'type_event' => 'Atelier', 'type_public' => 'Autres', 'desc_event' => 'x', 'commanditaire_event' => 'MDNI',
+            'nbpart' => 4, 'facture' => 'Non', 'devis' => 'Non', 'objet' => 'Non', 'auteur' => 'T',
+        ];
+        $a = \App\Models\Evenements::create($base + ['nom_event' => 'Cible Un', 'date_heure_debut' => $jour.' 14:00:00', 'date_heure_fin' => $jour.' 16:00:00']);
+        \App\Models\Evenements::create($base + ['nom_event' => 'Autre Deux', 'date_heure_debut' => $jour.' 10:00:00', 'date_heure_fin' => $jour.' 11:00:00']);
+
+        $html = $this->actingAs($this->admin)->get('/dashboard/cards?from='.$jour.'&to='.$jour.'&evenement='.$a->id)->assertOk()->getContent();
+        $this->assertStringContainsString('Cible Un', $html);
+        $this->assertStringNotContainsString('Autre Deux', $html);
+
+        // Identifiant inconnu : affichage normal.
+        $html = $this->actingAs($this->admin)->get('/dashboard/cards?from='.$jour.'&to='.$jour.'&evenement=99999')->assertOk()->getContent();
+        $this->assertStringContainsString('Cible Un', $html);
+        $this->assertStringContainsString('Autre Deux', $html);
+    }
 }

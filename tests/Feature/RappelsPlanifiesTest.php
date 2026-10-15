@@ -354,4 +354,45 @@ class RappelsPlanifiesTest extends TestCase
         $this->assertFileExists(base_path('rappels.php'));
         $this->assertStringContainsString("PHP_SAPI !== 'cli'", file_get_contents(base_path('rappels.php')));
     }
+
+    public function test_en_exterieur_n_est_pas_un_conflit_de_salle(): void
+    {
+        $dehors = Salles::create(['nom_salle' => 'En extérieur', 'type_salle' => 'Salle']);
+        $a = $this->evenement('2026-10-16 14:00:00', [$this->marie->id], ['nom_event' => 'Sortie A']);
+        $b = $this->evenement('2026-10-16 15:00:00', [$this->paul->id], ['nom_event' => 'Sortie B']);
+        $a->salles()->sync([$dehors->id]);
+        $b->salles()->sync([$dehors->id]);
+
+        $this->lancer();
+
+        $this->assertSame(0, $this->de($this->admin, 'admin.conflit')->count());
+    }
+
+    public function test_le_conflit_indique_la_date_et_mene_aux_deux_evenements(): void
+    {
+        $salle = Salles::create(['nom_salle' => 'Salle 2', 'type_salle' => 'Salle']);
+        $a = $this->evenement('2026-10-16 14:00:00', [$this->marie->id], ['nom_event' => 'Atelier Scratch']);   // 14h-16h
+        $b = $this->evenement('2026-10-16 15:00:00', [$this->paul->id], ['nom_event' => 'Permanence Pix']);     // 15h-17h
+        $a->salles()->sync([$salle->id]);
+        $b->salles()->sync([$salle->id]);
+
+        $this->lancer();
+
+        $n = $this->de($this->admin, 'admin.conflit')->firstOrFail();
+        $this->assertStringContainsString('vendredi 16 octobre', $n->contexte);
+        $this->assertStringContainsString('de 15h00 à 16h00', $n->contexte, 'le moment du chevauchement');
+        $this->assertStringContainsString('16 octobre', $n->titre);
+        $this->assertStringContainsString('evenement='.$a->id.'%2C'.$b->id, $n->url);
+        $this->assertStringContainsString('from=2026-10-16', $n->url);
+    }
+
+    public function test_les_rappels_d_evenement_ciblent_l_evenement(): void
+    {
+        $e = $this->evenement('2026-10-12 14:00:00', [$this->marie->id], ['prendre_photos' => true]);
+
+        $this->lancer('2026-10-11');
+
+        $n = $this->de($this->marie, 'evenement.photos')->firstOrFail();
+        $this->assertStringContainsString('evenement='.$e->id, $n->url);
+    }
 }
