@@ -178,6 +178,75 @@ $modeSombre = auth()->check() && auth()->user()->modeSombre();
         });
     </script>
 
+    {{-- Retour visuel : barre de chargement en haut de page + surbrillance des éléments ciblés par une notification.
+         Sans lui, un filtrage quasi instantané passe inaperçu quand on est déjà sur la page concernée. --}}
+    <style>
+        #chargementHaut { position: fixed; top: 0; left: 0; right: 0; z-index: 2000; height: 3px; overflow: hidden; pointer-events: none;
+                          background: color-mix(in srgb, var(--tblr-primary) 18%, transparent); }
+        #chargementHaut::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; border-radius: 3px; background: var(--tblr-primary);
+                                 animation: chargement-barre 1s ease-in-out infinite; }
+        @keyframes chargement-barre { from { left: -40%; } to { left: 100%; } }
+
+        [data-cible], [data-cible-evenements] { animation: cible-entree .5s ease-out both; }
+        @keyframes cible-entree { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+
+        .nt-it--ouvre { opacity: .55; }
+        .cible-flash { animation: cible-flash 1.8s ease-out 1; position: relative; z-index: 1; }
+        @keyframes cible-flash {
+            0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tblr-primary) 55%, transparent); }
+            35%  { box-shadow: 0 0 0 7px color-mix(in srgb, var(--tblr-primary) 32%, transparent); }
+            100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--tblr-primary) 0%, transparent); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #chargementHaut::after { animation: none; left: 0; width: 100%; }
+            [data-cible], [data-cible-evenements], .cible-flash { animation: none; }
+        }
+    </style>
+    <script>
+        // Affiche la barre de chargement ; avec une durée (ms) elle disparaît d'elle-même.
+        window.afficherChargement = function (duree) {
+            var barre = document.getElementById('chargementHaut');
+            if (!barre) {
+                barre = document.createElement('div');
+                barre.id = 'chargementHaut';
+                barre.setAttribute('role', 'progressbar');
+                barre.setAttribute('aria-label', 'Chargement');
+                document.body.appendChild(barre);
+            }
+            if (duree) setTimeout(function () { barre.remove(); }, duree);
+        };
+
+        // Arrivée depuis une notification : bandeau animé, barre de chargement et surbrillance des éléments affichés.
+        (function () {
+            if (!document.querySelector('[data-cible], [data-cible-evenements]')) return;
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            var fait = false;
+            function surbrillance() {
+                var cibles = document.querySelectorAll('[data-tache]:not(.d-none), [data-projet]:not(.d-none), #cardsContainer .card');
+                cibles.forEach(function (el) {
+                    el.classList.add('cible-flash');
+                    setTimeout(function () { el.classList.remove('cible-flash'); }, 1900);
+                });
+            }
+
+            window.afficherChargement(1100);
+            setTimeout(function () { fait = true; surbrillance(); }, 650);
+
+            // Tableau de bord : les cartes sont rechargées en Ajax juste après l'ouverture de la page.
+            var cartes = document.getElementById('cardsContainer');
+            if (cartes && window.MutationObserver) {
+                var rappel = null;
+                var observateur = new MutationObserver(function () {
+                    clearTimeout(rappel);
+                    rappel = setTimeout(function () { surbrillance(); observateur.disconnect(); }, 80);
+                });
+                observateur.observe(cartes, { childList: true });
+                setTimeout(function () { observateur.disconnect(); }, 4000);
+            }
+        })();
+    </script>
+
     {{-- Scripts additionnels --}}
     @stack('scripts')
 </body>

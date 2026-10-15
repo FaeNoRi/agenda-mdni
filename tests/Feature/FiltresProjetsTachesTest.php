@@ -197,4 +197,13 @@ class FiltresProjetsTachesTest extends TestCase
         $this->assertStringContainsString('Cible Un', $html);
         $this->assertStringContainsString('Autre Deux', $html);
     }
+
+    public function test_le_retour_visuel_du_ciblage_est_present(): void
+    {
+        $html = $this->actingAs($this->admin)->get('/projets')->assertOk()->getContent();
+
+        $this->assertStringContainsString('window.afficherChargement', $html);
+        $this->assertStringContainsString('@keyframes cible-flash', $html);
+        $this->assertStringContainsString('prefers-reduced-motion', $html, 'respecte « réduire les animations »');
+    }
 }

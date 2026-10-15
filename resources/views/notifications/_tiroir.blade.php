@@ -241,7 +241,11 @@
 
             const ouvrir = () => {
                 if (!n.vue) marquer(n, true);
-                if (n.url) location.href = n.url;
+                if (n.url) {
+                    it.classList.add('nt-it--ouvre');
+                    if (window.afficherChargement) window.afficherChargement();   // retour immédiat : la page se recharge
+                    location.href = n.url;
+                }
             };
             it.onclick = ouvrir;
             it.onkeydown = (e) => { if (e.key === 'Enter') ouvrir(); };
