@@ -199,6 +199,22 @@ class TacheController extends Controller
         return response()->json(['ok' => true, 'change' => $change, 'id' => $tache->id]);
     }
 
+    /** Corrige le texte obligatoire d'une tâche « En attente » ou « Bloqué », sans changer le statut. */
+    public function raison(Request $request, Tache $tache): JsonResponse
+    {
+        Gate::authorize('changeStatus', $tache);
+
+        $data = $request->validate([
+            'raison' => ['required', 'string', 'max:1000'],
+        ], [
+            'raison.required' => 'Précisez la raison.',
+        ]);
+
+        $change = $tache->modifierRaison($data['raison'], $request->user());
+
+        return response()->json(['ok' => true, 'change' => $change, 'id' => $tache->id]);
+    }
+
     // ---- Outils -----------------------------------------------------------
 
     private function formulaire(Tache $tache): View

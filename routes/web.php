@@ -149,6 +149,7 @@ Route::middleware(['auth', 'projets.acces'])->group(function () {
     Route::put('/taches/{tache}', [TacheController::class, 'update'])->name('taches.update');
     Route::delete('/taches/{tache}', [TacheController::class, 'destroy'])->name('taches.destroy');
     Route::post('/taches/{tache}/statut', [TacheController::class, 'statut'])->name('taches.statut');
+    Route::post('/taches/{tache}/raison', [TacheController::class, 'raison'])->name('taches.raison');
     Route::post('/taches/{tache}/commentaires', [CommentaireController::class, 'storeTache'])->name('taches.commentaires.store');
     Route::post('/projets/{projet}/commentaires', [CommentaireController::class, 'storeProjet'])->name('projets.commentaires.store');
     Route::put('/commentaires/{commentaire}', [CommentaireController::class, 'update'])->name('commentaires.update');

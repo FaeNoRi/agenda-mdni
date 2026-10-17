@@ -95,8 +95,24 @@
     @endif
 
     @if($tache->raison && $s->exigeRaison())
-        <div class="mb-4 p-2 rounded" style="background: {{ $s->couleur() }}1f; color: {{ $s->couleur() }}; font-size: 13px;">
-            <x-icone name="message-2" :size="14" /> <strong>{{ $s->label() }} :</strong> {{ $tache->raison }}
+        <div class="mb-4 p-2 rounded" style="background: {{ $s->couleur() }}1f; color: {{ $s->couleur() }}; font-size: 13px;" data-raison-carte>
+            <div data-raison-vue>
+                <x-icone name="message-2" :size="14" /> <strong>{{ $s->label() }} :</strong> {{ $tache->raison }}
+                @can('changeStatus', $tache)
+                    <button type="button" class="btn btn-sm btn-link p-0 ms-2 align-baseline" style="font-size: 12.5px; font-weight: 600; color: inherit; text-decoration: underline;" data-raison-modifier>Modifier le texte</button>
+                @endcan
+            </div>
+
+            @can('changeStatus', $tache)
+                <form action="{{ route('taches.raison', $tache) }}" method="POST" class="d-none" data-raison-edition data-ajax-form data-id="{{ $tache->id }}" novalidate>
+                    @csrf
+                    <div class="alert alert-danger d-none" data-erreurs role="alert"></div>
+                    <label class="form-label mb-1" style="color: inherit; font-weight: 600;">{{ $s->label() }} : texte obligatoire</label>
+                    <textarea name="raison" class="form-control mb-2" rows="2" maxlength="1000" required>{{ $tache->raison }}</textarea>
+                    <button type="submit" class="btn btn-sm pt-btn-doux">Enregistrer</button>
+                    <button type="button" class="btn btn-sm btn-link link-secondary" data-raison-annuler>Annuler</button>
+                </form>
+            @endcan
         </div>
     @endif
 

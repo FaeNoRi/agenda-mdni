@@ -26,6 +26,7 @@ class RestrictCivique
         // La règle fine (« uniquement là où il est impliqué ») est portée par les politiques
         // TachePolicy / ProjetPolicy, que les contrôleurs doivent interroger.
         'taches.statut',
+        'taches.raison',
         'taches.commentaires.store',
         'projets.commentaires.store',
         // Notifications : marquer comme lue et régler ses préférences.

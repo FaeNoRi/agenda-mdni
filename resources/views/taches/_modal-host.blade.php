@@ -66,6 +66,22 @@
                 return;
             }
 
+            // Texte obligatoire d'une tâche « En attente » / « Bloqué » : modifiable sans changer le statut.
+            const raisonOuvrir = t.closest('[data-raison-modifier]');
+            if (raisonOuvrir) {
+                const carte = raisonOuvrir.closest('[data-raison-carte]');
+                carte.querySelector('[data-raison-vue]').classList.add('d-none');
+                carte.querySelector('[data-raison-edition]').classList.remove('d-none');
+                carte.querySelector('[data-raison-edition] textarea')?.focus();
+                return;
+            }
+            if (t.closest('[data-raison-annuler]')) {
+                const carte = t.closest('[data-raison-carte]');
+                carte.querySelector('[data-raison-edition]').classList.add('d-none');
+                carte.querySelector('[data-raison-vue]').classList.remove('d-none');
+                return;
+            }
+
             if (t.closest('[data-supprimer-demande]')) {
                 contenu.querySelector('[data-suppr-confirm]')?.classList.remove('d-none');
                 return;

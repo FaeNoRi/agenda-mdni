@@ -130,6 +130,44 @@ class Tache extends Model
     }
 
     /**
+     * Corrige le texte obligatoire d'une tâche « En attente » ou « Bloqué » sans toucher au statut.
+     * Retourne false si le texte est identique (rien n'est écrit).
+     */
+    public function modifierRaison(string $raison, ?User $par = null): bool
+    {
+        $raison = trim($raison);
+
+        if (!$this->statut->exigeRaison()) {
+            throw ValidationException::withMessages([
+                'raison' => 'Ce statut n\'a pas de texte à modifier.',
+            ]);
+        }
+        if ($raison === '') {
+            throw ValidationException::withMessages([
+                'raison' => 'Précisez la raison pour le statut « '.$this->statut->label().' ».',
+            ]);
+        }
+        if ($raison === $this->raison) {
+            return false;
+        }
+
+        DB::transaction(function () use ($raison, $par) {
+            $this->forceFill(['raison' => $raison])->save();
+
+            ProjetHistorique::noter($this->projet_id, ProjetHistorique::TACHE,
+                '« '.$this->titre.' » : texte « '.$this->statut->label().' » modifié ('.$raison.')', $par, $this->id);
+
+            $this->historiques()->create([
+                'user_id' => $par?->id,
+                'statut' => $this->statut,
+                'raison' => $raison,
+            ]);
+        });
+
+        return true;
+    }
+
+    /**
      * Change le statut et l'inscrit dans l'historique. « En attente » et « Bloqué » exigent une raison.
      * Retourne false si le statut est déjà celui demandé (rien n'est écrit).
      */
