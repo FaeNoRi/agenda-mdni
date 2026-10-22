@@ -11,6 +11,13 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
+// PHP 8.5 : le fichier de configuration de base du framework (vendor/laravel/framework/config/database.php, v12.21)
+// utilise encore une constante PDO dépréciée. L'avis de dépréciation ne doit jamais s'afficher dans la réponse
+// (il casserait les en-têtes HTTP) : on l'écarte jusqu'à la mise à jour de Laravel. Les autres erreurs restent signalées.
+if (PHP_VERSION_ID >= 80500) {
+    error_reporting(E_ALL & ~E_DEPRECATED);
+}
+
 use Illuminate\Contracts\Console\Kernel;
 
 define('LARAVEL_START', microtime(true));
