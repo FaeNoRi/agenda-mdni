@@ -12,6 +12,14 @@
     .nm-compte { margin-top: .4rem; padding: .8rem 1rem .5rem 1.25rem; border-top: 1px solid color-mix(in srgb, var(--tblr-primary-fg) 28%, transparent); }
     .nm-nom { font-weight: 600; color: var(--tblr-primary-fg); }
     .nm-mail { font-size: .85rem; color: var(--tblr-primary-fg); opacity: .8; overflow-wrap: anywhere; }
+    .nm-titre { padding: .6rem 1rem .2rem 1.25rem; font-size: .8rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--tblr-primary-fg); opacity: .75; }
+
+    /* Outils mis en avant (Flo'pilot, Floppy Là) : pastilles aux couleurs du thème de l'utilisateur. */
+    .nav-tool { display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .95rem; border-radius: 999px; font-weight: 600; font-size: .9rem; line-height: 1.2; text-decoration: none; transition: background-color .15s, color .15s; }
+    .nav-tool-plein { background: var(--tblr-primary-fg); color: var(--tblr-primary) !important; }
+    .nav-tool-plein:hover, .nav-tool-plein:focus-visible, .nav-tool-plein.show, .nav-tool-plein.active { background: color-mix(in srgb, var(--tblr-primary-fg) 88%, var(--tblr-primary)); color: var(--tblr-primary) !important; }
+    .nav-tool-contour { color: var(--tblr-primary-fg) !important; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tblr-primary-fg) 75%, transparent); }
+    .nav-tool-contour:hover, .nav-tool-contour:focus-visible, .nav-tool-contour.active { background: color-mix(in srgb, var(--tblr-primary-fg) 18%, transparent); color: var(--tblr-primary-fg) !important; }
 </style>
 <nav x-data="{ open: false }" class="shadow bg-primary text-white border-b border-gray-100">
     <!-- Primary Navigation Menu -->
@@ -37,26 +45,6 @@
                     </x-nav-link>
                 </div>
 
-                @if(auth()->user()->accedeProjetsTaches())
-                <div class="hidden sm:-my-px sm:ms-10 sm:flex items-center">
-                    <div class="dropdown">
-                        <a href="#" class="nav-link dropdown-toggle {{ request()->routeIs('projets.*', 'taches.*') ? 'active' : '' }}" data-bs-toggle="dropdown" role="button" aria-expanded="false">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="icon me-1" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" /></svg>
-                            Projets &amp; tâches
-                        </a>
-                        <div class="dropdown-menu">
-                            <a href="{{ route('projets.index') }}" class="dropdown-item {{ request()->routeIs('projets.*') ? 'active' : '' }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" /></svg>
-                                Projets
-                            </a>
-                            <a href="{{ route('taches.index') }}" class="dropdown-item {{ request()->routeIs('taches.*') ? 'active' : '' }}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3.5 5.5l1.5 1.5l2.5 -2.5" /><path d="M3.5 11.5l1.5 1.5l2.5 -2.5" /><path d="M3.5 17.5l1.5 1.5l2.5 -2.5" /><path d="M11 6l9 0" /><path d="M11 12l9 0" /><path d="M11 18l9 0" /></svg>
-                                Tâches
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                @endif
 
                 @if(auth()->user()->is_admin)
                 <div class="hidden sm:-my-px sm:ms-10 sm:flex items-center">
@@ -183,19 +171,35 @@
                 </div>
                 @endif
                 
-                <div class="hidden sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('presence')" :active="request()->routeIs('presence')" target="_blank" rel="noopener noreferrer">
-                        {{ __('Floppy Là') }}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-external-link" style="padding-left:5px;">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" />
-                            <path d="M11 13l9 -9" />
-                            <path d="M15 4h5v5" />
-                        </svg>
-                    </x-nav-link>
-                </div>
             </div> 
 
+
+            <!-- Outils mis en avant : Flo'pilot (interne) et Floppy Là (nouvel onglet) -->
+            <div class="hidden sm:flex sm:items-center ms-auto gap-2">
+                @if(auth()->user()->accedeProjetsTaches())
+                <div class="dropdown">
+                    <a href="#" class="nav-tool nav-tool-plein dropdown-toggle {{ request()->routeIs('projets.*', 'taches.*') ? 'active' : '' }}" data-bs-toggle="dropdown" role="button" aria-expanded="false">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 16l2 -6l6 -2l-2 6l-6 2"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/></svg>
+                        Flo'pilot
+                    </a>
+                        <div class="dropdown-menu">
+                            <a href="{{ route('projets.index') }}" class="dropdown-item {{ request()->routeIs('projets.*') ? 'active' : '' }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" /></svg>
+                                Projets
+                            </a>
+                            <a href="{{ route('taches.index') }}" class="dropdown-item {{ request()->routeIs('taches.*') ? 'active' : '' }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3.5 5.5l1.5 1.5l2.5 -2.5" /><path d="M3.5 11.5l1.5 1.5l2.5 -2.5" /><path d="M3.5 17.5l1.5 1.5l2.5 -2.5" /><path d="M11 6l9 0" /><path d="M11 12l9 0" /><path d="M11 18l9 0" /></svg>
+                                Tâches
+                            </a>
+                        </div>
+                </div>
+                @endif
+                <a href="{{ route('presence') }}" class="nav-tool nav-tool-contour {{ request()->routeIs('presence') ? 'active' : '' }}" target="_blank" rel="noopener noreferrer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4"/><path d="M15 19l2 2l4 -4"/></svg>
+                    Floppy Là
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6"/><path d="M11 13l9 -9"/><path d="M15 4h5v5"/></svg>
+                </a>
+            </div>
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
@@ -264,6 +268,7 @@
         <a href="{{ route('dashboard') }}" class="nm-lien {{ request()->routeIs('dashboard') ? 'on' : '' }}"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></svg> Tableau de bord</a>
 
         @if(auth()->user()->accedeProjetsTaches())
+            <div class="nm-titre">Flo'pilot</div>
             <a href="{{ route('projets.index') }}" class="nm-lien {{ request()->routeIs('projets.*') ? 'on' : '' }}"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2"/></svg> Projets</a>
             <a href="{{ route('taches.index') }}" class="nm-lien {{ request()->routeIs('taches.*') ? 'on' : '' }}"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 5.5l1.5 1.5l2.5 -2.5"/><path d="M3.5 11.5l1.5 1.5l2.5 -2.5"/><path d="M3.5 17.5l1.5 1.5l2.5 -2.5"/><path d="M11 6l9 0"/><path d="M11 12l9 0"/><path d="M11 18l9 0"/></svg> Tâches</a>
         @endif

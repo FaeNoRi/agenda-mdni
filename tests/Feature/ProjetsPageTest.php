@@ -76,10 +76,21 @@ class ProjetsPageTest extends TestCase
 
         foreach ([User::factory()->create(), User::factory()->create(['is_admin' => true]), User::factory()->create(['is_civique' => true])] as $u) {
             $this->actingAs($u)->get('/dashboard')->assertOk()
-                ->assertSee('Projets &amp; tâches', false)
+                ->assertSee("Flo'pilot", false)
+                ->assertDontSee('Projets &amp; tâches', false)
                 ->assertSee(route('projets.index'), false)
                 ->assertSee(route('taches.index'), false);
         }
+    }
+
+    public function test_le_menu_met_en_avant_floppy_la_meme_sans_flopilot(): void
+    {
+        config(['features.projets_taches' => false]);
+
+        $this->actingAs(User::factory()->create())->get('/dashboard')->assertOk()
+            ->assertSee('Floppy Là', false)
+            ->assertSee(route('presence'), false)
+            ->assertDontSee('nav-tool-plein dropdown-toggle', false);
     }
 
     public function test_le_module_ferme_n_a_pas_d_entree_de_menu_sauf_pour_les_administrateurs(): void
