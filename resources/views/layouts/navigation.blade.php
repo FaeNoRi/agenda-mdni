@@ -16,10 +16,10 @@
 
     /* Outils mis en avant (Flo'pilot, Floppy Là) : pastilles aux couleurs du thème de l'utilisateur. */
     .nav-tool { display: inline-flex; align-items: center; gap: .4rem; padding: .4rem .95rem; border-radius: 999px; font-weight: 600; font-size: .9rem; line-height: 1.2; text-decoration: none; transition: background-color .15s, color .15s; }
-    .nav-tool-plein { background: var(--tblr-primary-fg); color: var(--tblr-primary) !important; }
-    .nav-tool-plein:hover, .nav-tool-plein:focus-visible, .nav-tool-plein.show, .nav-tool-plein.active { background: color-mix(in srgb, var(--tblr-primary-fg) 88%, var(--tblr-primary)); color: var(--tblr-primary) !important; }
-    .nav-tool-contour { color: var(--tblr-primary-fg) !important; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tblr-primary-fg) 75%, transparent); }
-    .nav-tool-contour:hover, .nav-tool-contour:focus-visible, .nav-tool-contour.active { background: color-mix(in srgb, var(--tblr-primary-fg) 18%, transparent); color: var(--tblr-primary-fg) !important; }
+    nav.bg-primary a.nav-tool-plein { background: var(--tblr-primary-fg); color: var(--tblr-primary) !important; }
+    nav.bg-primary a.nav-tool-plein:hover, nav.bg-primary a.nav-tool-plein:focus-visible, nav.bg-primary a.nav-tool-plein.show, nav.bg-primary a.nav-tool-plein.active { background: color-mix(in srgb, var(--tblr-primary-fg) 88%, var(--tblr-primary)); color: var(--tblr-primary) !important; }
+    nav.bg-primary a.nav-tool-contour { color: var(--tblr-primary-fg) !important; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--tblr-primary-fg) 75%, transparent); }
+    nav.bg-primary a.nav-tool-contour:hover, nav.bg-primary a.nav-tool-contour:focus-visible, nav.bg-primary a.nav-tool-contour.active { background: color-mix(in srgb, var(--tblr-primary-fg) 18%, transparent); color: var(--tblr-primary-fg) !important; }
 </style>
 <nav x-data="{ open: false }" class="shadow bg-primary text-white border-b border-gray-100">
     <!-- Primary Navigation Menu -->
