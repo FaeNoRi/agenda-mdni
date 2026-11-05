@@ -24,7 +24,7 @@
         @endif
 
         @include('projets._filtres', [
-            'libMien' => 'Mes tâches', 'nbRetard' => $nbRetard, 'etats' => $statuts, 'libEtat' => 'Statut',
+            'libMien' => 'Mes tâches', 'libTous' => 'Toutes les tâches', 'cleFiltres' => 'taches', 'avecTerminees' => true, 'defTri' => true, 'nbRetard' => $nbRetard, 'etats' => $statuts, 'libEtat' => 'Statut',
             'personnes' => $personnes, 'projets' => $projets,
         ])
 
@@ -107,6 +107,8 @@
 
             function afficher(carte, g, f) {
                 if (cibleId && carte.dataset.tache !== String(cibleId)) return false;
+                // Les tâches terminées ou annulées sont masquées, sauf demande explicite (option ou filtre de statut).
+                if (!cibleId && !f.terminees && !f.etats.length && ['termine', 'annule'].includes(carte.dataset.statut)) return false;
                 if (f.mien && carte.dataset.mien !== '1') return false;
                 if (f.retard && carte.dataset.retard !== '1') return false;
                 if (f.pers.length && !carte.dataset.resp.split(',').some(id => f.pers.includes(id))) return false;

@@ -40,7 +40,7 @@
         @endif
 
         @include('projets._filtres', [
-            'libMien' => 'Mes projets', 'nbRetard' => $retardProjets, 'etats' => $etats, 'libEtat' => 'État',
+            'libMien' => 'Mes projets', 'libTous' => 'Tous les projets', 'cleFiltres' => 'projets', 'nbRetard' => $retardProjets, 'etats' => $etats, 'libEtat' => 'État',
             'personnes' => $personnes,
         ])
 

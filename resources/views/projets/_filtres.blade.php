@@ -2,7 +2,9 @@
     Filtres des pages Projets et Tâches : une barre discrète dans la page + un tiroir (même présentation que
     le tiroir des filtres du tableau de bord). Les filtres s'appliquent instantanément, côté navigateur.
 
-    Variables : $libMien ("Mes projets" / "Mes tâches"), $nbRetard, $etats (enum : value, label, couleur),
+    Variables : $libMien ("Mes projets" / "Mes tâches"), $libTous ("Tous les projets" / "Toutes les tâches"), $cleFiltres (mémoire
+                locale des choix), $avecTerminees (tâches : option pour afficher les tâches terminées/annulées, masquées par défaut),
+                $defTri (tri par échéance activé par défaut), $nbRetard, $etats (enum : value, label, couleur),
                 $libEtat ("État" / "Statut"), $personnes (utilisateurs), $projets (facultatif : liste déroulante).
 
     Le tiroir ne filtre rien lui-même : il émet l'événement « pt-filtres » (detail = valeurs courantes) que la page écoute,
@@ -11,7 +13,10 @@
 <style>
     .pf-barre { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
     /* Avec le menu flottant, le bouton « Filtres » est dans le dock : la barre n'apparaît que s'il y a des filtres actifs. */
-    body.dock-ok .pf-barre:not(.pf-actif) { display: none; }
+    body.dock-ok .pf-barre:not(.pf-actif):not(.pf-barre--seg) { display: none; }
+    .pf-seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--tblr-border-color, var(--c-bord)); border-radius: 999px; background: var(--c-surface); }
+    .pf-seg button { border: 0; background: transparent; padding: 4px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--c-muted); cursor: pointer; }
+    .pf-seg button.on { background: var(--tblr-primary); color: var(--tblr-primary-fg, #fff); }
     body.dock-ok .pf-barre [data-dock-filtres] { display: none !important; }
 
     .fpill { --pc: var(--tblr-primary); display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border: 1px solid var(--tblr-border-color, var(--c-bord)); border-radius: 999px; background: var(--c-surface); color: var(--tblr-body-color, #182433); font-size: 13px; font-weight: 600; line-height: 1.3; cursor: pointer; transition: background .12s, border-color .12s, color .12s; }
@@ -26,7 +31,11 @@
     .fcount { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--tblr-primary); color: var(--tblr-primary-fg); font-size: 11px; font-weight: 700; line-height: 20px; text-align: center; letter-spacing: 0; }
 </style>
 
-<div class="pf-barre" id="pfBarre">
+<div class="pf-barre pf-barre--seg" id="pfBarre">
+    <div class="pf-seg" role="group" aria-label="Périmètre">
+        <button type="button" data-pf-seg="mien" aria-pressed="false">{{ $libMien }}</button>
+        <button type="button" data-pf-seg="tous" aria-pressed="false">{{ $libTous ?? 'Tout afficher' }}</button>
+    </div>
     <button type="button" class="btn pt-btn-doux" data-dock-filtres data-bs-toggle="offcanvas" data-bs-target="#pfTiroir" aria-controls="pfTiroir">
         <x-icone name="filter" :size="16" /> Filtres <span class="fcount d-none" id="pfCompte"></span>
     </button>
@@ -69,6 +78,12 @@
                 <button type="button" class="fpill" data-pf-rapide="retard" aria-pressed="false" style="--pc: #d63939;">
                     <x-icone name="alert-triangle" :size="16" /> En retard <b>{{ $nbRetard }}</b>
                 </button>
+                @isset($avecTerminees)
+                    {{-- Option d'affichage : les tâches terminées ou annulées sont masquées par défaut. --}}
+                    <button type="button" class="fpill" data-pf-rapide="terminees" aria-pressed="false" style="--pc: #2fb344;" title="Afficher aussi les tâches terminées ou annulées">
+                        <x-icone name="list-check" :size="16" /> Afficher les terminées
+                    </button>
+                @endisset
                 {{-- Un tri, pas un filtre : il ne masque rien et n'est pas compté dans les filtres actifs. --}}
                 <button type="button" class="fpill" data-pf-rapide="tri" aria-pressed="false" style="--pc: #4299e1;" title="Classer de l'échéance la plus proche à la plus éloignée">
                     <x-icone name="calendar" :size="16" /> Échéance la plus proche
@@ -142,6 +157,7 @@
                 a: periode ? a.value : de.value,     // sans période : le jour choisi, exactement
                 mien: !!racine.querySelector('[data-pf-rapide="mien"].on'),
                 retard: !!racine.querySelector('[data-pf-rapide="retard"].on'),
+                terminees: !!racine.querySelector('[data-pf-rapide="terminees"].on'),   // option d'affichage, pas un filtre
                 tri: !!racine.querySelector('[data-pf-rapide="tri"].on'),   // tri par échéance : n'est pas un filtre
                 etats: actifs('data-pf-etat'),
                 pers: actifs('data-pf-pers'),
@@ -152,6 +168,30 @@
                 + (f.etats.length ? 1 : 0) + (f.pers.length ? 1 : 0) + (f.projet !== '' ? 1 : 0);
 
             return f;
+        }
+
+        // Mémoire locale : on retrouve ses réglages après une modification de tâche (rechargement) ou à la prochaine visite.
+        // Un lien de notification (?tache= / ?projet=) ignore la mémoire pour ne pas masquer la cible.
+        const cle = 'ptFiltres:' + @json($cleFiltres ?? 'defaut');
+        const ignorer = @json(request()->hasAny(['tache', 'projet']));
+        const defauts = { mien: true, retard: false, tri: @json((bool) ($defTri ?? false)), terminees: false, etats: [], pers: [], projet: '' };
+
+        function memoriser(f) {
+            try { localStorage.setItem(cle, JSON.stringify({ mien: f.mien, retard: f.retard, tri: f.tri, terminees: f.terminees, etats: f.etats, pers: f.pers, projet: f.projet })); } catch (e) {}
+        }
+
+        function restaurer() {
+            if (ignorer) return;
+            let v = defauts;
+            try { v = Object.assign({}, defauts, JSON.parse(localStorage.getItem(cle) || '{}')); } catch (e) {}
+            const mettre = (sel, on) => { const b = racine.querySelector(sel); if (b && on) { b.classList.add('on'); b.setAttribute('aria-pressed', 'true'); } };
+            mettre('[data-pf-rapide="mien"]', v.mien);
+            mettre('[data-pf-rapide="retard"]', v.retard);
+            mettre('[data-pf-rapide="tri"]', v.tri);
+            mettre('[data-pf-rapide="terminees"]', v.terminees);
+            (v.etats || []).forEach(x => mettre('[data-pf-etat="' + x + '"]', true));
+            (v.pers || []).forEach(x => mettre('[data-pf-pers="' + x + '"]', true));
+            if (projet && v.projet !== '' && projet.querySelector('option[value="' + v.projet + '"]')) projet.value = v.projet;
         }
 
         function pastille(el, n) {
@@ -169,6 +209,12 @@
             pastille(compte, n);
             effacerBarre.classList.toggle('d-none', n === 0);
             barre.classList.toggle('pf-actif', n > 0);
+            barre.querySelectorAll('[data-pf-seg]').forEach(b => {
+                const on = (b.dataset.pfSeg === 'mien') === f.mien;
+                b.classList.toggle('on', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            });
+            memoriser(f);
 
             document.dispatchEvent(new CustomEvent('pt-filtres', { detail: f }));
         }
@@ -191,6 +237,14 @@
             if (!on) a.value = '';
         }
 
+        barre.querySelectorAll('[data-pf-seg]').forEach(b => b.addEventListener('click', () => {
+            const p = racine.querySelector('[data-pf-rapide="mien"]');
+            const on = b.dataset.pfSeg === 'mien';
+            p.classList.toggle('on', on);
+            p.setAttribute('aria-pressed', on ? 'true' : 'false');
+            emettre();
+        }));
+
         racine.addEventListener('click', (e) => {
             const p = e.target.closest('.fpill');
             if (!p) return;
@@ -208,6 +262,7 @@
         effacerBarre.addEventListener('click', (e) => { e.preventDefault(); effacer(); });
 
         window.ptFiltres = { lire: lire, effacer: effacer };
+        restaurer();
         emettre();
     })();
 </script>
