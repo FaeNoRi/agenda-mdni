@@ -213,9 +213,11 @@ class EvenementController extends Controller
             }
 
             $dates = $this->dateRangeArray($start, $end);
+            $conflicts = $this->congeConflicts($c, $start, $end);
         } catch (\Exception $e) {
             $summary = 'Dates inconnues';
             $dates   = [];
+            $conflicts = [];
         }
 
         return [
@@ -225,11 +227,59 @@ class EvenementController extends Controller
             'badge_label' => 'Congé',
             'summary'     => $summary,
             'dates'       => $dates,
-            // Bornes réelles du congé, utilisées pour détecter un conflit d'horaire
-            // (et pas seulement un conflit de date) avec un événement.
             'start'       => $c->start,
             'end'         => $c->end,
+            // Événements en conflit, par jour : [ 'Y-m-d' => [ ['nom' => …, 'horaire' => …], … ] ].
+            'conflicts'   => $conflicts,
         ];
+    }
+
+    /**
+     * Événements auxquels la personne en congé est affectée nommément et dont les horaires
+     * chevauchent réellement le congé, regroupés par jour de chevauchement.
+     *
+     * Calculé sur tous les événements (et non sur les seules cartes affichées) : un filtre
+     * du tableau de bord (type, salle, pastilles…) ne doit ni masquer ni inventer un conflit.
+     * Les événements annulés et ceux de « Toute l'équipe » (id 0) sont ignorés.
+     */
+    private function congeConflicts(Conge $c, Carbon $start, Carbon $end): array
+    {
+        if (!$c->user_id) {
+            return [];
+        }
+
+        // Congé saisi « 00:00 → 00:00 » le même jour : journée entière (sinon durée nulle).
+        if ($start->eq($end) && $start->format('H:i') === '00:00') {
+            $end = $end->copy()->addDay();
+        }
+
+        $conflicts = [];
+
+        Evenements::whereNotIn('type_event', ['Annule', 'Annulé'])
+            ->where('date_heure_debut', '<', $end)
+            ->where('date_heure_fin', '>', $start)
+            ->whereHas('users', fn ($q) => $q->where('users.id', $c->user_id))
+            ->orderBy('date_heure_debut')
+            ->get(['id', 'nom_event', 'date_heure_debut', 'date_heure_fin'])
+            ->each(function (Evenements $e) use ($start, $end, &$conflicts) {
+                $evStart = $e->date_heure_debut;
+                $evEnd   = $e->date_heure_fin;
+
+                $horaire = $evStart->isSameDay($evEnd)
+                    ? $evStart->format('H:i') . '–' . $evEnd->format('H:i')
+                    : $evStart->format('d/m H:i') . ' – ' . $evEnd->format('d/m H:i');
+
+                // Jours réellement concernés par le chevauchement (fin exclusive).
+                // (max/min renvoient l'une des deux instances : on copie avant de modifier.)
+                $overlapStart = $evStart->max($start)->copy();
+                $overlapEnd   = $evEnd->min($end)->copy()->subSecond();
+
+                foreach ($this->dateRangeArray($overlapStart, $overlapEnd) as $day) {
+                    $conflicts[$day][] = ['nom' => $e->nom_event, 'horaire' => $horaire];
+                }
+            });
+
+        return $conflicts;
     }
 
     private function buildNotifications($changementsHoraires, $conges)

@@ -36,38 +36,14 @@ $grouped = $events->groupBy(fn($e) => $e->date_heure_debut->format('Y-m-d'))->so
             && request('from') === request('to')
             && request('from') !== $today;
 
-        // Créneaux (début/fin) affectés à chaque animateur ce jour-là, événements
-        // annulés exclus : un événement annulé ne doit jamais générer de conflit.
-        $userSlotsToday = [];
-        foreach ($dayEvents as $event) {
-            if (in_array($event->type_event, ['Annule', 'Annulé'], true)) {
-                continue;
-            }
-            foreach ($event->users as $user) {
-                $userSlotsToday[$user->id][] = [$event->date_heure_debut, $event->date_heure_fin];
-            }
-        }
-
+        // Conflits calculés côté contrôleur (EvenementController::congeConflicts) sur tous
+        // les événements, indépendamment des filtres : chevauchement réel des horaires,
+        // événements annulés exclus. On ne garde ici que ceux du jour affiché.
         $dayNotifications = ($notifications ?? collect())
             ->filter(fn($n) => in_array($date, $n['dates'], true))
-            ->map(function ($n) use ($userSlotsToday) {
-                $n['conflict'] = false;
-
-                // Conflit uniquement si les horaires du congé chevauchent réellement
-                // ceux d'un événement (pas seulement la même date : un congé
-                // d'une demi-journée ne doit pas signaler un événement l'après-midi).
-                if ($n['type'] === 'conge' && $n['user_id'] && !empty($n['start']) && !empty($n['end'])
-                    && isset($userSlotsToday[$n['user_id']])) {
-                    $congeStart = \Carbon\Carbon::parse($n['start']);
-                    $congeEnd   = \Carbon\Carbon::parse($n['end']);
-
-                    foreach ($userSlotsToday[$n['user_id']] as [$evStart, $evEnd]) {
-                        if ($congeStart->lt($evEnd) && $congeEnd->gt($evStart)) {
-                            $n['conflict'] = true;
-                            break;
-                        }
-                    }
-                }
+            ->map(function ($n) use ($date) {
+                $n['conflict_events'] = $n['conflicts'][$date] ?? [];
+                $n['conflict'] = $n['type'] === 'conge' && !empty($n['conflict_events']);
 
                 return $n;
             });
