@@ -120,6 +120,28 @@ class EvenementDisponibiliteTest extends TestCase
         );
     }
 
+    public function test_full_day_conge_flags_user_on_its_end_date(): void
+    {
+        $user = User::factory()->create();
+
+        // Journées entières du 10 au 12 : le 12 est inclus.
+        Conge::create([
+            'user_id' => $user->id,
+            'start' => '2026-01-10 00:00:00',
+            'end' => '2026-01-12 00:00:00',
+        ]);
+
+        $response = $this->actingAs(User::factory()->create())->getJson(
+            '/evenements/disponibilites?debut='.urlencode('2026-01-12T14:00').'&fin='.urlencode('2026-01-12T15:00')
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath(
+            "users.{$user->id}.0",
+            fn ($reason) => str_contains($reason, 'congé')
+        );
+    }
+
     public function test_flags_user_with_schedule_change_with_reason(): void
     {
         $user = User::factory()->create();

@@ -140,6 +140,41 @@ class DashboardConflictBadgeTest extends TestCase
         $response->assertSee('Congé · Conflit');
     }
 
+    public function test_full_day_conge_includes_its_end_date(): void
+    {
+        $admin = User::factory()->create();
+        $antoine = User::factory()->create(['name' => 'Cadet Antoine']);
+
+        // Journées entières du 16 au 17 : le 17 est inclus.
+        Conge::create(['user_id' => $antoine->id, 'start' => '2026-09-16 00:00:00', 'end' => '2026-09-17 00:00:00']);
+
+        $event = $this->createEvent();
+        $event->users()->sync([$antoine->id]);
+
+        $response = $this->actingAs($admin)->get('/dashboard/cards?from=2026-09-17&to=2026-09-17');
+
+        $response->assertOk();
+        $response->assertSee('Congé · Conflit');
+    }
+
+    public function test_partial_conge_ending_at_midnight_does_not_cover_the_next_day(): void
+    {
+        $admin = User::factory()->create();
+        $antoine = User::factory()->create(['name' => 'Cadet Antoine']);
+
+        // Début à 14:00 : pas une journée entière, la fin à 00:00 est exclusive.
+        Conge::create(['user_id' => $antoine->id, 'start' => '2026-09-16 14:00:00', 'end' => '2026-09-17 00:00:00']);
+
+        $event = $this->createEvent();
+        $event->users()->sync([$antoine->id]);
+
+        $response = $this->actingAs($admin)->get('/dashboard/cards?from=2026-09-17&to=2026-09-17');
+
+        $response->assertOk();
+        // Aucune pastille de congé sur le 17 (le nom figure en revanche sur la carte).
+        $response->assertDontSee('data-bs-custom-class="date-badge-popover"', false);
+    }
+
     public function test_team_event_does_not_trigger_conflict(): void
     {
         $admin = User::factory()->create();

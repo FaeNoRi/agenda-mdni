@@ -212,8 +212,9 @@ class EvenementController extends Controller
                     . $end->translatedFormat('d F Y \à H:i') . '</strong>';
             }
 
-            $dates = $this->dateRangeArray($start, $end);
-            $conflicts = $this->congeConflicts($c, $start, $end);
+            // Jours couverts (fin effective exclusive : journées entières incluses jusqu'à la date de fin).
+            $dates = $this->dateRangeArray($start, $c->finEffective()->subSecond()->max($start));
+            $conflicts = $this->congeConflicts($c);
         } catch (\Exception $e) {
             $summary = 'Dates inconnues';
             $dates   = [];
@@ -242,16 +243,15 @@ class EvenementController extends Controller
      * du tableau de bord (type, salle, pastilles…) ne doit ni masquer ni inventer un conflit.
      * Les événements annulés et ceux de « Toute l'équipe » (id 0) sont ignorés.
      */
-    private function congeConflicts(Conge $c, Carbon $start, Carbon $end): array
+    private function congeConflicts(Conge $c): array
     {
         if (!$c->user_id) {
             return [];
         }
 
-        // Congé saisi « 00:00 → 00:00 » le même jour : journée entière (sinon durée nulle).
-        if ($start->eq($end) && $start->format('H:i') === '00:00') {
-            $end = $end->copy()->addDay();
-        }
+        // Journées entières (début et fin à 00:00) : la date de fin est incluse.
+        $start = $c->debutEffectif();
+        $end   = $c->finEffective();
 
         $conflicts = [];
 
@@ -774,7 +774,9 @@ class EvenementController extends Controller
         }
 
         // Congés chevauchant le créneau (alerte indicative)
-        $conges = Conge::where('start', '<', $fin)->where('end', '>', $debut)->get();
+        // (journées entières : date de fin incluse, voir Conge::finEffective)
+        $conges = Conge::candidatsPour(Carbon::parse($debut), Carbon::parse($fin))->get()
+            ->filter(fn (Conge $c) => $c->chevauche(Carbon::parse($debut), Carbon::parse($fin)));
 
         foreach ($conges as $conge) {
             $sameDay = Carbon::parse($conge->start)->isSameDay(Carbon::parse($conge->end));
