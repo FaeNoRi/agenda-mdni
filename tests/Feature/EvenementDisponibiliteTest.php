@@ -32,6 +32,18 @@ class EvenementDisponibiliteTest extends TestCase
         ], $overrides));
     }
 
+    public function test_dashboard_and_event_list_load_the_shared_availability_script(): void
+    {
+        $user = User::factory()->create();
+
+        foreach (['/dashboard', '/evenements'] as $page) {
+            $this->actingAs($user)->get($page)
+                ->assertOk()
+                ->assertSee('function appliquerDisponibilites', false)
+                ->assertSee('— occupé(e)', false);
+        }
+    }
+
     public function test_returns_empty_when_no_dates_given(): void
     {
         $response = $this->actingAs(User::factory()->create())
