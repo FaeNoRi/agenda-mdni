@@ -1,7 +1,7 @@
 {{--
     Disponibilités du formulaire d'événement (tableau de bord et liste des événements).
     Indicatif, non bloquant : dans les listes, une personne / salle occupée est grisée et suffixée
-    « — occupé(e) » (la couleur seule n'est pas fiable dans une liste déroulante native) ;
+    « — affecté(e) à n ateliers » (une liste déroulante native n'accepte que du texte) ;
     sous chaque ligne, un petit message donne la raison pour l'élément sélectionné.
 --}}
 <script>
@@ -76,11 +76,20 @@
     function appliquerDisponibilites(data) {
         const IGNORE_IDS = ['0', '16'];
         const config = {
-            user: { reasons: data.users || {}, suffixe: ' — occupé(e)' },
-            salle: { reasons: data.salles || {}, suffixe: ' — occupée' },
+            user: { reasons: data.users || {}, affecte: 'affecté(e)' },
+            salle: { reasons: data.salles || {}, affecte: 'affectée' },
         };
 
-        Object.entries(config).forEach(([type, { reasons, suffixe }]) => {
+        // « — affecté(e) à 2 ateliers » (événements chevauchant le créneau) ; à défaut, le motif
+        // propre à la personne : « — en congé », « — horaire modifié ».
+        const suffixe = (raisons, affecte) => {
+            const n = raisons.filter(r => r.startsWith('Occupé')).length;
+            if (n > 0) return ` — ${affecte} à ${n} atelier${n > 1 ? 's' : ''}`;
+            if (raisons.some(r => r.startsWith('En congé'))) return ' — en congé';
+            return ' — horaire modifié';
+        };
+
+        Object.entries(config).forEach(([type, { reasons, affecte }]) => {
             document.querySelectorAll(`select[data-type="${type}"]`).forEach(select => {
                 select.querySelectorAll('option').forEach(opt => {
                     if (opt.dataset.label === undefined) {
@@ -90,7 +99,7 @@
                     const busy = !IGNORE_IDS.includes(opt.value)
                         && Object.prototype.hasOwnProperty.call(reasons, opt.value);
 
-                    opt.textContent = opt.dataset.label + (busy ? suffixe : '');
+                    opt.textContent = opt.dataset.label + (busy ? suffixe(reasons[opt.value], affecte) : '');
                     opt.classList.toggle('dispo-occupe', busy);
                     opt.style.color = busy ? '#9aa0ac' : '';
 
