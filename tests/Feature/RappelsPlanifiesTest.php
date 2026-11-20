@@ -274,6 +274,17 @@ class RappelsPlanifiesTest extends TestCase
         $this->assertSame(0, $this->de($this->admin, 'admin.conflit')->count());
     }
 
+    public function test_fonctionnement_ne_fait_pas_de_conflit_a_j7(): void
+    {
+        // « Fonctionnement » chevauchant un atelier avec la même personne, dans les deux sens.
+        $this->evenement('2026-10-16 14:00:00', [$this->marie->id], ['nom_event' => 'A', 'type_event' => 'Fonctionnement']);
+        $this->evenement('2026-10-16 15:00:00', [$this->marie->id], ['nom_event' => 'B']);
+
+        $this->lancer();
+
+        $this->assertSame(0, $this->de($this->admin, 'admin.conflit')->count());
+    }
+
     public function test_la_personne_en_commun_fait_un_conflit(): void
     {
         $this->evenement('2026-10-16 14:00:00', [$this->marie->id], ['nom_event' => 'A']);

@@ -99,6 +99,24 @@ class EvenementDisponibiliteTest extends TestCase
         $this->assertArrayNotHasKey((string) $user->id, $response->json('users'));
     }
 
+    public function test_fonctionnement_events_make_neither_user_nor_salle_busy(): void
+    {
+        $user = User::factory()->create();
+        $salle = Salles::create(['nom_salle' => 'Salle A', 'type_salle' => 'Atelier']);
+
+        $event = $this->createEvent(['type_event' => 'Fonctionnement']);
+        $event->users()->attach($user->id);
+        $event->salles()->attach($salle->id);
+
+        $response = $this->actingAs(User::factory()->create())->getJson(
+            '/evenements/disponibilites?debut='.urlencode('2026-01-10T14:30').'&fin='.urlencode('2026-01-10T15:30')
+        );
+
+        $response->assertOk();
+        $this->assertArrayNotHasKey((string) $user->id, $response->json('users'));
+        $this->assertArrayNotHasKey((string) $salle->id, $response->json('salles'));
+    }
+
     public function test_flags_user_on_conge_with_reason(): void
     {
         $user = User::factory()->create();

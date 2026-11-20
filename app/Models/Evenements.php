@@ -76,6 +76,17 @@ class Evenements extends Model
         return $query;
     }
 
+    /**
+     * Types jamais pris en compte dans les vérifications de conflit (congés, disponibilités,
+     * alerte J-7) : annulés, et « Fonctionnement » (vie interne de la structure).
+     */
+    public const TYPES_SANS_CONFLIT = ['Annule', 'Annulé', 'Fonctionnement'];
+
+    public function ignoreConflits(): bool
+    {
+        return in_array($this->type_event, self::TYPES_SANS_CONFLIT, true);
+    }
+
     public function isCancelled(): bool
     {
         return in_array($this->type_event, ['Annule', 'Annulé'], true);

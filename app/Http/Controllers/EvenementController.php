@@ -255,8 +255,7 @@ class EvenementController extends Controller
 
         $conflicts = [];
 
-        // « Fonctionnement » (vie interne de la structure) n'est pas un engagement en conflit avec un congé.
-        Evenements::whereNotIn('type_event', ['Annule', 'Annulé', 'Fonctionnement'])
+        Evenements::whereNotIn('type_event', Evenements::TYPES_SANS_CONFLIT)
             ->where('date_heure_debut', '<', $end)
             ->where('date_heure_fin', '>', $start)
             ->whereHas('users', fn ($q) => $q->where('users.id', $c->user_id))
@@ -732,7 +731,8 @@ class EvenementController extends Controller
 
         // Autres événements chevauchant le créneau (occupation ferme). En modification,
         // l'événement édité est exclu : il ne doit pas se déclarer "occupé" par lui-même.
-        $evenements = Evenements::where('type_event', '!=', 'Annule')
+        // Annulés et « Fonctionnement » ne rendent ni une personne ni une salle occupée.
+        $evenements = Evenements::whereNotIn('type_event', Evenements::TYPES_SANS_CONFLIT)
             ->when($request->integer('exclude'), fn ($q, $id) => $q->where('id', '!=', $id))
             ->where(function ($q) use ($debut, $fin) {
                 $q->where('date_heure_debut', '<', $fin)

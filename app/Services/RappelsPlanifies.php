@@ -161,7 +161,7 @@ class RappelsPlanifies
             }
 
             // Conflits de salle ou de personne : J-7, aux administrateurs.
-            if ($jours === 7) {
+            if ($jours === 7 && ! $evenement->ignoreConflits()) {
                 $cree += $this->conflits($evenement, $base);
             }
         }
@@ -169,7 +169,7 @@ class RappelsPlanifies
         return $cree;
     }
 
-    /** Autres événements non annulés qui chevauchent celui-ci avec la même salle ou la même personne. */
+    /** Autres événements (ni annulés, ni « Fonctionnement ») qui chevauchent celui-ci avec la même salle ou la même personne. */
     private function conflits(Evenements $evenement, array $base): int
     {
         $autres = Evenements::where('id', '!=', $evenement->id)
@@ -177,7 +177,7 @@ class RappelsPlanifies
             ->where('date_heure_fin', '>', $evenement->date_heure_debut)
             ->with(['users', 'salles'])
             ->get()
-            ->reject(fn (Evenements $e) => $e->isCancelled());
+            ->reject(fn (Evenements $e) => $e->ignoreConflits());
 
         $administrateurs = User::where('is_admin', 1)->get();
         $cree = 0;
