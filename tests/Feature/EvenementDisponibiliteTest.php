@@ -40,7 +40,7 @@ class EvenementDisponibiliteTest extends TestCase
             $this->actingAs($user)->get($page)
                 ->assertOk()
                 ->assertSee('function appliquerDisponibilites', false)
-                ->assertSee('à ${n} atelier', false);
+                ->assertSee('à ${n} événement', false);
         }
     }
 

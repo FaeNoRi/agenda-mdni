@@ -1,7 +1,7 @@
 {{--
     Disponibilités du formulaire d'événement (tableau de bord et liste des événements).
     Indicatif, non bloquant : dans les listes, une personne / salle occupée est grisée et suffixée
-    « — affecté(e) à n ateliers » (une liste déroulante native n'accepte que du texte) ;
+    « — affecté(e) à n événements » (une liste déroulante native n'accepte que du texte) ;
     sous chaque ligne, un petit message donne la raison pour l'élément sélectionné.
 --}}
 <script>
@@ -80,11 +80,11 @@
             salle: { reasons: data.salles || {}, affecte: 'affectée' },
         };
 
-        // « — affecté(e) à 2 ateliers » (événements chevauchant le créneau) ; à défaut, le motif
+        // « — affecté(e) à 2 événements » (chevauchant le créneau) ; à défaut, le motif
         // propre à la personne : « — en congé », « — horaire modifié ».
         const suffixe = (raisons, affecte) => {
             const n = raisons.filter(r => r.startsWith('Occupé')).length;
-            if (n > 0) return ` — ${affecte} à ${n} atelier${n > 1 ? 's' : ''}`;
+            if (n > 0) return ` — ${affecte} à ${n} événement${n > 1 ? 's' : ''}`;
             if (raisons.some(r => r.startsWith('En congé'))) return ' — en congé';
             return ' — horaire modifié';
         };
