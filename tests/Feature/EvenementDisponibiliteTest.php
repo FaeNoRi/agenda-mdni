@@ -99,6 +99,53 @@ class EvenementDisponibiliteTest extends TestCase
         $this->assertArrayNotHasKey((string) $user->id, $response->json('users'));
     }
 
+    public function test_full_day_event_makes_user_and_salle_busy_all_day(): void
+    {
+        $user = User::factory()->create();
+        $salle = Salles::create(['nom_salle' => 'Salle A', 'type_salle' => 'Atelier']);
+
+        // « Journée entière » enregistrée 00:00 → 00:00 le même jour.
+        $event = $this->createEvent([
+            'date_heure_debut' => '2026-11-20 00:00:00',
+            'date_heure_fin' => '2026-11-20 00:00:00',
+        ]);
+        $event->users()->attach($user->id);
+        $event->salles()->attach($salle->id);
+
+        $response = $this->actingAs(User::factory()->create())->getJson(
+            '/evenements/disponibilites?debut='.urlencode('2026-11-20T08:00').'&fin='.urlencode('2026-11-20T16:00')
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath("users.{$user->id}.0", fn ($r) => str_contains($r, 'journée entière'));
+        $response->assertJsonPath("salles.{$salle->id}.0", fn ($r) => str_contains($r, 'Atelier Photo'));
+
+        // Le lendemain, plus occupé.
+        $lendemain = $this->actingAs(User::factory()->create())->getJson(
+            '/evenements/disponibilites?debut='.urlencode('2026-11-21T08:00').'&fin='.urlencode('2026-11-21T16:00')
+        );
+        $this->assertArrayNotHasKey((string) $user->id, $lendemain->json('users'));
+    }
+
+    public function test_full_day_slot_detects_events_during_the_day(): void
+    {
+        $user = User::factory()->create();
+
+        $event = $this->createEvent([
+            'date_heure_debut' => '2026-11-20 10:00:00',
+            'date_heure_fin' => '2026-11-20 12:00:00',
+        ]);
+        $event->users()->attach($user->id);
+
+        // Création d'un événement « Journée entière » : 00:00 → 00:00.
+        $response = $this->actingAs(User::factory()->create())->getJson(
+            '/evenements/disponibilites?debut='.urlencode('2026-11-20T00:00').'&fin='.urlencode('2026-11-20T00:00')
+        );
+
+        $response->assertOk();
+        $response->assertJsonPath("users.{$user->id}.0", fn ($r) => str_contains($r, 'Atelier Photo'));
+    }
+
     public function test_fonctionnement_events_make_neither_user_nor_salle_busy(): void
     {
         $user = User::factory()->create();

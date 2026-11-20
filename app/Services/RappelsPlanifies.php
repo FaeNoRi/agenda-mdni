@@ -172,12 +172,15 @@ class RappelsPlanifies
     /** Autres événements (ni annulés, ni « Fonctionnement ») qui chevauchent celui-ci avec la même salle ou la même personne. */
     private function conflits(Evenements $evenement, array $base): int
     {
+        // « Journée entière » (00:00 → 00:00) : date de fin incluse, voir Evenements::finEffective.
+        $debut = $evenement->date_heure_debut;
+        $fin = $evenement->finEffective();
         $autres = Evenements::where('id', '!=', $evenement->id)
-            ->where('date_heure_debut', '<', $evenement->date_heure_fin)
-            ->where('date_heure_fin', '>', $evenement->date_heure_debut)
+            ->candidatsPour($debut, $fin)
             ->with(['users', 'salles'])
             ->get()
-            ->reject(fn (Evenements $e) => $e->ignoreConflits());
+            ->reject(fn (Evenements $e) => $e->ignoreConflits())
+            ->filter(fn (Evenements $e) => $e->chevauche($debut, $fin));
 
         $administrateurs = User::where('is_admin', 1)->get();
         $cree = 0;
@@ -216,7 +219,7 @@ class RappelsPlanifies
 
             // Moment du chevauchement (de la plus tardive des deux ouvertures à la plus précoce des deux fins).
             $debutConflit = max(Carbon::parse($evenement->date_heure_debut), Carbon::parse($autre->date_heure_debut));
-            $finConflit = min(Carbon::parse($evenement->date_heure_fin), Carbon::parse($autre->date_heure_fin));
+            $finConflit = min($evenement->finEffective(), $autre->finEffective());
             $quand = $debutConflit->copy()->locale('fr')->translatedFormat('l j F')
                 .', de '.$debutConflit->format('H\hi').' à '.$finConflit->format('H\hi');
 

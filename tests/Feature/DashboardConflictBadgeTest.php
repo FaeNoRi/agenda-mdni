@@ -175,6 +175,26 @@ class DashboardConflictBadgeTest extends TestCase
         $response->assertDontSee('data-bs-custom-class="date-badge-popover"', false);
     }
 
+    public function test_full_day_event_conflicts_with_half_day_conge(): void
+    {
+        $admin = User::factory()->create();
+        $antoine = User::factory()->create(['name' => 'Cadet Antoine']);
+
+        Conge::create(['user_id' => $antoine->id, 'start' => '2026-09-17 08:00:00', 'end' => '2026-09-17 12:00:00']);
+
+        $event = $this->createEvent([
+            'date_heure_debut' => '2026-09-17 00:00:00',
+            'date_heure_fin' => '2026-09-17 00:00:00',
+        ]);
+        $event->users()->sync([$antoine->id]);
+
+        $response = $this->actingAs($admin)->get('/dashboard/cards?from=2026-09-17&to=2026-09-17');
+
+        $response->assertOk();
+        $response->assertSee('Congé · Conflit');
+        $response->assertSee('Point projet VEOLIA&lt;/strong&gt; (journée entière)', false);
+    }
+
     public function test_fonctionnement_event_does_not_trigger_conflict(): void
     {
         $admin = User::factory()->create();

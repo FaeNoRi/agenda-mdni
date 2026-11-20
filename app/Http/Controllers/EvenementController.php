@@ -255,19 +255,23 @@ class EvenementController extends Controller
 
         $conflicts = [];
 
+        // (événements « Journée entière » : 00:00 → 00:00, date de fin incluse, voir Evenements::finEffective)
         Evenements::whereNotIn('type_event', Evenements::TYPES_SANS_CONFLIT)
-            ->where('date_heure_debut', '<', $end)
-            ->where('date_heure_fin', '>', $start)
+            ->candidatsPour($start, $end)
             ->whereHas('users', fn ($q) => $q->where('users.id', $c->user_id))
             ->orderBy('date_heure_debut')
             ->get(['id', 'nom_event', 'date_heure_debut', 'date_heure_fin'])
+            ->filter(fn (Evenements $e) => $e->chevauche($start, $end))
             ->each(function (Evenements $e) use ($start, $end, &$conflicts) {
                 $evStart = $e->date_heure_debut;
-                $evEnd   = $e->date_heure_fin;
+                $evEnd   = $e->finEffective();
 
-                $horaire = $evStart->isSameDay($evEnd)
-                    ? $evStart->format('H:i') . '–' . $evEnd->format('H:i')
-                    : $evStart->format('d/m H:i') . ' – ' . $evEnd->format('d/m H:i');
+                $horaire = match (true) {
+                    $e->estJourneeEntiere() && $evStart->isSameDay($e->date_heure_fin) => 'journée entière',
+                    $e->estJourneeEntiere() => 'du ' . $evStart->format('d/m') . ' au ' . $e->date_heure_fin->format('d/m'),
+                    $evStart->isSameDay($evEnd) => $evStart->format('H:i') . '–' . $evEnd->format('H:i'),
+                    default => $evStart->format('d/m H:i') . ' – ' . $evEnd->format('d/m H:i'),
+                };
 
                 // Jours réellement concernés par le chevauchement (fin exclusive).
                 // (max/min renvoient l'une des deux instances : on copie avant de modifier.)
@@ -732,20 +736,29 @@ class EvenementController extends Controller
         // Autres événements chevauchant le créneau (occupation ferme). En modification,
         // l'événement édité est exclu : il ne doit pas se déclarer "occupé" par lui-même.
         // Annulés et « Fonctionnement » ne rendent ni une personne ni une salle occupée.
+        // « Journée entière » (00:00 → 00:00, date de fin incluse), pour le créneau demandé
+        // comme pour les événements existants : sinon durée nulle, jamais de chevauchement.
+        $debutC = Carbon::parse($debut);
+        $finC = Carbon::parse($fin);
+        if ($debutC->format('H:i:s') === '00:00:00' && $finC->format('H:i:s') === '00:00:00') {
+            $finC->addDay();
+            $fin = $finC->format('Y-m-d H:i:s');
+        }
+
         $evenements = Evenements::whereNotIn('type_event', Evenements::TYPES_SANS_CONFLIT)
             ->when($request->integer('exclude'), fn ($q, $id) => $q->where('id', '!=', $id))
-            ->where(function ($q) use ($debut, $fin) {
-                $q->where('date_heure_debut', '<', $fin)
-                  ->where('date_heure_fin', '>', $debut);
-            })
+            ->candidatsPour($debutC, $finC)
             ->with(['users', 'salles'])
-            ->get();
+            ->get()
+            ->filter(fn (Evenements $e) => $e->chevauche($debutC, $finC));
 
         $equipe = User::where('is_equipe', 1)->where('id', '!=', 0)->where('name', '!=', 'Non')->get(['id']);
 
         foreach ($evenements as $evenement) {
-            $periode = Carbon::parse($evenement->date_heure_debut)->format('d/m H:i')
-                . '–' . Carbon::parse($evenement->date_heure_fin)->format('H:i');
+            $periode = $evenement->estJourneeEntiere()
+                ? $evenement->date_heure_debut->format('d/m') . ' journée entière'
+                : Carbon::parse($evenement->date_heure_debut)->format('d/m H:i')
+                    . '–' . Carbon::parse($evenement->date_heure_fin)->format('H:i');
             $reason = 'Occupé : ' . ($evenement->nom_event ?: 'Événement') . " ({$periode})";
 
             foreach ($evenement->users as $user) {

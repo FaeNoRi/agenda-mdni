@@ -285,6 +285,18 @@ class RappelsPlanifiesTest extends TestCase
         $this->assertSame(0, $this->de($this->admin, 'admin.conflit')->count());
     }
 
+    public function test_un_evenement_journee_entiere_fait_un_conflit_a_j7(): void
+    {
+        $this->evenement('2026-10-16 00:00:00', [$this->marie->id], [
+            'nom_event' => 'A', 'date_heure_fin' => '2026-10-16 00:00:00',
+        ]);
+        $this->evenement('2026-10-16 14:00:00', [$this->marie->id], ['nom_event' => 'B']);
+
+        $this->lancer();
+
+        $this->assertStringContainsString('personne : Marie Durand', $this->de($this->admin, 'admin.conflit')->firstOrFail()->contexte);
+    }
+
     public function test_la_personne_en_commun_fait_un_conflit(): void
     {
         $this->evenement('2026-10-16 14:00:00', [$this->marie->id], ['nom_event' => 'A']);

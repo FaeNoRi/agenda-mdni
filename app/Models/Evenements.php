@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -85,6 +87,40 @@ class Evenements extends Model
     public function ignoreConflits(): bool
     {
         return in_array($this->type_event, self::TYPES_SANS_CONFLIT, true);
+    }
+
+    /** Journée(s) entière(s) : début ET fin à 00:00 (même règle que les congés, date de fin incluse). */
+    public function estJourneeEntiere(): bool
+    {
+        return $this->date_heure_debut->format('H:i:s') === '00:00:00'
+            && $this->date_heure_fin->format('H:i:s') === '00:00:00';
+    }
+
+    /**
+     * Fin réelle (exclusive) : un événement « Journée entière » (20/11 00:00 → 20/11 00:00)
+     * occupe toute la journée du 20, donc jusqu'au 21 00:00.
+     */
+    public function finEffective(): Carbon
+    {
+        $fin = Carbon::parse($this->date_heure_fin);
+
+        return $this->estJourneeEntiere() ? $fin->addDay() : $fin;
+    }
+
+    /** L'événement occupe-t-il réellement une partie du créneau [$debut, $fin[ ? */
+    public function chevauche(CarbonInterface $debut, CarbonInterface $fin): bool
+    {
+        return $this->date_heure_debut->lt($fin) && $this->finEffective()->gt($debut);
+    }
+
+    /**
+     * Événements susceptibles de chevaucher le créneau : pré-filtre SQL élargi d'un jour
+     * (fin incluse des journées entières), à affiner avec chevauche().
+     */
+    public function scopeCandidatsPour(Builder $query, CarbonInterface $debut, CarbonInterface $fin): Builder
+    {
+        return $query->where('date_heure_debut', '<', $fin)
+            ->where('date_heure_fin', '>=', Carbon::parse($debut)->subDay());
     }
 
     public function isCancelled(): bool
