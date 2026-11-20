@@ -241,7 +241,7 @@ class EvenementController extends Controller
      *
      * Calculé sur tous les événements (et non sur les seules cartes affichées) : un filtre
      * du tableau de bord (type, salle, pastilles…) ne doit ni masquer ni inventer un conflit.
-     * Les événements annulés et ceux de « Toute l'équipe » (id 0) sont ignorés.
+     * Les événements annulés, ceux de type « Fonctionnement » et ceux de « Toute l'équipe » (id 0) sont ignorés.
      */
     private function congeConflicts(Conge $c): array
     {
@@ -255,7 +255,8 @@ class EvenementController extends Controller
 
         $conflicts = [];
 
-        Evenements::whereNotIn('type_event', ['Annule', 'Annulé'])
+        // « Fonctionnement » (vie interne de la structure) n'est pas un engagement en conflit avec un congé.
+        Evenements::whereNotIn('type_event', ['Annule', 'Annulé', 'Fonctionnement'])
             ->where('date_heure_debut', '<', $end)
             ->where('date_heure_fin', '>', $start)
             ->whereHas('users', fn ($q) => $q->where('users.id', $c->user_id))

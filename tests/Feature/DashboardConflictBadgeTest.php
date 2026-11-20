@@ -175,6 +175,23 @@ class DashboardConflictBadgeTest extends TestCase
         $response->assertDontSee('data-bs-custom-class="date-badge-popover"', false);
     }
 
+    public function test_fonctionnement_event_does_not_trigger_conflict(): void
+    {
+        $admin = User::factory()->create();
+        $antoine = User::factory()->create(['name' => 'Cadet Antoine']);
+
+        Conge::create(['user_id' => $antoine->id, 'start' => '2026-09-17 00:00:00', 'end' => '2026-09-17 00:00:00']);
+
+        $event = $this->createEvent(['type_event' => 'Fonctionnement']);
+        $event->users()->sync([$antoine->id]);
+
+        $response = $this->actingAs($admin)->get('/dashboard/cards?from=2026-09-17&to=2026-09-17');
+
+        $response->assertOk();
+        $response->assertSee('data-bs-custom-class="date-badge-popover"', false);
+        $response->assertDontSee('Congé · Conflit');
+    }
+
     public function test_team_event_does_not_trigger_conflict(): void
     {
         $admin = User::factory()->create();
