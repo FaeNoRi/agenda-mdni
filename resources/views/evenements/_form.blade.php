@@ -165,7 +165,7 @@
         {{-- Suivant --}}
         <div class="d-flex justify-content-between mt-4">
             <p class="text-muted small" style="margin: auto;padding-left: 85px;">
-                Dernière modification par : {{ $evenement->auteur ?? 'Inconnu' }}
+                Dernière modification par : {{ $evenement->auteur ?? 'Inconnu' }}@if($evenement?->updated_at), le {{ $evenement->updated_at->translatedFormat('d F Y à H:i') }}@endif
             </p>
             <button type="button" class="btn btn-primary" @click="step = 2">Suivant</button>
         </div>
@@ -316,7 +316,7 @@
         <div class="d-flex justify-content-between mt-4">
             <button type="button" class="btn btn-secondary" @click="step = 1">Précédent</button>
             <p class="text-muted small" style="margin: auto;">
-                Dernière modification par : {{ $evenement->auteur ?? 'Inconnu' }}
+                Dernière modification par : {{ $evenement->auteur ?? 'Inconnu' }}@if($evenement?->updated_at), le {{ $evenement->updated_at->translatedFormat('d F Y à H:i') }}@endif
             </p>
             <button type="submit" class="btn btn-success">Enregistrer l'événement</button>
         </div>

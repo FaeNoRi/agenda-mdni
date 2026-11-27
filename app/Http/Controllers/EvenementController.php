@@ -11,6 +11,7 @@ use App\Models\Objets;
 use App\Models\Conge;
 use App\Models\ChangementHoraire;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Log;
@@ -508,15 +509,28 @@ class EvenementController extends Controller
         return $rows;
     }
 
-    /** Synchronise animateurs, salles, matériels et objets (objets vidés si "Objets à remettre" ≠ Oui). */
-    private function syncRelations(Evenements $evenement, array $data): void
+    /**
+     * Synchronise animateurs, salles, matériels et objets (objets vidés si "Objets à remettre" ≠ Oui).
+     * Renvoie true si au moins une relation a changé (ajout, retrait, quantité ou état modifié).
+     */
+    private function syncRelations(Evenements $evenement, array $data): bool
     {
-        $evenement->users()->sync($this->cleanIds($data['users'] ?? []));
-        $evenement->salles()->sync($this->cleanIds($data['salles'] ?? []));
-        $evenement->materiels()->sync($this->materielPivotData($data['materiels'] ?? [], $data['quantites'] ?? []));
-        $evenement->objets()->sync(
-            $data['objet'] === 'Oui' ? $this->objetPivotData($data['objets'] ?? [], $data['etat'] ?? []) : []
-        );
+        $resultats = [
+            $evenement->users()->sync($this->cleanIds($data['users'] ?? [])),
+            $evenement->salles()->sync($this->cleanIds($data['salles'] ?? [])),
+            $evenement->materiels()->sync($this->materielPivotData($data['materiels'] ?? [], $data['quantites'] ?? [])),
+            $evenement->objets()->sync(
+                $data['objet'] === 'Oui' ? $this->objetPivotData($data['objets'] ?? [], $data['etat'] ?? []) : []
+            ),
+        ];
+
+        foreach ($resultats as $r) {
+            if ($r['attached'] || $r['detached'] || $r['updated']) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function store(Request $request)
@@ -622,8 +636,17 @@ class EvenementController extends Controller
 
         try {
             DB::transaction(function () use ($evenement, $data) {
-                $evenement->update($data);
-                $this->syncRelations($evenement, $data);
+                // « Dernière modification par / le » : uniquement si quelque chose a réellement changé,
+                // y compris une simple relation (animateur, salle, matériel, état d'un objet), qui ne
+                // touche aucune colonne de l'événement et ne mettait donc pas updated_at à jour.
+                $evenement->fill(Arr::except($data, ['auteur']));
+                $relationsModifiees = $this->syncRelations($evenement, $data);
+
+                if ($evenement->isDirty() || $relationsModifiees) {
+                    $evenement->auteur = $data['auteur'];
+                    // save() n'écrit rien si seules les relations ont changé (même auteur) : touch() date la modification
+                    $evenement->isDirty() ? $evenement->save() : $evenement->touch();
+                }
             });
 
             app(SendEventEmailService::class)->send($evenement, SendEventEmailService::UPDATED, $before);

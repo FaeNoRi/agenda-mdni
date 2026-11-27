@@ -103,6 +103,52 @@ class EvenementCrudTest extends TestCase
         $this->assertTrue($event->users->contains($animateurNouveau->id));
     }
 
+    public function test_modifier_seulement_une_relation_met_a_jour_auteur_et_date(): void
+    {
+        $createur = User::factory()->create(['name' => 'Créateur']);
+        $event = $this->createEvent($createur->name);
+        $this->travel(2)->days();
+
+        $animateur = User::factory()->create();
+        $this->actingAs($createur)->put("/evenements/{$event->id}", $this->requestPayload([
+            'users' => [$animateur->id],
+        ]))->assertRedirect();
+
+        $event->refresh();
+        $this->assertSame('Créateur', $event->auteur);
+        $this->assertTrue($event->updated_at->isToday(), 'la date de modification avance même si seule la liste des animateurs change');
+
+        // un autre utilisateur change seulement l'état d'un objet
+        $objet = Objets::create(['nom_obj' => 'Carnet']);
+        $event->update(['objet' => 'Oui']);
+        $event->objets()->attach($objet->id, ['etat' => 'A faire']);
+        $autre = User::factory()->create(['name' => 'Relecteur']);
+        $this->actingAs($autre)->put("/evenements/{$event->id}", $this->requestPayload([
+            'users' => [$animateur->id], 'objet' => 'Oui', 'objets' => [$objet->id], 'etat' => ['Fait'],
+        ]))->assertRedirect();
+
+        $this->assertSame('Relecteur', $event->fresh()->auteur);
+    }
+
+    public function test_enregistrer_sans_rien_changer_ne_modifie_ni_auteur_ni_date(): void
+    {
+        $createur = User::factory()->create(['name' => 'Créateur']);
+        $animateur = User::factory()->create();
+        $event = $this->createEvent($createur->name);
+        $event->users()->attach($animateur->id);
+        $avant = $event->fresh()->updated_at;
+        $this->travel(2)->days();
+
+        $curieux = User::factory()->create(['name' => 'Curieux']);
+        $this->actingAs($curieux)->put("/evenements/{$event->id}", $this->requestPayload([
+            'users' => [$animateur->id],
+        ]))->assertRedirect();
+
+        $event->refresh();
+        $this->assertSame('Créateur', $event->auteur);
+        $this->assertTrue($event->updated_at->equalTo($avant));
+    }
+
     public function test_destroy_detaches_relations_and_deletes(): void
     {
         $user = User::factory()->create();

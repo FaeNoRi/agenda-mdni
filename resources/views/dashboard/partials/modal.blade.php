@@ -150,7 +150,7 @@
 {{-- --- FOOTER fixe --- --}}
 <div class="modal-footer">
     <p class="text-muted small" style="margin: auto;padding-left: 85px;">
-        Dernière modification par : <b>{{ $event->auteur ?? 'Inconnu' }}</b>, le {{ $event->updated_at->translatedFormat('d F Y') ?? 'Inconnu' }}
+        Dernière modification par : <b>{{ $event->auteur ?? 'Inconnu' }}</b>, le {{ $event->updated_at?->translatedFormat('d F Y à H:i') ?? 'Inconnu' }}
     </p>
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
 </div>
